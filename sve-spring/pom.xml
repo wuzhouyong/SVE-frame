@@ -35,9 +35,17 @@
 		<poi.version>3.17</poi.version>
 		<oshi.version>3.9.1</oshi.version>
 		<velocity.version>1.7</velocity.version>
+		<oracle.version>11.2.0.4.0</oracle.version>
 	</properties>
 
 	<dependencies>
+
+		<!-- Oracle驱动包 -->
+		<dependency>
+			<groupId>com.oracle</groupId>
+			<artifactId>ojdbc6</artifactId>
+			<version>${oracle.version}</version>
+		</dependency>
 
 		<!-- SpringBoot 核心包 -->
 		<dependency>
