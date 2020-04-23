@@ -79,14 +79,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="exceptionInfo != null and exceptionInfo != ''">exception_info,</if>
  			create_time
  		)values(
- 			<if test="jobLogId != null and jobLogId != 0">#{jobLogId},</if>
+ 			<if test="jobLogId != null and jobLogId != 0">seq_sys_job_log.NEXTVAL,</if>
  			<if test="jobName != null and jobName != ''">#{jobName},</if>
  			<if test="jobGroup != null and jobGroup != ''">#{jobGroup},</if>
  			<if test="invokeTarget != null and invokeTarget != ''">#{invokeTarget},</if>
  			<if test="jobMessage != null and jobMessage != ''">#{jobMessage},</if>
  			<if test="status != null and status != ''">#{status},</if>
  			<if test="exceptionInfo != null and exceptionInfo != ''">#{exceptionInfo},</if>
- 			sysdate()
+ 			sysdate
  		)
 	</insert>
 

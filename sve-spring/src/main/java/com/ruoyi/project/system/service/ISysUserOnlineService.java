@@ -1,5 +1,6 @@
 package com.ruoyi.project.system.service;
 
+import com.ruoyi.framework.aspectj.lang.annotation.DataSource;
 import com.ruoyi.framework.security.LoginUser;
 import com.ruoyi.project.monitor.domain.SysUserOnline;
 
@@ -17,6 +18,7 @@ public interface ISysUserOnlineService
      * @param user 用户信息
      * @return 在线用户信息
      */
+    @DataSource()
     public SysUserOnline selectOnlineByIpaddr(String ipaddr, LoginUser user);
 
     /**
