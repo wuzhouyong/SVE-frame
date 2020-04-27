@@ -26,7 +26,7 @@ export default {
   },
   data() {
     return {
-      title: '若依管理系统',
+      title: '环保管理系统',
       logo: logoImg
     }
   }

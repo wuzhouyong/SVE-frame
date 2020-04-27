@@ -53,30 +53,39 @@ body {
 }
 
 //for mini
-.el-form-item--mini {
-  margin-bottom: 10px !important;
+.app-container {
+  .el-form-item--mini {
+    margin-bottom: 10px !important;
 
-  label {
-    font-size: $mini-font-size;
-  }
-  .el-form-item__content{
-    div{
-      width: 180px !important;
+    label {
+      font-size: $mini-font-size;
+    }
+
+    input {
+      font-size: $mini-font-size;
+      height: $mini-height !important;
+      line-height: $mini-height !important;
+    }
+
+    input:not(.el-range-input) {
+
+    }
+
+    .el-date-editor {
+      height: $mini-height !important;
+
+      input {
+        height: 26px !important;
+      }
     }
   }
-  input {
-    font-size: $mini-font-size;
-    height: $mini-height !important;
-    line-height: $mini-height !important;
-  }
-
-  input:not(.el-range-input) {
-
-  }
-  .el-date-editor {
-    height: $mini-height !important;
-    input {
-      height: 26px !important;
+  .el-table--mini{
+    .el-table__body-wrapper {
+      table {
+        td {
+          padding: 2px 0;
+        }
+      }
     }
   }
 }
