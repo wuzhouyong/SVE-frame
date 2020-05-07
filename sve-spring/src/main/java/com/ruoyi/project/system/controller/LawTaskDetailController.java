@@ -3,6 +3,7 @@ package com.ruoyi.project.system.controller;
 import java.util.List;
 
 import com.ruoyi.framework.web.page.TableDataInfo;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +23,7 @@ import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 
 /**
- * 移动执法任务 - 明细Controller
+ * 移动执法任务 - 明细 Controller
  * 
  * @author ruoyi
  * @date 2020-05-07
@@ -34,7 +35,7 @@ public class LawTaskDetailController extends BaseController
     @Autowired
     private ILawTaskDetailService lawTaskDetailService;
     /**
-     * 查询【请填写功能名称】列表
+     * 查询 移动执法任务 - 明细 列表
      */
     @PreAuthorize("@ss.hasPermi('system:detail:list')")
     @GetMapping("/list")
@@ -42,6 +43,15 @@ public class LawTaskDetailController extends BaseController
         startPage();
         List<LawTaskDetail> list = lawTaskDetailService.selectLawTaskDetailList(lawTaskDetail);
         return getDataTable(list);
+    }
+
+    @ApiOperation("获取用户详细dfdfdfdfd")
+    @PreAuthorize("@ss.hasPermi('system:detail:list')")
+    @GetMapping("/list1")
+    public List<LawTaskDetail> lawTaskDetails() {
+        startPage();
+        List<LawTaskDetail> list = lawTaskDetailService.selectLawTaskDetailALL();
+        return list;
     }
 
     /**
@@ -99,4 +109,5 @@ public class LawTaskDetailController extends BaseController
     {
         return toAjax(lawTaskDetailService.deleteLawTaskDetailByIds(taskDetailIds));
     }
+    
 }
