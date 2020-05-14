@@ -1,6 +1,11 @@
 package com.ruoyi.project.system.controller;
 
 import java.util.List;
+
+import com.ruoyi.framework.redis.RedisCache;
+import com.ruoyi.framework.web.domain.TreeSelect;
+import com.ruoyi.project.system.domain.SysDept;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -18,7 +23,6 @@ import com.ruoyi.framework.aspectj.lang.annotation.Log;
 import com.ruoyi.framework.aspectj.lang.enums.BusinessType;
 import com.ruoyi.framework.web.controller.BaseController;
 import com.ruoyi.framework.web.domain.AjaxResult;
-import com.ruoyi.project.system.domain.SysDept;
 import com.ruoyi.project.system.service.ISysDeptService;
 
 /**
@@ -33,6 +37,8 @@ public class SysDeptController extends BaseController
     @Autowired
     private ISysDeptService deptService;
 
+    @Autowired
+    private RedisCache redisCache;
     /**
      * 获取部门列表
      */
@@ -62,6 +68,16 @@ public class SysDeptController extends BaseController
     {
         List<SysDept> depts = deptService.selectDeptList(dept);
         return AjaxResult.success(deptService.buildDeptTreeSelect(depts));
+    }
+
+
+   // 获取所有的部门及对应的用户  /system/dept/selectTreeDept --------------888--------
+    @ApiOperation("获取所有的部门及对应的用户")
+    @GetMapping("/selectTreeDept")
+    public AjaxResult selectTreeDept()
+    {
+        List<TreeSelect> treeDeptList = redisCache.getCacheObject("dept_user_tree");
+        return AjaxResult.success(treeDeptList);
     }
 
     /**

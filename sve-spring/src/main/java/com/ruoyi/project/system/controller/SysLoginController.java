@@ -2,6 +2,8 @@ package com.ruoyi.project.system.controller;
 
 import java.util.List;
 import java.util.Set;
+
+import com.ruoyi.project.system.domain.SysUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +18,6 @@ import com.ruoyi.framework.security.service.SysPermissionService;
 import com.ruoyi.framework.security.service.TokenService;
 import com.ruoyi.framework.web.domain.AjaxResult;
 import com.ruoyi.project.system.domain.SysMenu;
-import com.ruoyi.project.system.domain.SysUser;
 import com.ruoyi.project.system.service.ISysMenuService;
 
 /**
@@ -42,10 +43,10 @@ public class SysLoginController
     /**
      * 登录方法
      * 
-     * @param username 用户名
-     * @param password 密码
-     * @param captcha 验证码
-     * @param uuid 唯一标识
+     * @param     username 用户名
+     * @param     password 密码
+     * @param     captcha 验证码
+     * @param     uuid 唯一标识
      * @return 结果
      */
     @PostMapping("/login")

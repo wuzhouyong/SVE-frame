@@ -1,5 +1,6 @@
 package com.ruoyi.framework.security.service;
 
+import com.ruoyi.project.system.domain.SysUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,6 @@ import com.ruoyi.common.enums.UserStatus;
 import com.ruoyi.common.exception.BaseException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.security.LoginUser;
-import com.ruoyi.project.system.domain.SysUser;
 import com.ruoyi.project.system.service.ISysUserService;
 
 /**

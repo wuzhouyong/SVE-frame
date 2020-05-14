@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.system.mapper.JTaskdetailMapper">
+    
+    <resultMap type="JTaskdetail" id="JTaskdetailResult">
+        <result property="ztaskdid"    column="ztaskdid"    />
+        <result property="ztaskhid"    column="ztaskhid"    />
+        <result property="zproctype"    column="zproctype"    />
+        <result property="zprocuserid"    column="zprocuserid"    />
+        <result property="zhandleduserid"    column="zhandleduserid"    />
+        <result property="zisread"    column="zisread"    />
+        <result property="zfeedback"    column="zfeedback"    />
+        <result property="zprocdate"    column="zprocdate"    />
+        <result property="zisdeleted"    column="zisdeleted"    />
+        <result property="zdatecreated"    column="zdatecreated"    />
+        <result property="zcreatedby"    column="zcreatedby"    />
+        <result property="zdateupdated"    column="zdateupdated"    />
+        <result property="zupdatedby"    column="zupdatedby"    />
+        <result property="zprocusertype"    column="zprocusertype"    />
+    </resultMap>
+
+    <sql id="selectJTaskdetailVo">
+        select ztaskdid, ztaskhid, zproctype, zprocuserid, zhandleduserid, zisread, zfeedback, zprocdate, zisdeleted, zdatecreated, zcreatedby, zdateupdated, zupdatedby, zprocusertype from j_taskdetail
+    </sql>
+
+    <select id="selectJTaskdetailList" parameterType="JTaskdetail" resultMap="JTaskdetailResult">
+        <include refid="selectJTaskdetailVo"/>
+        <where>  
+        </where>
+    </select>
+    
+    <select id="selectJTaskdetailById" parameterType="Long" resultMap="JTaskdetailResult">
+        <include refid="selectJTaskdetailVo"/>
+        where ztaskdid = #{ztaskdid}
+    </select>
+        
+    <insert id="insertJTaskdetail" parameterType="JTaskdetail" useGeneratedKeys="true" keyProperty="ztaskdid">
+        <selectKey keyProperty="ztaskdid" order="BEFORE" resultType="Long">
+            select seq_j_taskdetail.nextval as ztaskdid from DUAL
+        </selectKey>
+        insert into j_taskdetail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="ztaskdid != null  and ztaskdid != ''">ztaskdid,</if>
+            <if test="ztaskhid != null  and ztaskhid != ''">ztaskhid,</if>
+            <if test="zproctype != null ">zproctype,</if>
+            <if test="zprocuserid != null  and zprocuserid != ''">zprocuserid,</if>
+            <if test="zhandleduserid != null  and zhandleduserid != ''">zhandleduserid,</if>
+            <if test="zisread != null ">zisread,</if>
+            <if test="zfeedback != null  and zfeedback != ''">zfeedback,</if>
+            <if test="zprocdate != null ">zprocdate,</if>
+            <if test="zisdeleted != null ">zisdeleted,</if>
+            <if test="zdatecreated != null ">zdatecreated,</if>
+            <if test="zcreatedby != null  and zcreatedby != ''">zcreatedby,</if>
+            <if test="zdateupdated != null ">zdateupdated,</if>
+            <if test="zupdatedby != null  and zupdatedby != ''">zupdatedby,</if>
+            <if test="zprocusertype != null ">zprocusertype,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="ztaskdid != null  and ztaskdid != ''">#{ztaskdid},</if>
+            <if test="ztaskhid != null  and ztaskhid != ''">#{ztaskhid},</if>
+            <if test="zproctype != null ">#{zproctype},</if>
+            <if test="zprocuserid != null  and zprocuserid != ''">#{zprocuserid},</if>
+            <if test="zhandleduserid != null  and zhandleduserid != ''">#{zhandleduserid},</if>
+            <if test="zisread != null ">#{zisread},</if>
+            <if test="zfeedback != null  and zfeedback != ''">#{zfeedback},</if>
+            <if test="zprocdate != null ">#{zprocdate},</if>
+            <if test="zisdeleted != null ">#{zisdeleted},</if>
+            <if test="zdatecreated != null ">#{zdatecreated},</if>
+            <if test="zcreatedby != null  and zcreatedby != ''">#{zcreatedby},</if>
+            <if test="zdateupdated != null ">#{zdateupdated},</if>
+            <if test="zupdatedby != null  and zupdatedby != ''">#{zupdatedby},</if>
+            <if test="zprocusertype != null ">#{zprocusertype},</if>
+         </trim>
+    </insert>
+
+    <update id="updateJTaskdetail" parameterType="JTaskdetail">
+        update j_taskdetail
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="ztaskhid != null  and ztaskhid != ''">ztaskhid = #{ztaskhid},</if>
+            <if test="zproctype != null ">zproctype = #{zproctype},</if>
+            <if test="zprocuserid != null  and zprocuserid != ''">zprocuserid = #{zprocuserid},</if>
+            <if test="zhandleduserid != null  and zhandleduserid != ''">zhandleduserid = #{zhandleduserid},</if>
+            <if test="zisread != null ">zisread = #{zisread},</if>
+            <if test="zfeedback != null  and zfeedback != ''">zfeedback = #{zfeedback},</if>
+            <if test="zprocdate != null ">zprocdate = #{zprocdate},</if>
+            <if test="zisdeleted != null ">zisdeleted = #{zisdeleted},</if>
+            <if test="zdatecreated != null ">zdatecreated = #{zdatecreated},</if>
+            <if test="zcreatedby != null  and zcreatedby != ''">zcreatedby = #{zcreatedby},</if>
+            <if test="zdateupdated != null ">zdateupdated = #{zdateupdated},</if>
+            <if test="zupdatedby != null  and zupdatedby != ''">zupdatedby = #{zupdatedby},</if>
+            <if test="zprocusertype != null ">zprocusertype = #{zprocusertype},</if>
+        </trim>
+        where ztaskdid = #{ztaskdid}
+    </update>
+
+    <delete id="deleteJTaskdetailById" parameterType="Long">
+        delete from j_taskdetail where ztaskdid = #{ztaskdid}
+    </delete>
+
+    <delete id="deleteJTaskdetailByIds" parameterType="String">
+        delete from j_taskdetail where ztaskdid in 
+        <foreach item="ztaskdid" collection="array" open="(" separator="," close=")">
+            #{ztaskdid}
+        </foreach>
+    </delete>
+    
+</mapper>

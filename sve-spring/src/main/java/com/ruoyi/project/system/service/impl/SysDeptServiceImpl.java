@@ -1,9 +1,9 @@
 package com.ruoyi.project.system.service.impl;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import com.ruoyi.project.system.domain.SysDept;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.common.constant.UserConstants;
@@ -11,7 +11,6 @@ import com.ruoyi.common.exception.CustomException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.aspectj.lang.annotation.DataScope;
 import com.ruoyi.framework.web.domain.TreeSelect;
-import com.ruoyi.project.system.domain.SysDept;
 import com.ruoyi.project.system.mapper.SysDeptMapper;
 import com.ruoyi.project.system.service.ISysDeptService;
 
@@ -23,7 +22,7 @@ import com.ruoyi.project.system.service.ISysDeptService;
 @Service
 public class SysDeptServiceImpl implements ISysDeptService
 {
-    @Autowired
+     @Autowired
     private SysDeptMapper deptMapper;
 
     /**
@@ -57,6 +56,7 @@ public class SysDeptServiceImpl implements ISysDeptService
         for (Iterator<SysDept> iterator = depts.iterator(); iterator.hasNext();)
         {
             SysDept dept = (SysDept) iterator.next();
+
             // 如果是顶级节点, 遍历该父节点的所有子节点
             if (!tempList.contains(dept.getParentId()))
             {
@@ -82,7 +82,9 @@ public class SysDeptServiceImpl implements ISysDeptService
     {
         List<SysDept> deptTrees = buildDeptTree(depts);
         return deptTrees.stream().map(TreeSelect::new).collect(Collectors.toList());
+
     }
+
 
     /**
      * 根据角色ID查询部门树信息
@@ -260,6 +262,7 @@ public class SysDeptServiceImpl implements ISysDeptService
                 while (it.hasNext())
                 {
                     SysDept n = (SysDept) it.next();
+
                     recursionFn(list, n);
                 }
             }

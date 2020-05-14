@@ -22,13 +22,19 @@ public class TreeSelect implements Serializable
     /** 节点名称 */
     private String label;
 
-    /** 子节点 */
+    /** 类型:1 用户  2 部门 */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private String type;
+
+    /** 子节点 */
+   @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<TreeSelect> children;
 
-    public TreeSelect()
-    {
-
+    public TreeSelect(Long id, String label, List<TreeSelect> children,String type) {
+        this.id = id;
+        this.label = label;
+        this.children = children;
+        this.type = type;
     }
 
     public TreeSelect(SysDept dept)
@@ -36,7 +42,7 @@ public class TreeSelect implements Serializable
         this.id = dept.getDeptId();
         this.label = dept.getDeptName();
         this.children = dept.getChildren().stream().map(TreeSelect::new).collect(Collectors.toList());
-    }
+         }
 
     public TreeSelect(SysMenu menu)
     {
@@ -45,33 +51,36 @@ public class TreeSelect implements Serializable
         this.children = menu.getChildren().stream().map(TreeSelect::new).collect(Collectors.toList());
     }
 
-    public Long getId()
-    {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Long id)
-    {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getLabel()
-    {
+    public String getLabel() {
         return label;
     }
 
-    public void setLabel(String label)
-    {
+    public void setLabel(String label) {
         this.label = label;
     }
 
-    public List<TreeSelect> getChildren()
-    {
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public List<TreeSelect> getChildren() {
         return children;
     }
 
-    public void setChildren(List<TreeSelect> children)
-    {
+    public void setChildren(List<TreeSelect> children) {
         this.children = children;
     }
+
 }

@@ -1,8 +1,9 @@
 package com.ruoyi.project.system.mapper;
 
 import java.util.List;
-import org.apache.ibatis.annotations.Param;
+
 import com.ruoyi.project.system.domain.SysDept;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 部门管理 数据层
@@ -18,6 +19,14 @@ public interface SysDeptMapper
      * @return 部门信息集合
      */
     public List<SysDept> selectDeptList(SysDept dept);
+
+    /**
+     * 查询部门及部门里面的用户     ---8888888-------
+     *
+     * @param dept 部门信息
+     * @return 部门信息集合
+     */
+    public List<SysDept> selectDeptAndUserList(SysDept dept);
 
     /**
      * 根据角色ID查询部门树信息
@@ -106,4 +115,5 @@ public interface SysDeptMapper
      * @return 结果
      */
     public int deleteDeptById(Long deptId);
+
 }

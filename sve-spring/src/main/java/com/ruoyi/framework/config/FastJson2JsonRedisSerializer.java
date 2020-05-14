@@ -28,6 +28,7 @@ public class FastJson2JsonRedisSerializer<T> implements RedisSerializer<T>
     static
     {
         ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
+        ParserConfig.getGlobalInstance().addAccept("com.ruoyi.framework.web.domain.TreeSelect");
     }
 
     public FastJson2JsonRedisSerializer(Class<T> clazz)

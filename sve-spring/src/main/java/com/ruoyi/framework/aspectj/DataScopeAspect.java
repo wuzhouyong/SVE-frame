@@ -1,6 +1,8 @@
 package com.ruoyi.framework.aspectj;
 
 import java.lang.reflect.Method;
+
+import com.ruoyi.project.system.domain.SysUser;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,7 +18,6 @@ import com.ruoyi.framework.security.LoginUser;
 import com.ruoyi.framework.security.service.TokenService;
 import com.ruoyi.framework.web.domain.BaseEntity;
 import com.ruoyi.project.system.domain.SysRole;
-import com.ruoyi.project.system.domain.SysUser;
 
 /**
  * 数据过滤处理
