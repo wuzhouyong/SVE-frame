@@ -10,8 +10,9 @@ import java.util.Map;
 
 public interface IWarnService {
     List<WarnEntity> getWarnList(WarnParam param);
-    List<WarnProcResult> getWarnProcDetail(String prefix, String warnId);
-    List<WarnProcResult> getWarnProcHistory(String prefix, String warnId);
+    List<WarnProcResult> getWarnProcDetail(String warnId);
+    List<WarnProcResult> getWarnProcHistory(String warnId);
     List<Map> getAttachList(String refType, String refId);
-    int warnProc(String prefix, WarnProcEntity entity);
+    int warnProc(WarnProcEntity entity);
+    int upgradeLevel(String warnId);
 }

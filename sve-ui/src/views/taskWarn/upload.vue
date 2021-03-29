@@ -77,7 +77,7 @@ export default {
     getList () {
       let ref = {
         refId: this.ids.join(","),
-        refType: this.oPath+"_warn_attach",
+        refType: "warn_attach",
       };
       fileList(ref).then((res) => {
         if (res.code === 200) {
@@ -95,7 +95,7 @@ export default {
           fileName: file.name,
           file: imgcode,
           refId: _that.ids.join(","),
-          refType: _that.oPath+"_warn_attach",
+          refType: "warn_attach",
           attachType: _that.attachType,
         };
         uploadFile(data).then((res) => {

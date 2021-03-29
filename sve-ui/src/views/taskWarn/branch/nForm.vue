@@ -81,7 +81,7 @@ export default {
         this.$refs["elForm"].validate((valid) => {
           if (!valid) return;
           let oVal = Object.assign(this.defaultForm, this.formData);
-          warnProc(this.oPath, oVal).then(res => {
+          warnProc(oVal).then(res => {
             if (res.code === 200) {
               this.msgSuccess("异常处理成功");
               this.$emit("complete");

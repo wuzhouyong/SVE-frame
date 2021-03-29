@@ -43,11 +43,6 @@ public class PfBasSourceCountServiceImpl implements PfBasSourceCountService {
     }
 
     @Override
-    public int getTotal(String townCode, String fullName) {
-        return pfBasSourceCountMapper.getTotal(townCode, fullName);
-    }
-
-    @Override
     public List<ExportCountEntity> getExportCountData(MonitorTaskParam param) throws Exception {
         if (param.getTownCodes() != null && param.getTownCodes().length != 0) {
             if (param.getTownCodes().length > 1)

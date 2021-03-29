@@ -1,5 +1,20 @@
 <template>
   <div class="task-wk">
+    <div class="census-connected">
+      <el-form :model="queryForm" ref="queryForm" :inline="true" class="task-serchForm">
+        <el-form-item label="监控任务" prop="tagHeadId">
+          <el-select
+            v-model="queryForm.tagHeadId"
+            placeholder="请选择监控任务"
+            clearable
+            :style="{width: '170px'}"
+          >
+            <el-option v-for="i in cities" :key="i.id" :label="i.name" :value="i.id"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <p class="isJr">已接入企业:888</p>
+    </div>
     <el-form :model="queryForm" ref="queryForm" :inline="true" class="task-serchForm">
       <el-form-item label="企业名称" prop="fullName">
         <el-input
@@ -124,9 +139,10 @@
 
 <script>
 import utils from "@/utils/ruoyi";
-import {GetRegionPower} from "@/api/composite/source";
+import {GetRegionPower, getTagList} from "@/api/composite/source";
 import {sourceTask, exportTable} from "@/api/monitor_task";
 import {mapState} from "vuex";
+import {analysis} from "@/config";
 
 const platformList = [
   {platProp: "shuizhongdian", platName: "涉水重点排污单位"},
@@ -142,12 +158,13 @@ const platformList = [
   {platProp: "qixiu", platName: "汽修行业过程监控"},
   {platProp: "youyan", platName: "餐饮行业过程监控"},
   {platProp: "jiayou", platName: "加油站油气回收装置过程监控"},
-  {platProp: 'xinfang', platName: '重点信访企业'}
+  {platProp: "xinfang", platName: "重点信访企业"}
 ];
 export default {
-  data() {
+  data () {
     return {
       data: [],
+      cities: [],
       queryForm: {townCode: undefined, listType: 0},
       page: {
         pageNum: 1,
@@ -165,13 +182,14 @@ export default {
   },
   watch: {
     searchData: {
-      handler() {
+      handler () {
         this.handleQuery();
       },
       immediate: true
     },
   },
-  created() {
+  created () {
+    this.getSourceTag();
     GetRegionPower().then((res) => {
       this.townCodeOptions = res.data;
     });
@@ -187,7 +205,17 @@ export default {
     this.getList(this.queryForm);
   },
   methods: {
-    getList(v = {}) {
+    getSourceTag () {
+      getTagList().then((res) => {
+        if (res.code === 200) {
+          let oArr = res.rows;
+          this.cities = analysis.filter((p) =>
+            oArr.some((s) => s.tagHeadId === p.id)
+          );
+        }
+      });
+    },
+    getList (v = {}) {
       this.loading = true;
       // v = utils.filterData(v);
       let oVal = Object.assign({labelIds: this.searchData}, v);
@@ -200,28 +228,28 @@ export default {
       });
     },
     /** 搜索按钮操作 */
-    handleQuery() {
+    handleQuery () {
       this.page.pageNum = 1;
       this.getList(this.queryForm);
     },
     //重置表单
-    resetQuery() {
+    resetQuery () {
       this.resetForm("queryForm");
       this.queryForm.listType = 0;
       this.handleQuery();
     },
     //经营状态
-    cScaleType(row) {
+    cScaleType (row) {
       return this.selectDictLabel(this.sourceStatusOptions, row.sourceStatus);
     },
     //表格样式
-    tableRowClassName({row, rowIndex}) {
+    tableRowClassName ({row, rowIndex}) {
       if (row.fullName === " 合计") {
         return "warning-row";
       }
       return "";
     },
-    exportTables() {
+    exportTables () {
       this.$confirm("是否导出数据?", "警告", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
@@ -241,6 +269,26 @@ export default {
 </script>
 
 <style lang="scss">
+.census-connected {
+  border-left: 3px solid #00a0ff;
+  padding-left: 10px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  justify-content: flex-start;
+
+  p.isJr {
+    margin-left: 10px;
+    font-size:14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+
+  .el-form-item {
+    margin: 0;
+  }
+}
+
 .show-0 {
   width: 14px;
   height: 14px;

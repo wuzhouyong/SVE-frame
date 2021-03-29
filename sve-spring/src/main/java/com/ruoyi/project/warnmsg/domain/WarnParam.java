@@ -16,8 +16,9 @@ public class WarnParam extends BaseEntity {
     private String acquisitionBrand;
     private String constructionUnit;
     private Integer constructionStatus;
-    private Integer warnType;
+    private String warnType;
     private Integer warnLevel;
+    private Integer upgradeLevel;
     private Integer procStatus;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private Date startDate;
@@ -83,11 +84,11 @@ public class WarnParam extends BaseEntity {
         this.constructionStatus = constructionStatus;
     }
 
-    public Integer getWarnType() {
+    public String getWarnType() {
         return warnType;
     }
 
-    public void setWarnType(Integer warnType) {
+    public void setWarnType(String warnType) {
         this.warnType = warnType;
     }
 
@@ -97,6 +98,14 @@ public class WarnParam extends BaseEntity {
 
     public void setWarnLevel(Integer warnLevel) {
         this.warnLevel = warnLevel;
+    }
+
+    public Integer getUpgradeLevel() {
+        return upgradeLevel;
+    }
+
+    public void setUpgradeLevel(Integer upgradeLevel) {
+        this.upgradeLevel = upgradeLevel;
     }
 
     public Integer getProcStatus() {

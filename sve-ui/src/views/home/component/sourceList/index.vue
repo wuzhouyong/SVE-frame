@@ -21,6 +21,12 @@
         </el-input>
       </el-form>
     </div>
+    <div>
+      <p
+        style="width:100%;margin:3px 0;padding:0;color:#fff;text-align: center;font-size:12px;padding:5px 0">
+        异常信息展示</p>
+      <n-scroll-warn @ejectMsg="ejectMsg"></n-scroll-warn>
+    </div>
     <div class="stautsType_home" style="margin-top:10px;">
       <div class="map-company-grade">
         <p class="bg-color-1" :class="constStatus===0?'bg-ground-1':''" @click="constChoose(0)">未开展</p>
@@ -35,6 +41,7 @@
         <p class="bg-color-1" :class="warnStatus===1?'bg-ground-1':''" @click="warnChoose(1)">一级异常</p>
         <p class="bg-color-2" :class="warnStatus===2?'bg-ground-2':''" @click="warnChoose(2)">二级异常</p>
         <p class="bg-color-3" :class="warnStatus===3?'bg-ground-3':''" @click="warnChoose(3)">三级异常</p>
+        <p class="bg-color-4" :class="warnStatus===4?'bg-ground-4':''" @click="warnChoose(4)">四级异常</p>
         <p class="bg-color-0" :class="warnStatus===0?'bg-ground-0':''" @click="warnChoose(0)">无异常</p>
       </div>
       <!-- <p class="cz" @click="resetQuery">重置</p> -->
@@ -44,6 +51,7 @@
         :data="tableData"
         border
         height="100%"
+        ref="oTable"
         v-loading="loading"
         element-loading-text="数据获取中."
         @row-click="rowClick"
@@ -76,8 +84,10 @@
 import {homeSourceList} from "@/api/home/index";
 import {getRegion} from "@/api/composite/source";
 import utils from "@/utils/ruoyi";
+import nScrollWarn from "../scrollWarn";
 
 export default {
+  components: {nScrollWarn},
   props: ["checkArr", "regions"],
   data () {
     return {
@@ -140,6 +150,11 @@ export default {
         if (res.code === 200) {
           this.tableData = res.rows;
           this.total = res.total;
+          this.$nextTick(() => {
+            if (this.$refs.oTable.bodyWrapper) {
+              this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            }
+          });
           this.$emit("sendSourceList", res.rows);
         }
         this.loading = false;
@@ -156,9 +171,7 @@ export default {
       this.btnLoading = true;
       this.page.pageNum = 1;
       this.getList(this.sourceForm);
-      if (this.sourceForm.townCode) {
-        this.$emit("townCodeSave", this.sourceForm.townCode);
-      }
+      this.$emit("townCodeSave", this.sourceForm.townCode);
       setInterval(() => {
         this.btnLoading = false;
       }, 1000);
@@ -192,8 +205,14 @@ export default {
       };
       this.warnStatus = -1;
       this.constStatus = -1;
-      this.getList(this.sourceForm);
+      this.handleSearch();
     },
+    ejectMsg (v) {
+      homeSourceList({sourceId: v}).then(res => {
+        let oRes = res.rows[0];
+        this.$emit("showDetails", oRes);
+      });
+    }
   },
 };
 </script>
@@ -202,6 +221,7 @@ $statusColor0: #63d59d;
 $statusColor1: #db1f35;
 $statusColor2: #f63;
 $statusColor3: #edc414;
+$statusColor4: #48D1CC;
 $statusColor6: #1890ff;
 .mapindex-sourcelist {
   padding: 5px;
@@ -409,6 +429,18 @@ $statusColor6: #1890ff;
     }
   }
 
+  .bg-color-4 {
+    border: 1px solid $statusColor4;
+    color: $statusColor4;
+
+    &:hover {
+      cursor: pointer;
+      color: #fff;
+      transition: all 0.3s;
+      background-color: $statusColor4;
+    }
+  }
+
   .bg-color-6 {
     border: 1px solid $statusColor6;
     color: $statusColor6;
@@ -438,6 +470,11 @@ $statusColor6: #1890ff;
 
   .bg-ground-3 {
     background-color: $statusColor3;
+    color: #fff;
+  }
+
+  .bg-ground-4 {
+    background-color: $statusColor4;
     color: #fff;
   }
 

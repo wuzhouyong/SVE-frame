@@ -1,75 +1,13 @@
 <template>
   <div class="mapindex-source-details">
-    <div class="source-basic">
-      <el-row :gutter="15" v-if="JSON.stringify(sData) !== '{}'">
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>环保联系人：</p>
-          <span :title="sData.envContactName">{{ sData.envContactName || "-" }}</span>
-        </el-col>
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>环保联系人电话：</p>
-          <span>{{ sData.envContactPhone || "-" }}</span>
-        </el-col>
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>所属行业：</p>
-          <span :title="sData.industryName">{{ sData.industryName || "-" }}</span>
-        </el-col>
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>企业经营状态：</p>
-          <span>{{ sData.dictLabel || "-" }}</span>
-        </el-col>
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>所属镇街：</p>
-          <span>{{ sData.townName || "-" }}</span>
-        </el-col>
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>地址：</p>
-          <span :title="sData.address">{{ sData.address || "-" }}</span>
-        </el-col>
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>排污许可证代码：</p>
-          <span>{{ sData.emissionPermitCode || "-" }}</span>
-        </el-col>
-        <!-- <el-col :lg="8" :md="12" :sm="24">
-          <p>企业验收状态：</p>
-          <span>{{constructionStatus[sData.status]}}</span>
-        </el-col>-->
-        <el-col :lg="8" :md="12" :sm="24">
-          <p>社会统一信用代码：</p>
-          <span>{{ sData.socialCreditCode || "-" }}</span>
-        </el-col>
-      </el-row>
-    </div>
-    <div class="platform-list">
-      <el-tabs v-model="platFormRadio" @tab-click="tabClick">
-        <el-tab-pane :label="i.name" v-for="i in platform" :key="i.path" :name="i.path"></el-tab-pane>
-      </el-tabs>
-    </div>
-    <div class="outwater-tab" v-show="platform.length>0">
+    <div class="outwater-tab">
       <el-tabs v-model="activeName" type="card" @tab-click="menuTab">
-        <el-tab-pane label="施工进度" name="1">
-          <ConstructChunk :platFormPath="platFormPath" v-bind="$attrs"></ConstructChunk>
+        <el-tab-pane label="企业信息" name="1">
+          <n-source-msg :sData="sData" :platform="platform"></n-source-msg>
         </el-tab-pane>
         <el-tab-pane label="异常查询" name="3">
-          <WarnChunk
-            :warnTypes="warnTypes"
-            :warnLevels="warnLevels"
-            :platFormPath="platFormPath"
-            :isMenu="activeName==='3'"
-            v-bind="$attrs"
-          ></WarnChunk>
         </el-tab-pane>
-        <el-tab-pane label="实时数据" name="4" v-if="platFormPath!=='outwater'">
-          <RealChunk v-bind="$attrs" :platFormPath="platFormPath" :aceName="activeName"></RealChunk>
-        </el-tab-pane>
-        <el-tab-pane label="分钟数据" name="5">
-          <MinuteChunk v-bind="$attrs" :platFormPath="platFormPath" :aceName="activeName"></MinuteChunk>
-        </el-tab-pane>
-        <el-tab-pane label="小时数据" name="6">
-          <HourChunk v-bind="$attrs" :platFormPath="platFormPath" :aceName="activeName"></HourChunk>
-        </el-tab-pane>
-        <el-tab-pane label="日数据" name="7">
-          <DayChunk v-bind="$attrs" :platFormPath="platFormPath" :aceName="activeName"></DayChunk>
+        <el-tab-pane label="数据查询" name="4">
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -85,6 +23,8 @@ import DayChunk from "./component/day";
 import MinuteChunk from "./component/minute";
 import HourChunk from "./component/hour";
 
+import nSourceMsg from "./component/nSourceMsg";
+
 export default {
   components: {
     ConstructChunk,
@@ -92,7 +32,8 @@ export default {
     RealChunk,
     DayChunk,
     MinuteChunk,
-    HourChunk
+    HourChunk,
+    nSourceMsg
   },
   props: {
     sData: {
@@ -168,7 +109,6 @@ export default {
     //平台切换
     tabClick (v) {
       this.platFormPath = v.name;
-      console.log(v);
       this.activeName = "1";
     },
     menuTab (v) {
@@ -201,38 +141,6 @@ export default {
 
   .el-loading-mask {
     background-color: rgba(0, 0, 0, 0.4);
-  }
-
-  .source-basic {
-    width: 100%;
-    height: auto;
-    color: #fff;
-    padding: 5px;
-    max-height: 200px;
-    overflow-y: auto;
-    overflow-x: hidden;
-
-    .el-col {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-      overflow: hidden;
-
-      p {
-        font-size: 13px;
-        margin: 0;
-      }
-
-      span {
-        font-size: 13px;
-        margin-left: 5px;
-        color: #0cf;
-        flex: 1;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-    }
   }
 
   .platform-list {

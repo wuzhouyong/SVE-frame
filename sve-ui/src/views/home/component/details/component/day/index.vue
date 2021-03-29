@@ -86,12 +86,12 @@
   </div>
 </template>
 <script>
-import { pointSelectList } from "@/api/outwater/index";
-import { searchDay } from "@/api/home";
+import {pointSelectList} from "@/api/outwater/index";
+import {searchDay} from "@/api/home";
 import VeLine from "v-charts/lib/line.common";
-import { outletList } from "@/api/youyan";
-import { outletList as qxoutletList } from "@/api/qixiu";
-import { jyOutletSelect } from "@/api/jiayou";
+import {outletList} from "@/api/youyan";
+import {outletList as qxoutletList} from "@/api/qixiu";
+import {jyOutletSelect} from "@/api/jiayou";
 
 export default {
   props: {
@@ -105,8 +105,8 @@ export default {
       type: String
     }
   },
-  components: { VeLine },
-  data() {
+  components: {VeLine},
+  data () {
     this.chartsSetting = {
       settings: {
         labelMap: {}
@@ -174,8 +174,8 @@ export default {
     };
   },
   computed: {
-    multipleProp() {
-      const { oId, platFormPath, aceName } = this;
+    multipleProp () {
+      const {oId, platFormPath, aceName} = this;
       return {
         oId,
         platFormPath,
@@ -185,8 +185,8 @@ export default {
   },
   watch: {
     multipleProp: {
-      handler(v) {
-        if (v) {
+      handler (v) {
+        if (v && v.aceName === "7") {
           this.queryForm.sourceId = v.oId;
           let n = v.oId;
           this.reset();
@@ -208,7 +208,7 @@ export default {
     }
   },
   methods: {
-    getJYOutLet(v) {
+    getJYOutLet (v) {
       jyOutletSelect(v).then(res => {
         if (res.code === 200) {
           let oArr = res.data;
@@ -218,10 +218,10 @@ export default {
           });
           this.outletData = oArr;
         }
-      })
+      });
     },
     //重置
-    reset() {
+    reset () {
       this.queryForm.startDate = undefined;
       this.queryForm.checkPointId = undefined;
       this.tableData = [];
@@ -230,13 +230,13 @@ export default {
       this.chartData.columns = [];
       this.isCut = true;
     },
-    getoutletList(v) {
+    getoutletList (v) {
       outletList(v).then((res) => {
         this.outletData = res.data;
       });
     },
     //获取列表
-    getList(v = {}) {
+    getList (v = {}) {
       this.loading = true;
       searchDay(v, this.platFormPath).then((res) => {
         if (res.code === 200) {
@@ -260,7 +260,7 @@ export default {
         this.loading = false;
       });
     },
-    funCol(cols) {
+    funCol (cols) {
       var res = [];
       cols.forEach((a) => {
         if (a.dataIndex) {
@@ -275,15 +275,18 @@ export default {
       return res;
     },
     //获取检测井
-    getPointList(v) {
+    getPointList (v) {
       let oVal = {
         sourceId: v
       };
       pointSelectList(oVal).then((res) => {
         this.pointList = res.rows;
+        if (this.pointList.length > 0) {
+          this.queryForm.checkPointId = this.pointList[0].id;
+        }
       });
     },
-    getqxoutletList(v) {
+    getqxoutletList (v) {
       let oVal = {
         sourceId: v
       };
@@ -291,7 +294,7 @@ export default {
         this.outletData = res.rows;
       });
     },
-    handleQuery() {
+    handleQuery () {
       this.queryForm.startDate = this.queryForm.dayTime[0];
       this.queryForm.endDate = this.queryForm.dayTime[1];
       this.queryForm.sourceId = this.oId;
@@ -304,7 +307,7 @@ export default {
       } else {
         delete oVal.checkPointId;
       }
-      let { startDate, endDate } = this.queryForm;
+      let {startDate, endDate} = this.queryForm;
       if (startDate && endDate) {
         this.getList(oVal);
       } else {
@@ -312,7 +315,7 @@ export default {
       }
     },
     //获取7天前(num是正数表示之后的时间，num负数表示之前的时间，0表示今天)
-    fun_date(num) {
+    fun_date (num) {
       let date1 = new Date();
       let time1 =
         date1.getFullYear() +

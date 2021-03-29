@@ -95,6 +95,9 @@
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
         <el-button type="warning" icon="el-icon-edit" size="mini" @click="warnHandle" :disabled="!idMultiple">异常处理
         </el-button>
+        <el-button type="info" icon="el-icon-position" size="mini" :disabled="true" v-if="activeName==='pending'">
+          移交给分局
+        </el-button>
       </el-form-item>
     </el-form>
     <!-- 表格 -->
@@ -254,7 +257,9 @@ export default {
           this.tableData = res.rows;
           this.total = res.total;
           this.$nextTick(() => {
-            this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            if (this.$refs.oTable.bodyWrapper) {
+              this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            }
           });
         }
         this.loading = false;
@@ -292,7 +297,7 @@ export default {
           oTime: null
         };
       }
-      this.isChangeSys = falses
+      this.isChangeSys = falses;
       this.handleQuery();
     },
     sysChange (v) {

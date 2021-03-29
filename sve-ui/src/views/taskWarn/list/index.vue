@@ -130,7 +130,7 @@
     <!--    查看详情-->
     <el-dialog
       title="异常详情"
-      :visible.sync="detailsVisible" s
+      :visible.sync="detailsVisible"
       width="700px"
       custom-class="warn_details_form">
       <n-details :oPath="oPath" :values="values" v-if="detailsVisible"></n-details>
@@ -230,7 +230,9 @@ export default {
           this.tableData = res.rows;
           this.total = res.total;
           this.$nextTick(() => {
-            this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            if (this.$refs.oTable.bodyWrapper) {
+              this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            }
           });
         }
         this.loading = false;
@@ -252,7 +254,7 @@ export default {
         warnLevel: null,
         oTime: null
       };
-      this.isChangeSys = false
+      this.isChangeSys = false;
       this.handleQuery();
     },
     sysChange (v) {

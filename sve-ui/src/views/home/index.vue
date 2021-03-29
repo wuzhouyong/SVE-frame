@@ -1,21 +1,21 @@
 <template>
   <div class="mapindex-style">
     <div class="gls_wk" ref="companyStyle">
-<!--      <div class="gls_header">-->
-<!--        <div class="gls_operation">-->
-<!--          <div class="gls_operation_btn">-->
-<!--            <router-link :to="$store.state.curos.path">-->
-<!--              <i class="el-icon-s-platform"></i>-->
-<!--              <span>返回平台</span>-->
-<!--            </router-link>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--        <div class="gls_shadow">-->
-<!--          <div class="gls_bg">-->
-<!--            <h1>东莞市在线监控平台</h1>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
+      <!--      <div class="gls_header">-->
+      <!--        <div class="gls_operation">-->
+      <!--          <div class="gls_operation_btn">-->
+      <!--            <router-link :to="$store.state.curos.path">-->
+      <!--              <i class="el-icon-s-platform"></i>-->
+      <!--              <span>返回平台</span>-->
+      <!--            </router-link>-->
+      <!--          </div>-->
+      <!--        </div>-->
+      <!--        <div class="gls_shadow">-->
+      <!--          <div class="gls_bg">-->
+      <!--            <h1>东莞市在线监控平台</h1>-->
+      <!--          </div>-->
+      <!--        </div>-->
+      <!--      </div>-->
       <!-- 地图 -->
       <div class="mapContain">
         <MapChunk
@@ -96,17 +96,16 @@
 import MapChunk from "./component/map";
 import SourceChunk from "./component/sourceList";
 import StatisChunk from "./component/statis";
-import DetailsChunk from "./component/details";
+import DetailsChunk from "./component/details/index";
+import nScrollWarn from "./component/scrollWarn";
 import utils from "@/utils/ruoyi";
-import { getSourceList, getTagList } from "@/api/composite/source";
-import Cookies from "js-cookie";
-// import { platform_list } from "@/config";
-import { task_statistics } from "@/config";
+import {getSourceList, getTagList} from "@/api/composite/source";
+import {task_statistics} from "@/config";
 
 export default {
   name: "MapIndex",
-  components: { MapChunk, SourceChunk, StatisChunk, DetailsChunk },
-  data() {
+  components: {MapChunk, SourceChunk, StatisChunk, DetailsChunk, nScrollWarn},
+  data () {
     return {
       sourceList: [],
       companyDetails: [],
@@ -137,12 +136,12 @@ export default {
       nKEY: ""
     };
   },
-  created() {
+  created () {
     this.pollutionCountWidth();
     this.getPlatform();
     // this.getUser();
   },
-  mounted() {
+  mounted () {
     //浏览器宽度改变重新计算污染源详情宽度
     window.onresize = () => {
       this.pollutionCountWidth();
@@ -150,7 +149,7 @@ export default {
   },
   methods: {
     //平台数据
-    getPlatform() {
+    getPlatform () {
       // this.cities = task_statistics;
       // let checkArr = [];
       // this.cities.forEach((v) => {
@@ -190,7 +189,7 @@ export default {
     //   });
     // },
     //企业列表
-    getList(v = {}) {
+    getList (v = {}) {
       this.loading = true;
       v = utils.filterData(v);
       getSourceList(this.urlParameter(v)).then((res) => {
@@ -202,7 +201,7 @@ export default {
       });
     },
     //计算污染源详情宽度
-    pollutionCountWidth() {
+    pollutionCountWidth () {
       let oWidth = window.innerWidth;
       if (this.isStatis) {
         this.pollutionW = oWidth - 400 - 300 - 6 + "px";
@@ -211,7 +210,7 @@ export default {
       }
     },
     //平台选择
-    handleCheckAllChange(val) {
+    handleCheckAllChange (val) {
       if (val) {
         let oArr = this.cities;
         let checkArr = [];
@@ -225,7 +224,7 @@ export default {
       this.checkArrs = this.checkedCities;
       this.isIndeterminate = false;
     },
-    handleCheckedCitiesChange(value) {
+    handleCheckedCitiesChange (value) {
       this.checkArrs = value;
       let checkedCount = value.length;
       this.checkAll = checkedCount === this.cities.length;
@@ -233,18 +232,18 @@ export default {
         checkedCount > 0 && checkedCount < this.cities.length;
     },
     //地图展示企业列表
-    sendSourceList(v) {
+    sendSourceList (v) {
       this.isPlatform = true;
       this.sourceList = v;
     },
     //点击显示企业详情
-    showDetails(v) {
+    showDetails (v) {
       this.sourceDetails = v;
       this.nKEY = Date.parse(new Date());
       this.isPlatform = false;
     },
     //关闭详情
-    detailsClose() {
+    detailsClose () {
       this.isPlatform = true;
     },
     //退出登录
@@ -261,7 +260,7 @@ export default {
     //   });
     // },
     //关闭统计
-    closediv() {
+    closediv () {
       this.isStatis = false;
       this.pollutionCountWidth();
     }

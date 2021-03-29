@@ -1,6 +1,9 @@
 package com.ruoyi.project.warnmsg.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.utils.SecurityUtils;
+
+import java.util.Date;
 
 public class WarnProcessEntity {
     private String procId;

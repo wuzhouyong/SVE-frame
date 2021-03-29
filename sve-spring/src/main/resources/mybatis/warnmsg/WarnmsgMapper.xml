@@ -22,7 +22,7 @@
     </resultMap>
     <select id="getWarnmsgList" parameterType="WarnmsgParam" resultMap="warnmsgResult">
         select distinct w.id, s.source_id, s.full_name source_name, s.town_code, s.town_name, cp.acquisition_brand,
-        c.construction_unit, c.construction_unit,
+        c.construction_unit, c.construction_status,
         w.warn_type, t.dict_label warn_type_name, w.warn_level, l.dict_label warn_level_name,
         w.proc_state, p.dict_label proc_state_name, w.start_date, w.end_date, w.warn_desc
         from dat_warnmsgheads w

@@ -199,7 +199,7 @@ export default {
   watch: {
     multipleProp: {
       handler (v) {
-        if (v) {
+        if (v && v.aceName === "4") {
           this.queryForm.sourceId = v.oId;
           let n = v.oId;
           this.reset();

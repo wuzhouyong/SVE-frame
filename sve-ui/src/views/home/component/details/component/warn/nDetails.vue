@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <el-tabs v-model="detailsName" @tab-click="tabClick">
+  <div class="home-details-context">
+    <el-tabs v-model="detailsName" type="card" @tab-click="tabClick">
       <el-tab-pane label="异常详情" name="details"></el-tab-pane>
       <el-tab-pane label="处理历史" name="history"></el-tab-pane>
     </el-tabs>
@@ -197,14 +197,14 @@ export default {
   },
   methods: {
     getDetails (v) {
-      warnDetails(v.warnId).then(res => {
+      warnDetails(this.oPath, v.warnId).then(res => {
         if (res.code === 200) {
           this.warnDetailsMsg = res.data;
         }
       });
     },
     getHistory (v) {
-      warnHistory(v.warnId).then(res => {
+      warnHistory(this.oPath, v.warnId).then(res => {
         if (res.code === 200) {
           this.warnDefaultHistory = res.data;
           this.warnHistoryMsg = JSON.parse(JSON.stringify(this.warnDefaultHistory));
@@ -237,5 +237,50 @@ export default {
 .select-type {
   width: 100%;
   margin-bottom: 6px;
+}
+
+.home-details-context {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .details_context {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /deep/ .el-divider__text {
+      background: rgba(23, 32, 47, 1);
+      color: #fff;
+    }
+
+    /deep/ .el-form-item {
+      margin-bottom: 0px;
+
+      .el-form-item__label, .el-form-item__content {
+        color: #fff;
+      }
+    }
+  }
+
+  .history_context {
+    /deep/ .el-card {
+      background: rgba(23, 32, 47, 1);
+
+      .el-card__body {
+        padding: 10px;
+
+        .el-form-item {
+          margin-bottom: 0px;
+
+          .el-form-item__label, .el-form-item__content {
+            color: #fff;
+          }
+        }
+      }
+    }
+  }
 }
 </style>

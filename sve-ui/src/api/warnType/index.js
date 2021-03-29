@@ -8,23 +8,23 @@ export function warnList (query, page) {
   });
 }
 
-export function warnDetails (prefix, warnId) {
+export function warnDetails (warnId) {
   return request({
-    url: `/warn/detail/${prefix}/${warnId}`,
+    url: `/warn/detail/${warnId}`,
     method: "get",
   });
 }
 
-export function warnHistory (prefix, warnId) {
+export function warnHistory (warnId) {
   return request({
-    url: `/warn/history/${prefix}/${warnId}`,
+    url: `/warn/history/${warnId}`,
     method: "get",
   });
 }
 
-export function warnProc (prefix, query) {
+export function warnProc (query) {
   return request({
-    url: `/warn/proc/${prefix}`,
+    url: `/warn/proc`,
     method: "post",
     data: query
   });

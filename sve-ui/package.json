@@ -68,6 +68,7 @@
     "vue-json-viewer": "^2.2.11",
     "vue-quill-editor": "3.0.6",
     "vue-router": "3.0.2",
+    "vue-seamless-scroll": "^1.1.23",
     "vue-splitpane": "1.0.4",
     "vuedraggable": "2.20.0",
     "vuex": "3.1.0",

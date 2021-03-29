@@ -179,6 +179,7 @@ export default {
         townCode: null,
         acquisitionBrand: null,
         constructionUnit: null,
+        userType: "city",
         procStatus: 0,
         warnLevel: "1",
         oTime: null
@@ -253,7 +254,9 @@ export default {
           this.tableData = res.rows;
           this.total = res.total;
           this.$nextTick(() => {
-            this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            if (this.$refs.oTable.bodyWrapper) {
+              this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            }
           });
         }
         this.loading = false;
@@ -272,6 +275,7 @@ export default {
           townCode: null,
           acquisitionBrand: null,
           constructionUnit: null,
+          userType: "city",
           procStatus: 0,
           warnLevel: "1",
           oTime: null
@@ -284,6 +288,7 @@ export default {
           townCode: null,
           acquisitionBrand: null,
           constructionUnit: null,
+          userType: "city",
           procStatus: null,
           warnLevel: null,
           oTime: null
@@ -325,6 +330,7 @@ export default {
           townCode: null,
           acquisitionBrand: null,
           constructionUnit: null,
+          userType: "city",
           procStatus: 0,
           warnLevel: "1",
           oTime: null
@@ -337,6 +343,7 @@ export default {
           townCode: null,
           acquisitionBrand: null,
           constructionUnit: null,
+          userType: "city",
           procStatus: null,
           warnLevel: null,
           oTime: null

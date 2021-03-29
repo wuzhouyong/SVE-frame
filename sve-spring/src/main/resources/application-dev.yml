@@ -87,10 +87,10 @@ spring:
 
       hbonline:
         # 从数据源开关/默认关闭
-        enabled: true
         url: jdbc:oracle:thin:@192.168.10.212:1521/dghb
+#        url: jdbc:oracle:thin:@192.168.10.201:1521/dghb
         username: hbonline
-        password: hbonline
+        password: abc123...
 
       # 初始连接数
       initialSize: 1

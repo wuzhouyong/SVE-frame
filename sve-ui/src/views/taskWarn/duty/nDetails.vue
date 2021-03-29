@@ -46,7 +46,7 @@
       </el-form>
       <el-divider content-position="left" v-if="warnDetailsMsg.length>0">处理详情</el-divider>
       <el-form label-width="130px">
-        <el-row :gutter="15" v-for="i in warnDetailsMsg">
+        <el-row :gutter="15" v-for="(i,index) in warnDetailsMsg" :key="1+index">
           <el-col :lg="24" :md="24" :sm="24">
             <el-form-item label="异常原因：">
               {{ i.warnReason }}
@@ -115,7 +115,7 @@
             市局处理
           </el-button>
         </div>
-        <el-card class="box-card" v-for="i in warnHistoryMsg" style="margin-bottom:5px">
+        <el-card class="box-card" v-for="(i,index) in warnHistoryMsg" style="margin-bottom:5px" :key="index">
           <el-form label-width="130px">
             <el-row :gutter="15">
               <el-col :lg="24" :md="24" :sm="24">
@@ -197,14 +197,14 @@ export default {
   },
   methods: {
     getDetails (v) {
-      warnDetails(this.oPath, v.warnId).then(res => {
+      warnDetails(v.warnId).then(res => {
         if (res.code === 200) {
           this.warnDetailsMsg = res.data;
         }
       });
     },
     getHistory (v) {
-      warnHistory(this.oPath, v.warnId).then(res => {
+      warnHistory(v.warnId).then(res => {
         if (res.code === 200) {
           this.warnDefaultHistory = res.data;
           this.warnHistoryMsg = JSON.parse(JSON.stringify(this.warnDefaultHistory));

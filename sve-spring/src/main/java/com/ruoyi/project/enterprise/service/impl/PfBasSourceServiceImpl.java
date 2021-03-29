@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -284,9 +285,9 @@ public class PfBasSourceServiceImpl implements IPfBasSourceService {
         int res = 0;
         String userName = SecurityUtils.getUsername();
         for (PfBasTagDetailEntity e : list) {
-            if (StringUtils.isEmpty(e.getIsCheck()))
+            if (e.getIsCheck() == null)
                 continue;
-            if (e.getIsCheck().equals("false") && !StringUtils.isEmpty(e.getTagDetailId())) {
+            if (!e.getIsCheck() && !StringUtils.isEmpty(e.getTagDetailId())) {
                 ConstructioninfoEntity entity = new ConstructioninfoEntity();
                 entity.setPfSourceId(e.getPfSourceId());
                 entity.setTagHeadId(e.getTagHeadId());
@@ -297,11 +298,11 @@ public class PfBasSourceServiceImpl implements IPfBasSourceService {
                 res = pfBasSourceMapper.removeAdjust(entity);
             }
 
-            if (e.getIsCheck().equals("true") && !StringUtils.isEmpty(e.getTagDetailId())) {
+            if (e.getIsCheck() && !StringUtils.isEmpty(e.getTagDetailId())) {
                 e.setUpdatedBy(userName);
                 res = pfBasSourceMapper.updateDetail(e);
             }
-            if (e.getIsCheck().equals("true") && StringUtils.isEmpty(e.getTagDetailId())) {
+            if (e.getIsCheck() && StringUtils.isEmpty(e.getTagDetailId())) {
                 int count = pfBasSourceMapper.selectTaskAdjust(e.getPfSourceId(),e.getTagHeadId());
                 if (count > 0) return AjaxResult.error("该企业待审批，不能关联任务");
                 String id = java.util.UUID.randomUUID().toString();
@@ -329,60 +330,50 @@ public class PfBasSourceServiceImpl implements IPfBasSourceService {
     }
 
     @Override
+    @Transactional
     public int insertTagDetailFJ(List<PfBasTagDetailEntity> list) {
         int res = 0;
         String userName = SecurityUtils.getUsername();
-        String sourceId = "";
-        if (list.size() > 0) {
-            sourceId = list.get(0).getPfSourceId();
-        }
-        List<PfBasTagDetailEntity> tdList = pfBasSourceMapper.selectTagDetailFJ(sourceId);
-        for (int i = list.size() - 1; i >= 0; i--) {
-            PfBasTagDetailEntity item = list.get(i);
-            if (item.getListType().equals("0")) {
-                list.remove(item);
-            }
-        }
+        Map<String, List<PfBasTagDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PfBasTagDetailEntity::getPfSourceId, LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<PfBasTagDetailEntity>> entry : map.entrySet()) {
+            String sourceId = entry.getKey();
+            List<PfBasTagDetailEntity> detailList = pfBasSourceMapper.selectTagDetailFJ(sourceId);
+            detailList = detailList.stream().filter(p -> p.getListType() == 0).collect(Collectors.toList());
+            List<String> tagHeadIds = detailList.stream().map(PfBasTagDetailEntity::getTagHeadId).collect(Collectors.toList());
+            List<PfBasTagDetailEntity> collect = entry.getValue().stream().filter(p -> !tagHeadIds.contains(p.getTagHeadId())).collect(Collectors.toList());
+            for (PfBasTagDetailEntity item : collect) {
+                if (item.getIsCheck() == null) continue;
+                if (item.getIsCheck()) {
+                    if (detailList.stream().noneMatch(p -> p.getTagDetailId().equals(item.getTagDetailId()))) {
+                        String id = java.util.UUID.randomUUID().toString();
+                        ConstructioninfoEntity entity = new ConstructioninfoEntity();
+                        item.setTagDetailId(id);
+                        item.setCreatedBy(userName);
+                        item.setUpdatedBy(userName);
+                        item.setBizSourceId(item.getPfSourceId());
+                        res += pfBasSourceMapper.insertTagDetail(item);
 
-        for (int i = 0; i < tdList.size(); i++) {
-            for (int j = list.size() - 1; j >= 0; j--) {
-                PfBasTagDetailEntity item = list.get(j);
-                if (item.getTagHeadId().equals(tdList.get(i).getTagHeadId())) {
-                    list.remove(item);
-                }
-            }
-        }
-
-        for (PfBasTagDetailEntity e : list) {
-            if (StringUtils.isEmpty(e.getIsCheck()))
-                continue;
-            if (e.getIsCheck().equals("false") && !StringUtils.isEmpty(e.getTagDetailId())) {
-                ConstructioninfoEntity entity = new ConstructioninfoEntity();
-                entity.setPfSourceId(e.getPfSourceId());
-                entity.setTagHeadId(e.getTagHeadId());
-                entity.setUpdatedBy(userName);
-                e.setUpdatedBy(userName);
-                res = pfBasSourceMapper.removeDetail(e);
-                res = pfBasSourceMapper.removeConstructioninfo(entity);
-            } else if (e.getIsCheck().equals("true") && StringUtils.isEmpty(e.getTagDetailId())) {
-                String id = java.util.UUID.randomUUID().toString();
-                ConstructioninfoEntity entity = new ConstructioninfoEntity();
-                e.setTagDetailId(id);
-                e.setCreatedBy(userName);
-                e.setUpdatedBy(userName);
-                e.setBizSourceId(e.getPfSourceId());
-                res = pfBasSourceMapper.insertTagDetail(e);
-
-                if (pfBasSourceMapper.existsConstruction(e) == 0) {
-                    entity.setPfSourceId(e.getPfSourceId());
-                    entity.setTagHeadId(e.getTagHeadId());
+                        if (pfBasSourceMapper.existsConstruction(item) == 0) {
+                            entity.setPfSourceId(item.getPfSourceId());
+                            entity.setTagHeadId(item.getTagHeadId());
+                            entity.setUpdatedBy(userName);
+                            entity.setCreatedBy(userName);
+                            entity.setConstructionUnit("未设置");
+                            entity.setConstructionPerson("未设置");
+                            entity.setConstructionPhone("未设置");
+                            entity.setConstructionStatus("0");
+                            pfBasSourceMapper.insertConstructioninfo(entity);
+                        }
+                    }
+                } else {
+                    ConstructioninfoEntity entity = new ConstructioninfoEntity();
+                    entity.setPfSourceId(item.getPfSourceId());
+                    entity.setTagHeadId(item.getTagHeadId());
                     entity.setUpdatedBy(userName);
-                    entity.setCreatedBy(userName);
-                    entity.setConstructionUnit("未设置");
-                    entity.setConstructionPerson("未设置");
-                    entity.setConstructionPhone("未设置");
-                    entity.setConstructionStatus("0");
-                    res = pfBasSourceMapper.insertConstructioninfo(entity);
+                    item.setUpdatedBy(userName);
+                    res += pfBasSourceMapper.removeDetail(item);
+                    res += pfBasSourceMapper.removeConstructioninfo(entity);
+                    res += pfBasSourceMapper.removeAdjust(entity);
                 }
             }
         }

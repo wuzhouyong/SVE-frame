@@ -28,9 +28,6 @@
             inner join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted = 0
             left join dat_warnstat w on w.tag_head_id = c.tag_head_id and w.source_id = c.pf_source_id and w.proc_state = 0
             where c.is_deleted = 0 and th.is_active = 1
-            <if test="warnLevel != null">
-                and w.warn_level = #{warnLevel}
-            </if>
             <if test="statuses != null and statuses.length > 0">
                 and c.construction_status in
                 <foreach collection="statuses" item="status" open="(" separator="," close=")">
@@ -50,8 +47,14 @@
         <if test="sourceName != null">
             and s.full_name like '%' || #{sourceName} || '%'
         </if>
+        <if test="sourceId != null">
+            and s.source_id = #{sourceId}
+        </if>
         <if test="townCode != null">
             and s.town_code = #{townCode}
+        </if>
+        <if test="warnLevel != null">
+            and w.warn_level = #{warnLevel}
         </if>
         ${dataScope}
         order by s.full_name

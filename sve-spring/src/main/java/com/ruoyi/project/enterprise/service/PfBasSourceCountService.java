@@ -11,8 +11,6 @@ public interface PfBasSourceCountService {
 
     public List<PfBasSourceList> getSourceList(MonitorTaskParam param);
 
-    public int getTotal(String fullName, String townCode);
-
     //查找镇街企业是否被监控
     public List<ExportCountEntity> getExportCountData(MonitorTaskParam param) throws Exception;
 

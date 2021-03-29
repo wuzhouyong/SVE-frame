@@ -15,13 +15,13 @@ public class PfBasTagDetailEntity implements Serializable {
 
     private String pfSourceId;
 
-    private String isCheck;
+    private Boolean isCheck;
 
     private String bizSourceId;
 
     private String isAudit;
 
-    private String listType;
+    private Integer listType;
 
     private String createdBy;
 
@@ -35,19 +35,19 @@ public class PfBasTagDetailEntity implements Serializable {
         this.isAudit = isAudit;
     }
 
-    public String getListType() {
+    public Integer getListType() {
         return listType;
     }
 
-    public void setListType(String listType) {
+    public void setListType(Integer listType) {
         this.listType = listType;
     }
 
-    public String getIsCheck() {
+    public Boolean getIsCheck() {
         return isCheck;
     }
 
-    public void setIsCheck(String isCheck) {
+    public void setIsCheck(Boolean isCheck) {
         this.isCheck = isCheck;
     }
 

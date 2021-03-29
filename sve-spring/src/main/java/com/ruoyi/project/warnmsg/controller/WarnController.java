@@ -60,28 +60,37 @@ public class WarnController extends BaseController {
         return doc.exportExcel("异常任务列表");
     }
 
-    @GetMapping("/detail/{prefix}/{warnId}")
-    public ResultEntity getWarnProcDetail(@PathVariable String prefix, @PathVariable String warnId) {
-        List<WarnProcResult> list = service.getWarnProcDetail(prefix, warnId);
-        List<Map> attaches = service.getAttachList(prefix + "_warn_attach", warnId);
+    @GetMapping("/detail/{warnId}")
+    public ResultEntity getWarnProcDetail(@PathVariable String warnId) {
+        List<WarnProcResult> list = service.getWarnProcDetail(warnId);
+        List<Map> attaches = service.getAttachList("warn_attach", warnId);
         list.forEach(e -> {
             e.setAttaches(attaches.stream().filter(f -> f.get("attachmentType").toString().equals(e.getUserType())).collect(Collectors.toList()));
         });
         return ResultEntity.success(list);
     }
 
-    @GetMapping("/history/{prefix}/{warnId}")
-    public ResultEntity getWarnProcHistory(@PathVariable String prefix, @PathVariable String warnId) {
-        List<WarnProcResult> list = service.getWarnProcHistory(prefix, warnId);
+    @GetMapping("/history/{warnId}")
+    public ResultEntity getWarnProcHistory(@PathVariable String warnId) {
+        List<WarnProcResult> list = service.getWarnProcHistory(warnId);
         return ResultEntity.success(list);
     }
 
-    @PostMapping("/proc/{prefix}")
-    public ResultEntity warnProc(@PathVariable String prefix, @RequestBody WarnProcEntity entity) {
-        int res = service.warnProc(prefix, entity);
+    @PostMapping("/proc")
+    public ResultEntity warnProc(@RequestBody WarnProcEntity entity) {
+        int res = service.warnProc(entity);
         if (res > 0) {
             return ResultEntity.success("异常处理成功");
         }
         return ResultEntity.error("异常处理失败");
+    }
+
+    @PatchMapping("/upgrade_level/{warnId}")
+    public ResultEntity upgradeLevel(@PathVariable String warnId) {
+        int res = service.upgradeLevel(warnId);
+        if (res > 0) {
+            return ResultEntity.success("异常级别提升成功");
+        }
+        return ResultEntity.error("异常级别提升失败");
     }
 }

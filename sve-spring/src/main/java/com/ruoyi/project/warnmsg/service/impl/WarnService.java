@@ -2,7 +2,8 @@ package com.ruoyi.project.warnmsg.service.impl;
 
 import com.ruoyi.common.utils.HashMapUtils;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.framework.datasource.DynamicDataSourceContextHolder;
+import com.ruoyi.framework.aspectj.lang.annotation.DataSource;
+import com.ruoyi.framework.aspectj.lang.enums.DataSourceType;
 import com.ruoyi.project.warnmsg.domain.WarnEntity;
 import com.ruoyi.project.warnmsg.domain.WarnParam;
 import com.ruoyi.project.warnmsg.domain.WarnProcEntity;
@@ -10,14 +11,13 @@ import com.ruoyi.project.warnmsg.domain.WarnProcResult;
 import com.ruoyi.project.warnmsg.mapper.WarnMapper;
 import com.ruoyi.project.warnmsg.service.IWarnService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@DataSource(value = DataSourceType.MASTER)
 public class WarnService implements IWarnService {
     @Resource
     private WarnMapper mapper;
@@ -28,18 +28,14 @@ public class WarnService implements IWarnService {
     }
 
     @Override
-    public List<WarnProcResult> getWarnProcDetail(String prefix, String warnId) {
-        DynamicDataSourceContextHolder.setDataSourceType(prefix.toUpperCase());
+    public List<WarnProcResult> getWarnProcDetail(String warnId) {
         List<WarnProcResult> list = mapper.getWarnProcDetail(warnId);
-        DynamicDataSourceContextHolder.clearDataSourceType();
         return list;
     }
 
     @Override
-    public List<WarnProcResult> getWarnProcHistory(String prefix, String warnId) {
-        DynamicDataSourceContextHolder.setDataSourceType(prefix.toUpperCase());
+    public List<WarnProcResult> getWarnProcHistory(String warnId) {
         List<WarnProcResult> list = mapper.getWarnProcHistory(warnId);
-        DynamicDataSourceContextHolder.clearDataSourceType();
         return list;
     }
 
@@ -49,8 +45,7 @@ public class WarnService implements IWarnService {
     }
 
     @Override
-    public int warnProc(String prefix, WarnProcEntity entity) {
-        DynamicDataSourceContextHolder.setDataSourceType(prefix.toUpperCase());
+    public int warnProc(WarnProcEntity entity) {
         if (mapper.verifySameWarnType(entity.getWarnIds()) == 1) {
             int res = 0;
             for (String warnId : entity.getWarnIds()) {
@@ -75,9 +70,17 @@ public class WarnService implements IWarnService {
                         )
                 ) res = mapper.updateWarnStatus(entity.getWarnIds(), SecurityUtils.getUsername());
             }
-            DynamicDataSourceContextHolder.clearDataSourceType();
             return res;
         }
         return -1;
+    }
+
+    @Override
+    public int upgradeLevel(String warnId) {
+        int level = mapper.getWarnLevelById(warnId);
+        if (level > 1) {
+            return mapper.upgradeLevel(warnId, SecurityUtils.getUsername());
+        }
+        return 0;
     }
 }

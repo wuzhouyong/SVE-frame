@@ -2,14 +2,14 @@
   <div class="statisticsCon">
     <h3>
       监控统计
-<!--      <i class="el-icon-close" @click="closeDiv"/>-->
+      <!--      <i class="el-icon-close" @click="closeDiv"/>-->
     </h3>
     <div class="home-statis-con" v-loading="loading" element-loading-text="数据加载中">
       <ul>
-<!--        <li class="pCalendar-wk">-->
-<!--          <p class="pCalendar" style="letter-spacing: 1px"><i class="el-icon-s-grid" style="padding-right:5px;"></i>数据正常率日历</p>-->
-<!--          <i class="el-icon-right"></i>-->
-<!--        </li>-->
+        <!--        <li class="pCalendar-wk">-->
+        <!--          <p class="pCalendar" style="letter-spacing: 1px"><i class="el-icon-s-grid" style="padding-right:5px;"></i>数据正常率日历</p>-->
+        <!--          <i class="el-icon-right"></i>-->
+        <!--        </li>-->
         <li>
           <div class="statis-title">
             <p class="statis-title-p1">企业总数</p>
@@ -33,6 +33,10 @@
             </div>
           </div>
         </li>
+<!--        <li>-->
+<!--          <p style="width:100%;margin:3px 0;padding:0;color:#fff;text-align: center;font-size:12px;">异常信息展示</p>-->
+<!--          <n-scroll-warn></n-scroll-warn>-->
+<!--        </li>-->
         <li>
           <div class="block">
             <el-date-picker
@@ -105,8 +109,10 @@
 </template>
 <script>
 import {getStatis, getStatisWarn} from "@/api/home/index";
+import nScrollWarn from "../scrollWarn";
 
 export default {
+  components: {nScrollWarn},
   props: {
     tagHeadIds: {
       type: Array

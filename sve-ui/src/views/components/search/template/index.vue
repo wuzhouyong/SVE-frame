@@ -60,6 +60,18 @@ export default {
       type: Array,
       default: () => []
     }
+  },
+  watch: {
+    tableData: {
+      handler () {
+        setTimeout(() => {
+          this.$nextTick(() => {
+            this.$refs.oTable.doLayout();
+          });
+        }, 100);
+      },
+      immediate: true
+    }
   }
 };
 </script>

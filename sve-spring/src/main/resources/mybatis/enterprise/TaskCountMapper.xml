@@ -318,7 +318,7 @@
         from pf_bas_tag_detail d
         inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and
         c.is_deleted = 0
-        left join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+        inner join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
         left join pf_bas_source_user u on u.source_id = d.pf_source_id
         left join pf_bas_task_adjust a on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and
         a.aduit_status = 0 and a.is_deleted = 0
@@ -335,6 +335,9 @@
                 and d.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
             </when>
         </choose>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
         ) ) ) s
         GROUP BY defer, apply_not_install, apply_defer, construction, logged_in, not_logged_in
     </select>
@@ -369,6 +372,9 @@
                 and c.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
             </when>
         </choose>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
         ) s
         GROUP BY not_install, connected, networked, accepting, accepted
     </select>
@@ -1054,69 +1060,59 @@
 
     <!--总任务数-->
     <select id="getAdditionNumber" parameterType="MonitorTaskParam" resultType="map">
-        select tag_head_id,
-               count(1)                                                                         total,
+        select h.tag_head_id, count(case when construction_status is not null then 1 end) total,
                count(case when construction_status in (0, 1) and verify_status != 1 then 1 end) not_finish,
-               count(case when (construction_status in (2, 3, 4, 6) and verify_status != 1) or verify_status = 1 then 1 end)finish
-        from ( select d.tag_head_id, u.source_id, u.login_flag, c.construction_status, c.verify_status, a.adjust_item
-                 from pf_bas_tag_detail d
-                          inner join pf_bas_constructioninfo c
-                                     on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and
-                                        c.is_deleted = 0
-                          left join pf_bas_task_adjust a
-                                    on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and
-                                       a.aduit_status = 0 and a.is_deleted = 0
-                          left join pf_bas_source_user u on u.source_id = d.pf_source_id
-                          left join pf_bas_source s on s.source_id = u.source_id and s.is_deleted = 0
-                 where d.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
-                   and d.list_type = 0
-                   and d.is_deleted = 0 ${dataScope}
-             ) s
-        group by tag_head_id
+               count(case when (construction_status in (2, 3, 4, 6) and verify_status != 1) or verify_status = 1 then 1 end) finish
+        from pf_bas_tag_head h
+        left join (
+            select d.tag_head_id, c.construction_status, c.verify_status
+            from pf_bas_tag_detail d
+            inner join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+            inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and c.is_deleted = 0
+            left join pf_bas_task_adjust a on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and a.aduit_status = 0 and a.is_deleted = 0
+            left join pf_bas_source_user u on u.source_id = d.pf_source_id
+            where d.list_type = 0 and d.is_deleted = 0
+            <if test="townCode != null">
+                and s.town_code = #{townCode}
+            </if>
+            ${dataScope}
+        ) s on s.tag_head_id = h.tag_head_id
+        where h.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
+        group by h.tag_head_id
     </select>
 
     <!--总记-->
     <select id="getAggregateNumber" parameterType="MonitorTaskParam" resultType="map">
-        select count(1) total,
-        count(case when construction_status in (0, 1) and verify_status != 1 then 1 end) not_finish,
-        count(case
-        when (construction_status in (2, 3, 4, 6) and verify_status != 1) or verify_status = 1
-        then 1 end) finish
+        select count(1) total, count(case when construction_status in (0, 1) and verify_status != 1 then 1 end) not_finish,
+        count(case when (construction_status in (2, 3, 4, 6) and verify_status != 1) or verify_status = 1 then 1 end) finish
         from (
-        select d.tag_head_id, u.source_id, u.login_flag, c.construction_status, c.verify_status, a.adjust_item
-        from pf_bas_tag_detail d
-        inner join pf_bas_constructioninfo c
-        on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and
-        c.is_deleted = 0
-        left join pf_bas_task_adjust a
-        on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and
-        a.aduit_status = 0 and a.is_deleted = 0
-        left join pf_bas_source_user u on u.source_id = d.pf_source_id
-        left join pf_bas_source s on s.source_id = u.source_id and s.is_deleted = 0
-        where d.list_type = 0 and d.is_deleted = 0 ${dataScope}
-        <choose>
-            <when test="tagHeadIds != null and tagHeadIds.length !=0">
-                and d.tag_head_id in
-                <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
-                    #{tagHeadId,jdbcType=BIGINT}
-                </foreach>
-            </when>
-            <when test="tagHeadIds == null ">
-                and d.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
-            </when>
-        </choose>
+            select c.construction_status, c.verify_status
+            from pf_bas_tag_detail d
+            inner join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+            inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and c.is_deleted = 0
+            where d.list_type = 0 and d.is_deleted = 0
+            and d.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
+            <choose>
+                <when test="tagHeadIds != null and tagHeadIds.length !=0">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </when>
+            </choose>
+            <if test="townCode != null">
+                and s.town_code = #{townCode}
+            </if>
+            ${dataScope}
         ) s
     </select>
 
-    <select id="getTotalAggregate" parameterType="MonitorTaskParam"
-            resultType="com.ruoyi.project.enterprise.domain.TaskSourceEntity">
-        select d.tag_head_id tagHeadId, u.source_id sourceId, s.full_name fullName, s.town_name townName,
-        h.tag_head_name tagHeadName
+    <select id="getTotalAggregate" parameterType="MonitorTaskParam" resultType="com.ruoyi.project.enterprise.domain.TaskSourceEntity">
+        select distinct d.tag_head_id tagHeadId, u.source_id sourceId, s.full_name fullName, s.town_name townName, h.tag_head_name tagHeadName
         from pf_bas_tag_detail d
         inner join pf_bas_tag_head h on d.tag_head_id=h.tag_head_id
-        inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id
-        and c.pf_source_id = d.pf_source_id and c.is_deleted = 0
-        left join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+        inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and c.is_deleted = 0
+        inner join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
         left join pf_bas_source_user u on u.source_id = d.pf_source_id
         left join pf_bas_task_adjust a on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id
         and a.aduit_status = 0 and a.is_deleted = 0

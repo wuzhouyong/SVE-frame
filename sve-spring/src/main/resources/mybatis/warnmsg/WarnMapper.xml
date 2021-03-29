@@ -13,6 +13,7 @@
         <result column="construction_unit" property="constructionUnit" />
         <result column="warn_level" property="warnLevel" />
         <result column="warn_level_name" property="warnLevelName" />
+        <result column="upgrade_level" property="upgradeLevel" />
         <result column="warn_type" property="warnType" />
         <result column="warn_type_name" property="warnTypeName" />
         <result column="proc_status" property="procStatus" />
@@ -22,70 +23,91 @@
         <result column="warn_desc" property="warnDesc" />
     </resultMap>
     <select id="getWarnList" resultMap="warn_entity">
-        select w.id, th.tag_head_id, th.tag_head_name, s.source_id, s.full_name source_name,
-               s.town_code, s.town_name, pc.acquisition_brand, c.construction_unit,
-               w.warn_level, l.warn_level_name, w.warn_type, d.warn_type_name, w.start_date, w.end_date, w.warn_desc,
-               w.proc_status, case when w.proc_status = 0 then '待处理' else '已完成' end proc_status_name
-        from dat_warnmsgheads w
-        inner join pf_bas_tag_head th on th.tag_head_id = w.tag_head_id
-        inner join pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
-        inner join pf_bas_constructioninfo c on c.tag_head_id = w.tag_head_id and c.pf_source_id = w.source_id
-        left join paishuihu.bas_checkpoint pc on pc.collect_id = w.collect_id and w.tag_head_id = 1012
-        <if test="userType == 'duty'">
-            inner join sys_user_task ut on ut.tag_id = c.tag_head_id and ut.source_id = c.pf_source_id and ut.user_id = #{currentUserId, jdbcType=VARCHAR} and ut.is_deleted = 0
-        </if>
-        left join (
-            select dict_value warn_level, dict_label warn_level_name
-            from sys_dict_data
-            where dict_type = 'ty_warn_level'
-        ) l on l.warn_level = w.warn_level
-        left join (
-            select dt.remark tag_head_id, dd.dict_value warn_type, dd.dict_label warn_type_name
-            from sys_dict_data dd
-            inner join sys_dict_type dt on dt.dict_type = dd.dict_type
-            where dt.dict_type like '%_warn_type'
-        ) d on d.tag_head_id = to_char(w.tag_head_id) and d.warn_type = w.warn_type
-        where w.is_deleted = 0
-        <if test="tagHeadId != null">
-            and w.tag_head_id = #{tagHeadId}
-        </if>
-        <if test="sourceId != null">
-            and s.source_id = #{sourceId}
-        </if>
-        <if test="sourceName != null">
-            and s.full_name like '%' || #{sourceName} || '%'
-        </if>
-        <if test="townCode != null">
-            and s.town_code = #{townCode}
-        </if>
-        <if test="acquisitionBrand != null">
-            and pc.acquisition_brand like '%' || #{acquisitionBrand} || '%'
-        </if>
-        <if test="constructionUnit != null">
-            and c.construction_unit like '%' || #{constructionUnit} || '%'
-        </if>
-        <if test="constructionStatus != null">
-            and c.construction_status = #{constructionStatus}
-        </if>
-        <if test="warnType != null">
-            and w.warn_type = #{warnType}
-        </if>
-        <if test="warnLevel != null">
-            and w.warn_level = #{warnLevel}
-        </if>
-        <if test="procStatus != null">
-            and w.proc_status = #{procStatus}
-        </if>
-        <if test="startDate != null and endDate != null">
-            and w.start_date >= #{startDate} and w.start_date &lt; #{endDate}
-        </if>
-        ${labelQuery}
-        ${dataScope}
-        order by w.send_date desc
+        select * from (
+            select w.id, th.tag_head_id, th.tag_head_name, s.source_id, s.full_name source_name,
+            s.town_code, s.town_name, pc.acquisition_brand, c.construction_unit, w.warn_level - w.upgrade_level warn_level,
+            l.warn_level_name, w.upgrade_level, w.warn_type, d.warn_type_name, w.start_date, w.end_date, w.warn_desc,
+            w.proc_status, case when w.proc_status = 1 then '已完成'
+            <if test="userType != null">when pd.cnt is not null then '已处理'
+            </if>
+            else '待处理' end
+            proc_status_name
+            from dat_warnmsgheads w
+            inner join pf_bas_tag_head th on th.tag_head_id = w.tag_head_id and th.is_deleted = 0
+            inner join pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+            inner join pf_bas_constructioninfo c on c.tag_head_id = w.tag_head_id and c.pf_source_id = s.source_id and c
+            .is_deleted = 0
+            left join paishuihu.bas_checkpoint pc on pc.collect_id = w.collect_id and w.tag_head_id = 1012
+            left join (
+            select warn_id, count(1) cnt from dat_warn_proc_detail
+            <if test="userType != null">where user_type = #{userType}
+            </if>
+            group by
+            warn_id
+            ) pd on pd.warn_id = w.id
+            <if test="userType == 'duty'">
+                inner join sys_user_task ut on ut.tag_id = c.tag_head_id and ut.source_id = c.pf_source_id and ut.user_id =
+                #{currentUserId, jdbcType=VARCHAR} and ut.is_deleted = 0
+            </if>
+            left join (
+                select dict_value warn_level, dict_label warn_level_name
+                from sys_dict_data
+                where dict_type = 'ty_warn_level'
+            ) l on l.warn_level = w.warn_level
+            left join (
+                select dt.remark tag_head_id, dd.dict_value warn_type, dd.dict_label warn_type_name
+                from sys_dict_data dd
+                inner join sys_dict_type dt on dt.dict_type = dd.dict_type
+                where dt.dict_type like '%_warn_type'
+            ) d on d.tag_head_id = to_char(w.tag_head_id) and d.warn_type = w.warn_type
+            where w.is_deleted = 0 and th.is_active = 1
+            <if test="tagHeadId != null">
+                and w.tag_head_id = #{tagHeadId}
+            </if>
+            <if test="sourceId != null">
+                and s.source_id = #{sourceId}
+            </if>
+            <if test="sourceName != null">
+                and s.full_name like '%' || #{sourceName} || '%'
+            </if>
+            <if test="townCode != null">
+                and s.town_code = #{townCode}
+            </if>
+            <if test="acquisitionBrand != null">
+                and pc.acquisition_brand like '%' || #{acquisitionBrand} || '%'
+            </if>
+            <if test="constructionUnit != null">
+                and c.construction_unit like '%' || #{constructionUnit} || '%'
+            </if>
+            <if test="constructionStatus != null">
+                and c.construction_status = #{constructionStatus}
+            </if>
+            <if test="warnType != null">
+                and w.warn_type = #{warnType}
+            </if>
+            <if test="procStatus != null">
+                and w.proc_status = #{procStatus}
+            </if>
+            <if test="startDate != null and endDate != null">
+                and w.start_date >= #{startDate} and w.start_date &lt; #{endDate}
+            </if>
+            ${labelQuery}
+            ${dataScope}
+            order by w.send_date desc
+        ) w
+        <where>
+            <if test="warnLevel != null">
+                and warn_level = #{warnLevel}
+            </if>
+            <if test="upgradeLevel != null">
+                and upgrade_level > 0
+            </if>
+        </where>
+        order by proc_status_name
     </select>
 
     <select id="getWarnLevelById" resultType="int">
-        select warn_level from dat_warnmsgheads where id = #{warnId}
+        select warn_level - upgrade_level from dat_warnmsgheads where id = #{warnId}
     </select>
 
     <resultMap id="warn_proc_entity" type="WarnProcResult">
@@ -149,5 +171,9 @@
         <foreach collection="warnIds" item="warnId" open="(" separator="," close=")">
             #{warnId}
         </foreach>
+    </update>
+
+    <update id="upgradeLevel">
+        update dat_warnmsgheads set upgrade_level = upgrade_level + 1, date_updated = sysdate where id = #{warnId}
     </update>
 </mapper>

@@ -7,7 +7,8 @@
           <el-option :label="i.name" :value="i.id" v-for="i in pointList" :key="i.id"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item :label="platFormPath==='jiayou'?'加油枪':'排放口'" prop="outletId" v-if="new Set(['youyan','qixiu','jiayou']).has(platFormPath)">
+      <el-form-item :label="platFormPath==='jiayou'?'加油枪':'排放口'" prop="outletId"
+                    v-if="new Set(['youyan','qixiu','jiayou']).has(platFormPath)">
         <el-select v-model="queryForm.outletId" size="mini">
           <el-option
             :label="i.facilityName"
@@ -34,7 +35,8 @@
           icon="el-icon-refresh"
           size="mini"
           @click="isCut=!isCut"
-        >{{isCut?'切换图表':'切换表格'}}</el-button>
+        >{{ isCut ? "切换图表" : "切换表格" }}
+        </el-button>
       </el-form-item>
     </el-form>
     <template v-if="isCut">
@@ -80,12 +82,13 @@
   </div>
 </template>
 <script>
-import { pointSelectList } from "@/api/outwater/index";
-import { searchMinute } from "@/api/home";
+import {pointSelectList} from "@/api/outwater/index";
+import {searchMinute} from "@/api/home";
 import VeLine from "v-charts/lib/line.common";
-import { outletList } from "@/api/youyan";
-import { outletList as qxoutletList } from "@/api/qixiu";
-import { jyOutletSelect } from "@/api/jiayou";
+import {outletList} from "@/api/youyan";
+import {outletList as qxoutletList} from "@/api/qixiu";
+import {jyOutletSelect} from "@/api/jiayou";
+
 export default {
   props: {
     oId: {
@@ -98,8 +101,8 @@ export default {
       type: String,
     },
   },
-  components: { VeLine },
-  data() {
+  components: {VeLine},
+  data () {
     this.chartsSetting = {
       settings: {
         labelMap: {},
@@ -167,8 +170,8 @@ export default {
     };
   },
   computed: {
-    multipleProp() {
-      const { oId, platFormPath, aceName } = this;
+    multipleProp () {
+      const {oId, platFormPath, aceName} = this;
       return {
         oId,
         platFormPath,
@@ -178,8 +181,8 @@ export default {
   },
   watch: {
     multipleProp: {
-      handler(v) {
-        if (v) {
+      handler (v) {
+        if (v && v.aceName === "5") {
           this.queryForm.sourceId = v.oId;
           let n = v.oId;
           this.reset();
@@ -187,7 +190,7 @@ export default {
             this.getoutletList(n);
           } else if (v.platFormPath === "outwater") {
             this.getPointList(n);
-          }else if (v.platFormPath === "jiayou") {
+          } else if (v.platFormPath === "jiayou") {
             this.getJYOutLet(n);
           }
           if (v.aceName === "5") {
@@ -201,7 +204,7 @@ export default {
     },
   },
   methods: {
-    getJYOutLet(v) {
+    getJYOutLet (v) {
       jyOutletSelect(v).then(res => {
         if (res.code === 200) {
           let oArr = res.data;
@@ -211,10 +214,10 @@ export default {
           });
           this.outletData = oArr;
         }
-      })
+      });
     },
     //重置
-    reset() {
+    reset () {
       this.queryForm.startDate = undefined;
       this.queryForm.checkPointId = undefined;
       this.tableData = [];
@@ -223,13 +226,13 @@ export default {
       this.chartData.columns = [];
       this.isCut = true;
     },
-    getoutletList(v) {
+    getoutletList (v) {
       outletList(v).then((res) => {
         this.outletData = res.data;
       });
     },
     //获取列表
-    getList(v = {}) {
+    getList (v = {}) {
       this.loading = true;
       searchMinute(v, this.platFormPath).then((res) => {
         if (res.code === 200) {
@@ -253,7 +256,7 @@ export default {
         this.loading = false;
       });
     },
-    funCol(cols) {
+    funCol (cols) {
       var res = [];
       cols.forEach((a) => {
         if (a.dataIndex) {
@@ -267,7 +270,7 @@ export default {
       });
       return res;
     },
-    getqxoutletList(v) {
+    getqxoutletList (v) {
       let oVal = {
         sourceId: v,
       };
@@ -276,16 +279,19 @@ export default {
       });
     },
     //获取检测井
-    getPointList(v) {
+    getPointList (v) {
       let oVal = {
         sourceId: v,
       };
       pointSelectList(oVal).then((res) => {
         this.pointList = res.rows;
+        if (this.pointList.length > 0) {
+          this.queryForm.checkPointId = this.pointList[0].id;
+        }
       });
     },
-    handleQuery() {
-      let { startDate } = this.queryForm;
+    handleQuery () {
+      let {startDate} = this.queryForm;
       this.queryForm.sourceId = this.oId;
       let oVal = JSON.parse(JSON.stringify(this.queryForm));
       if (this.platFormPath === "outwater") {
@@ -310,12 +316,14 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow:hidden;
+  overflow: hidden;
 }
+
 .home-serchForm {
   .el-form-item {
     margin-bottom: 5px;
   }
+
   label {
     color: #cfd0d2;
   }

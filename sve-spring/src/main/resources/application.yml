@@ -42,6 +42,7 @@ spring:
         basename: i18n/messages
     profiles:
         active: prod
+#        active: dev
     # 文件上传
     servlet:
         multipart:
@@ -57,12 +58,12 @@ spring:
     # redis 配置
     redis:
         # 地址
-        host: localhost
-#        host: 192.168.19.72
+#        host: localhost
+        host: 19.104.46.143
         # 端口，默认为6379
         port: 6379
         # 密码
-        password:
+        password: Saq!TycP19
         # 连接超时时间
         timeout: 30s
         lettuce:

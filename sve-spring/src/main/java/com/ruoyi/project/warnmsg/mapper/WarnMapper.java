@@ -14,14 +14,13 @@ import java.util.Map;
 
 @Mapper
 public interface WarnMapper {
-    @DataSource(value = DataSourceType.MASTER)
     List<WarnEntity> getWarnList(WarnParam param);
     int getWarnLevelById(@Param("warnId") String warnId);
     List<WarnProcResult> getWarnProcDetail(@Param("warnId") String warnId);
     List<WarnProcResult> getWarnProcHistory(@Param("warnId") String warnId);
-    @DataSource(value = DataSourceType.MASTER)
     List<Map> getAttachList(@Param("refType") String refType, @Param("refId") String refId);
     int verifySameWarnType(@Param("warnIds") String[] warnIds);
     int warnProc(WarnProcResult entity);
     int updateWarnStatus(@Param("warnIds") String[] warnIds, @Param("updatedBy") String updatedBy);
+    int upgradeLevel(@Param("warnId") String warnId, @Param("updatedBy") String updatedBy);
 }

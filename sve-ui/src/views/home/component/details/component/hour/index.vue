@@ -185,7 +185,7 @@ export default {
   watch: {
     multipleProp: {
       handler(v) {
-        if (v) {
+        if (v&& v.aceName === "6") {
           this.queryForm.sourceId = v.oId;
           let n = v.oId;
           this.reset();
@@ -231,7 +231,6 @@ export default {
     },
     getoutletList(v) {
       outletList(v).then((res) => {
-        console.log(res);
         this.outletData = res.data;
       });
     },
@@ -281,6 +280,9 @@ export default {
       };
       pointSelectList(oVal).then((res) => {
         this.pointList = res.rows;
+        if (this.pointList.length > 0) {
+          this.queryForm.checkPointId = this.pointList[0].id;
+        }
       });
     },
     getqxoutletList(v) {

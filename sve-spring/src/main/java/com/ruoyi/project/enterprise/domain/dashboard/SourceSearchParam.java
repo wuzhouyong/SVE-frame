@@ -4,6 +4,7 @@ import com.ruoyi.framework.web.domain.BaseEntity;
 
 public class SourceSearchParam extends BaseEntity {
     private String townCode;
+    private String sourceId;
     private String sourceName;
     private Integer warnLevel;
     private String[] tagHeadIds;
@@ -15,6 +16,14 @@ public class SourceSearchParam extends BaseEntity {
 
     public void setTownCode(String townCode) {
         this.townCode = townCode;
+    }
+
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    public void setSourceId(String sourceId) {
+        this.sourceId = sourceId;
     }
 
     public String getSourceName() {

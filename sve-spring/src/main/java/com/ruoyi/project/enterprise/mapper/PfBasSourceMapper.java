@@ -4,6 +4,7 @@ import com.ruoyi.project.enterprise.domain.*;
 import com.ruoyi.project.enterprise.domain.source.BasSourceParam;
 import com.ruoyi.project.enterprise.domain.source.SourceResult;
 import com.ruoyi.project.outwater.domain.entity.NameAndIdEntity;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
  * @author ruoyi
  * @date 2020-05-19
  */
+@Mapper
 public interface PfBasSourceMapper
 {
     public List<SourceResult> getSourceList(BasSourceParam param);

@@ -72,15 +72,16 @@
         </div>
       </div>
       <!---按钮-->
-<!--      <div class="home-index-btn">-->
-<!--        <el-button size="mini" type="primary" plain>监控统计</el-button>-->
-<!--        <el-button size="mini" type="primary" plain>异常任务</el-button>-->
-<!--        <el-button size="mini" type="primary" plain>异常处理</el-button>-->
-<!--        <el-button size="mini" type="primary" plain>企业列表</el-button>-->
-<!--      </div>-->
+      <!--      <div class="home-index-btn">-->
+      <!--        <el-button size="mini" type="primary" plain>监控统计</el-button>-->
+      <!--        <el-button size="mini" type="primary" plain>异常任务</el-button>-->
+      <!--        <el-button size="mini" type="primary" plain>异常处理</el-button>-->
+      <!--        <el-button size="mini" type="primary" plain>企业列表</el-button>-->
+      <!--      </div>-->
       <!-- 统计 -->
       <div class="home-company-census" :style="{top:(isStatis? '5px':'110%' )}">
         <StatisChunk @closediv="closediv" :tagHeadIds="checkArrs" :townCode="townCodeData"></StatisChunk>
+        <!--                <n-scroll-warn></n-scroll-warn>-->
       </div>
     </div>
   </div>
@@ -89,14 +90,16 @@
 import MapChunk from "@/views/home/component/map";
 import SourceChunk from "@/views/home/component/sourceList";
 import StatisChunk from "@/views/home/component/statis";
-import DetailsChunk from "@/views/home/component/details";
+import DetailsChunk from "@/views/home/component/details/index";
+import nScrollWarn from "@/views/home/component/scrollWarn";
 import utils from "@/utils/ruoyi";
 import {getSourceList, getTagList} from "@/api/composite/source";
 import {task_statistics} from "@/config";
+import {mapState} from "vuex";
 
 export default {
   name: "MapIndex",
-  components: {MapChunk, SourceChunk, StatisChunk, DetailsChunk},
+  components: {MapChunk, SourceChunk, StatisChunk, DetailsChunk, nScrollWarn},
   data () {
     return {
       sourceList: [],
@@ -130,6 +133,9 @@ export default {
       townCodeData: ""
     };
   },
+  computed: {
+    ...mapState("app", ["sidebar"]),
+  },
   created () {
     this.$nextTick(() => {
       this.pollutionCountWidth();
@@ -145,6 +151,12 @@ export default {
         this.isStatis = true;
         this.isCompany = true;
       }
+    },
+    "sidebar.opened": {
+      handler () {
+        this.pollutionCountWidth();
+      },
+      immediate: true
     }
   },
   mounted () {

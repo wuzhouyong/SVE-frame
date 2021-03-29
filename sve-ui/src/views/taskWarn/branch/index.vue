@@ -3,6 +3,7 @@
     <!--    分局处理-->
     <el-tabs v-model="activeName" @tab-click="handleClick">
       <el-tab-pane label="待处理" name="pending"></el-tab-pane>
+      <el-tab-pane label="专管员移交异常" name="duty"></el-tab-pane>
       <el-tab-pane label="全部" name="all"></el-tab-pane>
     </el-tabs>
     <!-- 搜索表单 -->
@@ -179,6 +180,7 @@ export default {
         townCode: null,
         acquisitionBrand: null,
         constructionUnit: null,
+        userType: "sub",
         procStatus: 0,
         warnLevel: "2",
         oTime: null
@@ -253,7 +255,9 @@ export default {
           this.tableData = res.rows;
           this.total = res.total;
           this.$nextTick(() => {
-            this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            if (this.$refs.oTable.bodyWrapper) {
+              this.$refs.oTable.bodyWrapper.scrollTop = 0;
+            }
           });
         }
         this.loading = false;
@@ -272,6 +276,7 @@ export default {
           townCode: null,
           acquisitionBrand: null,
           constructionUnit: null,
+          userType: "sub",
           procStatus: 0,
           warnLevel: "2",
           oTime: null
@@ -284,12 +289,13 @@ export default {
           townCode: null,
           acquisitionBrand: null,
           constructionUnit: null,
+          userType: "sub",
           procStatus: null,
           warnLevel: null,
           oTime: null
         };
       }
-      this.isChangeSys = false
+      this.isChangeSys = false;
       this.handleQuery();
     },
     sysChange (v) {
@@ -323,6 +329,7 @@ export default {
           warnType: null,
           sourceName: null,
           townCode: null,
+          userType: "sub",
           acquisitionBrand: null,
           constructionUnit: null,
           procStatus: 0,
@@ -335,6 +342,7 @@ export default {
           warnType: null,
           sourceName: null,
           townCode: null,
+          userType: "sub",
           acquisitionBrand: null,
           constructionUnit: null,
           procStatus: null,

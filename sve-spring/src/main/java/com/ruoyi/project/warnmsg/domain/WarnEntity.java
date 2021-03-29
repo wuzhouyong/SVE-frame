@@ -16,6 +16,7 @@ public class WarnEntity {
     private String constructionUnit;
     private String warnLevel;
     private String warnLevelName;
+    private Integer upgradeLevel;
     private String warnType;
     private String warnTypeName;
     private Integer procStatus;
@@ -112,6 +113,14 @@ public class WarnEntity {
 
     public void setWarnLevelName(String warnLevelName) {
         this.warnLevelName = warnLevelName;
+    }
+
+    public Integer getUpgradeLevel() {
+        return upgradeLevel;
+    }
+
+    public void setUpgradeLevel(Integer upgradeLevel) {
+        this.upgradeLevel = upgradeLevel;
     }
 
     public String getWarnType() {
