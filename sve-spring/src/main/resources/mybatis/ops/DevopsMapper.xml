@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.ops.mapper.DevopsMapper">
+
+    <resultMap type="OpSourceEntity" id="opSource">
+        <result property="opSourceId" column="op_source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="shortName" column="short_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="organizationCode" column="organization_code"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="legalPersonPhone" column="legal_person_phone"/>
+        <result property="contactName" column="contact_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="opSourceType" column="op_source_type"/>
+        <result property="isOnList" column="is_on_list"/>
+        <result property="memo" column="memo"/>
+    </resultMap>
+
+    <!--运维单位基础信息列表-->
+    <select id="selectBasDevopsList" parameterType="OpSourceEntity" resultMap="opSource">
+        select op_source_id,full_name,short_name,social_credit_code,organization_code,
+        legal_person_name,legal_person_phone,contact_name,contact_phone,op_source_type,is_on_list,memo
+        from pf_op_source
+        where is_deleted=0
+        <if test="fullName != null  and fullName != ''">and full_name like '%'||#{fullName}||'%'</if>
+        <if test="opSourceType != null  and opSourceType != ''">and op_source_type = #{opSourceType}</if>
+        <if test="contactName != null  and contactName != ''">and contact_name = #{contactName}</if>
+        <if test="isOnList != null">and is_on_list = #{isOnList}</if>
+        order by order_by desc
+    </select>
+
+    <!--新增运维单位基础信息-->
+    <insert id="insertBasDevops" parameterType="OpSourceEntity">
+        <selectKey keyProperty="opSourceId" resultType="int" order="BEFORE">
+            select seq_pf_op_source.nextval from dual
+        </selectKey>
+        insert into pf_op_source
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            op_source_id,full_name,short_name,
+            <if test="socialCreditCode != null and socialCreditCode != ''">social_credit_code,</if>
+            <if test="organizationCode != null and organizationCode != ''">organization_code,</if>
+            <if test="legalPersonName != null and legalPersonName != ''">legal_person_name,</if>
+            <if test="legalPersonPhone != null and legalPersonPhone != ''">legal_person_phone,</if>
+            <if test="contactName != null and contactName != ''">contact_name,</if>
+            <if test="contactPhone != null and contactPhone != ''">contact_phone,</if>
+            <if test="opSourceType != null and opSourceType != ''">op_source_type,</if>
+            <if test="isOnList != null and isOnList != ''">is_on_list,</if>
+            <if test="memo != null and memo != ''">memo,</if>
+            created_by,updated_by
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{opSourceId},#{fullName},#{shortName},
+            <if test="socialCreditCode != null and socialCreditCode != ''">#{socialCreditCode},</if>
+            <if test="organizationCode != null and organizationCode != ''">#{organizationCode},</if>
+            <if test="legalPersonName != null and legalPersonName != ''">#{legalPersonName},</if>
+            <if test="legalPersonPhone != null and legalPersonPhone != ''">#{legalPersonPhone},</if>
+            <if test="contactName != null and contactName != ''">#{contactName},</if>
+            <if test="contactPhone != null and contactPhone != ''">#{contactPhone},</if>
+            <if test="opSourceType != null and opSourceType != ''">#{opSourceType},</if>
+            <if test="isOnList != null and isOnList != ''">#{isOnList},</if>
+            <if test="memo != null and memo != ''">#{memo},</if>
+            #{createdBy,jdbcType=VARCHAR},#{updatedBy,jdbcType=VARCHAR}
+        </trim>
+    </insert>
+
+    <!--编辑运维单位基础信息-->
+    <update id="updateBasDevops" parameterType="OpSourceEntity">
+        update pf_op_source
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="fullName != null and fullName != ''">full_name = #{fullName},</if>
+            <if test="shortName != null and shortName != ''">short_name = #{shortName},</if>
+            social_credit_code = #{socialCreditCode,jdbcType=VARCHAR},
+            organization_code = #{organizationCode,jdbcType=VARCHAR},
+            legal_person_name = #{legalPersonName,jdbcType=VARCHAR},
+            legal_person_phone = #{legalPersonPhone,jdbcType=VARCHAR},
+            contact_name = #{contactName,jdbcType=VARCHAR},
+            contact_phone = #{contactPhone,jdbcType=VARCHAR},
+            <if test="opSourceType != null">op_source_type = #{opSourceType},</if>
+            <if test="isOnList != null">is_on_list = #{isOnList},</if>
+            memo = #{memo},
+            date_updated = sysdate
+        </trim>
+        where op_source_id = #{opSourceId} and is_deleted=0
+    </update>
+
+    <!--删除运维单位基础信息-->
+    <update id="deleteBasDevopsByIds">
+        UPDATE pf_op_source
+        set is_deleted = 1,date_updated = sysdate,updated_by = #{updatedBy}
+        where is_deleted=0 and op_source_id in
+        <foreach collection="opSourceIds" item="opSourceId" open="(" separator="," close=")">
+            #{opSourceId}
+        </foreach>
+    </update>
+
+</mapper>

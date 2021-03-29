@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.enterprise.mapper.SysUserTaskMapper">
+
+    <resultMap type="SysUserTask" id="SysUserTaskResult">
+        <result property="userSourceId" column="user_source_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="tagId" column="tag_id"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="dateCreated" column="date_created"/>
+        <result property="dateUpdated" column="date_updated"/>
+    </resultMap>
+
+    <resultMap type="PfBasSource" id="PfBasSourceResult">
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+    </resultMap>
+
+    <sql id="selectSysUserTaskVo">
+        select user_source_id, user_id, tag_id, source_id, is_deleted, created_by, updated_by, date_created, date_updated from sys_user_task
+    </sql>
+
+    <!--查询平台企业名列表 左-->
+    <select id="selectPlatformLeftDate" parameterType="SysUserTask" resultMap="PfBasSourceResult">
+        select s.* from pf_bas_source s
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+        inner join pf_bas_tag_head t on t.tag_head_id = d.tag_head_id and t.is_active = 1
+        left join (SELECT * from sys_user_task where is_deleted=0 and user_id = #{userId} )ut
+        on ut.tag_id = d.tag_head_id and ut.source_id = d.pf_source_id
+        where s.is_deleted=0 and ut.user_source_id is null
+        <if test="tagId != null and tagId != '' ">
+            and d. tag_head_id = #{tagId}
+        </if>
+<!--        <if test="tagId == null">-->
+<!--            and d. tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,1021,1022,1023)-->
+<!--        </if>-->
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+    </select>
+
+    <!--查询平台企业名列表 右-->
+    <select id="selectPlatformRightDate" parameterType="SysUserTask" resultMap="PfBasSourceResult">
+        select s.* from pf_bas_source s
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+        inner join pf_bas_tag_head t on t.tag_head_id = d.tag_head_id and t.is_active = 1
+        left join (SELECT * from sys_user_task where is_deleted=0 and user_id = #{userId} )ut
+        on ut.tag_id = d.tag_head_id and ut.source_id = d.pf_source_id
+        where s.is_deleted=0 and ut.user_source_id is not null
+        <if test="tagId != null and tagId != '' ">
+            and d. tag_head_id = #{tagId}
+        </if>
+<!--        <if test="tagId == null">-->
+<!--            and d. tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,1021,1022,1023)-->
+<!--        </if>-->
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+    </select>
+
+    <select id="selectSysUserTaskById" parameterType="String" resultMap="SysUserTaskResult">
+        <include refid="selectSysUserTaskVo"/>
+        where user_source_id = #{userSourceId}
+    </select>
+
+    <!--新增关联关系-->
+    <insert id="insertSysUserTask" parameterType="SysUserTask">
+        insert into sys_user_task
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userSourceId != null  and userSourceId != ''">user_source_id,</if>
+            <if test="userId != null  and userId != ''">user_id,</if>
+            <if test="tagId != null  and tagId != ''">tag_id,</if>
+            <if test="sourceId != null  and sourceId != ''">source_id,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userSourceId != null  and userSourceId != ''">#{userSourceId},</if>
+            <if test="userId != null  and userId != ''">#{userId},</if>
+            <if test="tagId != null  and tagId != ''">#{tagId},</if>
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+        </trim>
+    </insert>
+
+    <!--查询关联关系-->
+    <select id="selectSysUserTaskCount" parameterType="SysUserTask" resultType="int">
+        select count(1) from sys_user_task
+        where user_id = #{userId} and tag_id = #{tagId} and source_id = #{sourceId} and is_deleted=0
+    </select>
+
+    <!--删除关联关系-->
+    <update id="updateSysUserTask" parameterType="SysUserTask">
+        update sys_user_task
+        <trim prefix="SET" suffixOverrides=",">
+            is_deleted = 1,date_updated = sysdate,
+            <if test="updatedBy != null  and updatedBy != ''">updated_by = #{updatedBy},</if>
+        </trim>
+        where user_id = #{userId} and tag_id = #{tagId}
+        and source_id in
+        <foreach collection="sourceIds" item="sourceId" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+    </update>
+    <update id="addUserTaskByTagId" parameterType="BatchUserTaskModel">
+        merge into sys_user_task t
+            using (
+                select tag_head_id, pf_source_id
+                from pf_bas_tag_detail
+                where is_deleted = 0 and tag_head_id = #{tagHeadId}
+            ) d
+            on (d.pf_source_id = t.source_id and d.tag_head_id = t.tag_id and t.user_id = #{userId} and t.is_deleted = 0)
+            when not matched then
+                insert (user_source_id, user_id, tag_id, source_id, created_by, updated_by)
+                values (lower(rawtohex(sys_guid())), #{userId}, d.tag_head_id, d.pf_source_id, #{createdBy}, #{createdBy})
+    </update>
+
+    <update id="removeUserTaskByTagId" parameterType="BatchUserTaskModel">
+        update sys_user_task set is_deleted = 1, updated_by = #{createdBy}, date_updated = sysdate
+        where tag_id = #{tagHeadId} and user_id = #{userId}
+    </update>
+
+    <delete id="deleteSysUserTaskById" parameterType="String">
+        delete from sys_user_task where user_source_id = #{userSourceId}
+    </delete>
+
+    <delete id="deleteSysUserTaskByIds" parameterType="String">
+        delete from sys_user_task where user_source_id in
+        <foreach item="userSourceId" collection="array" open="(" separator="," close=")">
+            #{userSourceId}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.enterprise.mapper.LabelMapper">
+    <resultMap id="labelHead" type="LabelHead">
+        <result column="label_head_id" property="labelHeadId"/>
+        <result column="label_head_name" property="labelHeadName"/>
+        <result column="user_name" property="userName"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <resultMap id="labelSource" type="LabelSourceEntity">
+        <result column="source_id" property="sourceId"/>
+        <result column="full_name" property="fullName"/>
+        <result column="town_name" property="townName"/>
+        <result column="label_list" property="labelList"/>
+        <result column="label_id_list" property="labelIdList"/>
+    </resultMap>
+
+    <select id="getLabelListByUser" parameterType="string" resultMap="labelHead">
+        select * from pf_bas_label_head where is_deleted = 0 and (is_default = 1 or user_name = #{username})
+    </select>
+
+    <select id="getSourceList" parameterType="map" resultMap="labelSource">
+        select s.source_id, s.full_name, s.town_name,
+        listagg(lh.label_head_name, '、') within group (order by lh.label_head_id) label_list,
+        listagg(lh.label_head_id, ',') within group (order by lh.label_head_id) label_id_list
+        from pf_bas_source s
+        inner join pf_bas_tag_detail td on td.pf_source_id = s.source_id and td.is_deleted = 0
+        inner join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted = 0
+        left join pf_bas_label_detail ld on ld.source_id = s.source_id and ld.is_deleted = 0
+        left join pf_bas_label_head lh on lh.label_head_id = ld.label_head_id and lh.user_name = #{username} and lh.is_deleted = 0
+        where s.is_deleted = 0 and th.is_active = 1
+        <if test="sourceName != null">
+            and s.full_name like '%'|| #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        group by s.source_id, s.full_name, s.town_name
+    </select>
+
+    <select id="getSourceListByLabel" parameterType="map" resultMap="labelSource">
+        select s.source_id, s.full_name, s.town_name
+        from pf_bas_source s
+        inner join pf_bas_tag_detail td on td.pf_source_id = s.source_id and td.is_deleted = 0
+        inner join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted = 0
+        left join pf_bas_label_detail ld on ld.source_id = s.source_id and ld.is_deleted = 0
+        left join pf_bas_label_head lh on lh.label_head_id = ld.label_head_id
+        and lh.user_name = #{username} and lh.is_deleted = 0
+        where s.is_deleted = 0 and th.is_active = 1
+        <if test="sourceName != null">
+            and s.full_name like '%'|| #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <choose>
+            <when test="type == 'left'">
+                and (lh.label_head_id != #{labelHeadId} or lh.label_head_id is null)
+            </when>
+            <otherwise>
+                and lh.label_head_id = #{labelHeadId}
+            </otherwise>
+        </choose>
+        group by s.source_id, s.full_name, s.town_name
+    </select>
+
+    <select id="existsTopLevel" parameterType="int" resultType="boolean">
+        select case when parent_id is null then 1 else 0 end from pf_bas_label_head
+        where is_deleted = 0 and label_head_id = #{labelHeadId}
+    </select>
+
+    <select id="hasChildren" parameterType="int" resultType="boolean">
+        select case when count(1) > 0 then 1 else 0 end from pf_bas_label_head
+        where is_deleted = 0 and parent_id = #{parentId}
+    </select>
+
+    <insert id="addLabelHead" parameterType="LabelHead">
+        <selectKey keyProperty="labelHeadId" resultType="int" order="BEFORE">
+            select seq_label_head.nextval from dual
+        </selectKey>
+        insert into pf_bas_label_head(label_head_id, label_head_name, user_name, parent_id, created_by, updated_by)
+        values(#{labelHeadId}, #{labelHeadName}, #{userName,jdbcType=VARCHAR}, #{parentId,jdbcType=INTEGER}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="editLabelHead" parameterType="LabelHead">
+        update pf_bas_label_head set label_head_name = #{labelHeadName}, updated_by = #{updatedBy}, date_updated = sysdate
+        where label_head_id = #{labelHeadId}
+    </update>
+
+    <update id="removeLabelHead" parameterType="int">
+        update pf_bas_label_head set is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate
+        where label_head_id = #{labelHeadId}
+    </update>
+
+    <insert id="addLabelDetail" parameterType="LabelDetail">
+        <selectKey keyProperty="labelDetailId" resultType="int" order="BEFORE">
+            select seq_label_detail.nextval from dual
+        </selectKey>
+        insert into pf_bas_label_detail(label_detail_id, label_head_id, source_id, created_by, updated_by)
+        values(#{labelDetailId}, #{labelHeadId}, #{sourceId}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="removeLabelDetail" parameterType="LabelDetail">
+        update pf_bas_label_detail set is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate
+        where is_deleted = 0 and label_head_id = #{labelHeadId} and source_id = #{sourceId}
+    </update>
+</mapper>

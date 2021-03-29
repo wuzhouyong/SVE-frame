@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.WorkPlaceMapper">
+
+    <select id="getSourceNameList" resultType="map">
+        select rownum cols,zDataSourName DataSourName,TransportRate from (
+        select zDataSourName,round(sum(zActualCount)/sum(zSupposedCount),4) * 100 TransportRate
+        from zDataSourSetting s
+        inner join zCheckPointDef c on c.zDataSourId = s.zDataSourId
+        inner join zDataSourElement se on se.zCheckPointId = c.zCheckPointId
+        inner join zCompleteRate r on r.zCheckPointId = se.zCheckPointId and r.zElementId = se.zElementId
+        where se.zIsDeleted = 0 and c.zIsValid = 1 and s.zIsClosed = 0 and s.zFactoryStatus = 3
+        and zDataDate between trunc(sysdate ,'DD') -1 and trunc(sysdate ,'DD')
+        group by zDataSourName having sum(zActualCount)/sum(zSupposedCount) &lt; 0.9
+        order by TransportRate)
+    </select>
+
+</mapper>

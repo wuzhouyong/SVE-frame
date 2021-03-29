@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.lwjh.mapper.LWJHSourceMapper">
+
+    <resultMap id="basEntity" type="LWJHSourceEntity">
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="address" column="address"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="industryCode" column="industry_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="polluteType" column="pollute_type"/>
+        <result property="hasVideo" column="has_video"/>
+        <result property="memo" column="memo"/>
+        <result property="constructUnit" column="construct_unit"/>
+        <result property="constructPerson" column="construct_person"/>
+        <result property="constructPhone" column="construct_phone"/>
+
+    </resultMap>
+
+    <!--<resultMap id="entity" type="SourceData">
+        <result property="fullName" column="full_name"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="polluteType" column="pollute_type"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="number" column="ROWNUM"/>
+        <result property="city" column="town_name"/>
+    </resultMap>-->
+
+    <!--<resultMap id="city" type="SourceCityData">
+        <result property="fullName" column="full_name"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="industryCode" column="industry_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="polluteType" column="pollute_type"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="number" column="ROWNUM"/>
+        <result property="townName" column="town_name"/>
+        <result property="hasVideo" column="has_video"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="memo" column="memo"/>
+    </resultMap>-->
+
+    <resultMap id="sourceList" type="SourceListEntity">
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="bizSourceId" column="biz_source_id"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="address" column="address"/>
+        <result property="polluteType" column="pollute_type"/>
+        <result property="memo" column="memo"/>
+        <result property="hasVideo" column="has_video"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+    </resultMap>
+
+    <resultMap id="nameAndId" type="NameAndIdEntity">
+        <result property="Name"     column="full_name"      />
+        <result property="Id"      column="source_id"       />
+    </resultMap>
+
+    <select id="selectSourceAddList" parameterType="SourceListEntity" resultMap="nameAndId" >
+        SELECT s.source_id, s.full_name FROM pf_bas_source s
+        WHERE s.source_id IN (SELECT PF_SOURCE_ID from PF_BAS_TAG_DETAIL
+        where TAG_HEAD_ID = 1017 and BIZ_SOURCE_ID not in
+        (SELECT SOURCE_ID from LWJH_SOURCE WHERE IS_DELETED = 0))
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        ${dataScope}
+        order by s.full_name
+    </select>
+
+    <select id="selectSourceInfo" parameterType="SourceListEntity" resultMap="sourceList">
+        SELECT s.source_id,s.town_name,s.town_code,s.address,s.social_credit_code,s.env_contact_phone,s.env_contact_name,s.industry_name,s.emission_permit_code,
+        s.full_name,D.biz_source_id FROM PF_BAS_SOURCE s
+        LEFT JOIN PF_BAS_TAG_DETAIL d on d.PF_SOURCE_ID = S.SOURCE_ID
+        where S.SOURCE_ID = #{sourceId}
+        and s.is_deleted = 0
+        AND d.is_deleted = 0
+        AND D.TAG_HEAD_ID = 1017
+    </select>
+
+    <select id="selectSource" parameterType="SourceListEntity" resultMap="sourceList">
+        SELECT s.source_id,s.town_name,s.town_code,s.address,s.social_credit_code,s.env_contact_phone,s.env_contact_name,s.industry_name,s.emission_permit_code,
+        s.full_name,
+        ls.SOURCE_ID biz_source_id,ls.has_video,ls.memo,ls.pollute_type from LWJH_SOURCE ls
+        left join PF_BAS_TAG_DETAIL d on d.biz_source_id = ls.SOURCE_ID
+        left join PF_BAS_SOURCE s on d.pf_source_id = s.SOURCE_ID
+        where ls.IS_DELETED = 0 and d.tag_head_id = 1017 and d.IS_DELETED = 0 AND s.IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="factoryStatus != null and factoryStatus != ''">
+            and s.factory_status = #{factoryStatus}
+        </if>
+        ${dataScope}
+        ORDER BY ls.DATE_CREATED desc
+    </select>
+
+    <resultMap id="city" type="SourceCityData">
+        <result property="fullName" column="full_name"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="industryCode" column="industry_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="polluteType" column="pollute_type"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="number" column="ROWNUM"/>
+        <result property="townName" column="town_name"/>
+        <result property="hasVideo" column="has_video"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="memo" column="memo"/>
+    </resultMap>
+
+    <select id="selectSourceCityData" parameterType="LWJHSourceEntity" resultMap="city">
+        SELECT s.full_name,s.emission_permit_code,s.industry_code,s.industry_name,
+        s.env_contact_name,s.env_contact_phone,s.source_id,s.social_credit_code,s.town_name,
+        ls.has_video,ls.memo,ls.pollute_type from LWJH_SOURCE ls
+        left join PF_BAS_TAG_DETAIL d on d.biz_source_id = ls.SOURCE_ID
+        left join PF_BAS_SOURCE s on d.pf_source_id = s.SOURCE_ID
+        <if test="accessDate != null and accessDate != ''">
+            left join LWJH_CHECKPOINT c on c.SOURCE_ID = s.SOURCE_ID
+            left join LWJH_CHECKPOINTELEMENT e on e.CHECKPOINT_ID = c.CHECKPOINT_ID
+        </if>
+        where ls.IS_DELETED = 0 and d.tag_head_id = 1017 and d.IS_DELETED = 0 AND s.IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="factoryStatus != null and factoryStatus != ''">
+            and s.factory_status = #{factoryStatus}
+        </if>
+        <if test="accessDate != null and accessDate != ''">
+            and e.ACCESS_DATE = TO_DATE(#{accessDate}, 'yyyy-MM-dd')
+            and e.IS_DELETED = 0
+        </if>
+        ${dataScope}
+        ORDER BY full_name
+    </select>
+
+    <resultMap id="entity" type="SourceData">
+        <result property="fullName" column="full_name"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="polluteType" column="pollute_type"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="number" column="ROWNUM"/>
+        <result property="city" column="town_name"/>
+    </resultMap>
+
+    <select id="selectSourceData" parameterType="LWJHSourceEntity" resultMap="entity">
+        SELECT s.full_name,s.emission_permit_code,s.industry_name,
+        s.env_contact_name,s.env_contact_phone,s.source_id,
+        ls.pollute_type from LWJH_SOURCE ls
+        left join PF_BAS_TAG_DETAIL d on d.biz_source_id = ls.SOURCE_ID
+        left join PF_BAS_SOURCE s on d.pf_source_id = s.SOURCE_ID
+        <if test="accessDate != null and accessDate != ''">
+            left join LWJH_CHECKPOINT c on c.SOURCE_ID = s.SOURCE_ID
+            left join LWJH_CHECKPOINTELEMENT e on e.CHECKPOINT_ID = c.CHECKPOINT_ID
+        </if>
+        where ls.IS_DELETED = 0 and d.tag_head_id = 1017 and d.IS_DELETED = 0 AND s.IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="factoryStatus != null and factoryStatus != ''">
+            and s.factory_status = #{factoryStatus}
+        </if>
+        <if test="accessDate != null and accessDate != ''">
+            and e.ACCESS_DATE = TO_DATE(#{accessDate}, 'yyyy-MM-dd')
+            and e.IS_DELETED = 0
+        </if>
+        ${dataScope}
+        ORDER BY full_name
+    </select>
+
+    <insert id="insertSource" parameterType="SourceListEntity">
+        insert into lwjh_source
+        (source_id, pollute_type, has_video, memo,
+        is_deleted, created_by, updated_by, date_created, date_updated)
+        values(#{bizSourceId}, #{polluteType}, #{hasVideo}, #{memo},
+        0, #{userName}, #{userName}, sysdate, sysdate)
+    </insert>
+
+    <update id="removeSource" parameterType="SqlInEntity">
+        update lwjh_source
+        <set>
+            is_deleted = 1,
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where source_id in
+        <foreach collection="array" item="sourceId" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+    </update>
+
+    <update id="updateSource" parameterType="SourceListEntity">
+        update lwjh_source
+        <set>
+            pollute_type = #{polluteType, jdbcType=VARCHAR},
+            <if test="hasVideo != null">has_video = #{hasVideo},</if>
+            memo = #{memo, jdbcType=VARCHAR},
+            updated_by = #{userName, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where source_id = #{bizSourceId}
+    </update>
+
+    <select id="selectSourceCount" parameterType="LWJHSourceEntity" resultType="int">
+        select count(1) from lwjh_source s where s.is_deleted = 0 and s.full_name = #{fullName}
+    </select>
+
+
+
+
+    <select id="getTotal" parameterType="LWJHSourceEntity" resultType="int">
+        select COUNT(1)
+        from lwjh_source s
+        where s.is_deleted = 0
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="factoryStatus != null and factoryStatus != ''">
+            and s.factory_status = #{factoryStatus}
+        </if>
+        ${dataScope}
+    </select>
+
+</mapper>

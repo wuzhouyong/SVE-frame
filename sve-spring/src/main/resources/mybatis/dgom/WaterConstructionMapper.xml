@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.WaterConstructionMapper">
+
+    <resultMap id="dcEntity" type="OMConstructionEntity">
+        <result property="sourceId" column="pf_source_id"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="constructionStatus" column="construction_status"/>
+        <result property="constructionUnit" column="construction_unit"/>
+        <result property="constructionPerson" column="construction_person"/>
+        <result property="constructionPhone" column="construction_phone"/>
+        <result property="auditDate" column="audit_date"/>
+        <result property="completeDate" column="complete_date"/>
+        <result property="completeMemo" column="complete_memo"/>
+        <result property="acceptanceDate" column="acceptance_date"/>
+        <result property="acceptanceMemo" column="acceptance_memo"/>
+        <result property="acceptDate" column="accept_date"/>
+        <result property="acceptBy" column="accept_by"/>
+        <result property="acceptResult" column="accept_result"/>
+        <result property="shortName" column="short_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+    </resultMap>
+
+    <resultMap id="basPointEntity" type="BasCheckPointElementEntity">
+        <result property="checkpointName" column="FULL_NAME"></result>
+        <result property="elemName" column="ELEMENT_DESC"></result>
+    </resultMap>
+
+    <resultMap id="datStas" type="OMConstructionEntity">
+        <result property="constructionStatus" column="construction_status"></result>
+    </resultMap>
+
+    <select id="getDatConstructionList" resultMap="dcEntity">
+      select pf_source_id,social_credit_code, construction_status,
+      construction_unit, construction_person, short_name,tag_head_id,
+      construction_phone, to_char(complete_date,'yyyy-MM-dd') complete_date,
+      complete_memo, to_char(acceptance_date,'yyyy-MM-dd') acceptance_date,
+      acceptance_memo, audit_date, accept_date, accept_by, accept_result from
+      pf_bas_constructioninfo
+      where pf_source_id = #{sourceId} and is_deleted = 0 and tag_head_id = 1017
+    </select>
+
+    <resultMap id="disallowance" type="DisallowanceEntity">
+        <result property="returnId" column="return_id"/>
+        <result property="sourceId" column="pf_source_id"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="status" column="construction_status"/>
+        <result property="returnResult" column="return_result"/>
+        <result property="returnReason" column="return_reason"/>
+        <result property="contactName" column="contact_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="memo" column="memo"/>
+    </resultMap>
+
+    <select id="getDisallowanceList" parameterType="DisallowanceEntity" resultMap="disallowance">
+        select * from pf_bas_construction_return
+        where pf_source_id=#{sourceId} and tag_head_id = 1017
+    </select>
+
+    <select id="getStatus" resultType="int">
+      select construction_status from pf_bas_constructioninfo where pf_source_id = #{sourceId} and is_deleted = 0 and tag_head_id = 1017
+    </select>
+
+    <select id="isExitDat" resultType="int" parameterType="OMConstructionEntity">
+        select count(1) from pf_bas_constructioninfo
+        where pf_source_id = #{sourceId} and is_deleted = 0 and tag_head_id = 1017
+    </select>
+
+    <insert id="insertDatConstructionInfo" parameterType="OMConstructionEntity">
+        INSERT INTO pf_bas_constructioninfo (
+        pf_source_id,
+        tag_head_id,
+        construction_Unit,
+        construction_Person,
+        short_name,
+        construction_Phone,
+        social_credit_code,
+        <if test="completeMemo !=null and completeMemo !=''">complete_memo,</if>
+        created_By,
+        updated_By,
+        date_Created,
+        date_Updated,
+        construction_status
+        )VALUES(
+        <if test="sourceId !=null and sourceId !=''">#{sourceId},</if>
+        '1017',
+        <if test="constructionUnit !=null and constructionUnit !=''">#{constructionUnit},</if>
+        <if test="constructionPerson !=null and constructionPerson !=''">#{constructionPerson},</if>
+        <if test="shortName !=null and shortName !=''">#{shortName},</if>
+        <if test="constructionPhone !=null and constructionPhone !=''">#{constructionPhone},</if>
+        <if test="socialCreditCode !=null and socialCreditCode !=''">#{socialCreditCode},</if>
+        <if test="completeMemo !=null and completeMemo !=''">#{completeMemo},</if>
+        <if test="createdBy !=null and createdBy !=''">#{createdBy},</if>
+        <if test="updatedBy !=null and updatedBy !=''">#{updatedBy},</if>
+        sysdate,
+        sysdate,
+        1
+        )
+    </insert>
+
+    <update id="updateConstructioninfo" parameterType="OMConstructionEntity">
+        update pf_bas_constructioninfo
+        <set>
+            construction_unit=#{constructionUnit, jdbcType=VARCHAR},
+            <if test="constructionPerson !=null and constructionPerson !=''">
+                construction_person=#{constructionPerson},
+            </if>
+            construction_phone=#{constructionPhone, jdbcType=VARCHAR},
+            social_credit_code=#{socialCreditCode,jdbcType=VARCHAR},
+            complete_memo=#{completeMemo, jdbcType=VARCHAR},
+            short_name=#{shortName, jdbcType=VARCHAR},
+            updated_By=#{updatedBy, jdbcType=VARCHAR},
+            date_updated=sysdate
+        </set>
+        where pf_source_id=#{sourceId} and tag_head_id = 1017
+    </update>
+
+    <update id="updateDatCon" parameterType="OMConstructionEntity">
+        update pf_bas_constructioninfo
+        <set>
+            construction_unit=#{constructionUnit, jdbcType=VARCHAR},
+            construction_person=#{constructionPerson, jdbcType=VARCHAR},
+            construction_phone=#{constructionPhone, jdbcType=VARCHAR},
+            short_name=#{shortName, jdbcType=VARCHAR},
+            social_credit_code=#{socialCreditCode,jdbcType=VARCHAR},
+            complete_memo=#{completeMemo, jdbcType=VARCHAR},
+            updated_By=#{updatedBy, jdbcType=VARCHAR},
+            date_updated=sysdate,
+            construction_status=1
+        </set>
+        where pf_source_id=#{sourceId} and tag_head_id = 1017
+    </update>
+
+
+    <update id="updateComplete" parameterType="OMConstructionEntity">
+        update pf_bas_constructioninfo
+        <set>
+            complete_Date=to_date(#{completeDate},'yyyy-MM-dd'),
+            complete_memo=#{completeMemo, jdbcType=VARCHAR},
+            social_credit_code=#{socialCreditCode,jdbcType=VARCHAR},
+            updated_By=#{updatedBy, jdbcType=VARCHAR},
+            date_updated=sysdate,
+            construction_status=3
+        </set>
+        where pf_source_id=#{sourceId} and tag_head_id = 1017
+    </update>
+
+    <update id="updateAcceptance" parameterType="OMConstructionEntity">
+        update pf_bas_constructioninfo
+        <set>
+            acceptance_date=to_date(#{acceptanceDate},'yyyy-MM-dd'),
+            acceptance_Memo=#{acceptanceMemo, jdbcType=VARCHAR},
+            social_credit_code=#{socialCreditCode,jdbcType=VARCHAR},
+            updated_By=#{updatedBy, jdbcType=VARCHAR},
+            date_updated=sysdate,
+            construction_status=6
+        </set>
+        where pf_source_id=#{sourceId} and tag_head_id = 1017
+    </update>
+
+    <select id="isAcc" resultType="int">
+    	select count(*) from (
+            select distinct d.dict_label, count(a.attachment_id) over(partition by d.dict_label) total
+            from sys_dict_data d
+            left join pf_file_attachment a
+            on a.biz_table_name = d.dict_type and a.attachment_type = d.dict_value and a.is_deleted = 0
+            and a.biz_record_id = #{sourceId}
+            where d.dict_type = 'water_sysfile_type' and d.status = 0
+        )
+        where total = 0
+    </select>
+
+    <select id="isAttach" resultType="int">
+      select count(1) from pf_file_attachment where attachment_type='water_sbcght'
+      and biz_table_name ='water_sysfile_type' and biz_record_id=#{sourceId} and IS_DELETED = 0
+    </select>
+
+</mapper>

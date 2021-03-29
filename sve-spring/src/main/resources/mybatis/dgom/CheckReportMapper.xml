@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.dgom.mapper.CheckReportMapper">
+    <resultMap id="checkReportResult" type="CheckReportResult">
+        <result column="zsrcreportid" property="reportId"/>
+        <result column="zdatasourname" property="SourceName"/>
+        <result column="ztownname" property="townName"/>
+        <result column="zissue" property="issue"/>
+        <result column="zdutycom" property="dutyCom"/>
+        <result column="zdeptcode" property="deptCode"/>
+        <result column="zcheckby" property="checkBy"/>
+        <result column="zdatechecked" property="dateChecked"/>
+        <result column="zrequest" property="request"/>
+        <result column="zprocresult" property="procResult"/>
+        <result column="zmemo" property="memo"/>
+        <result column="zstatus" property="status"/>
+        <result column="zreportmonth" property="reportMonth"/>
+    </resultMap>
+    <select id="getCheckReportList" parameterType="CheckReportParam" resultMap="checkReportResult">
+        select r.zsrcreportid, s.zdatasourname,l.zlabelname ztownname, r.zissue, r.zdutycom, f.zdeptcode,
+               r.zcheckby, r.zdatechecked, r.zrequest, r.zprocresult, r.zmemo, r.zstatus, r.zreportmonth
+        from l_srconlinecheckreport r
+        inner join zdatasoursetting s on s.zdatasourid = r.zsourceid and s.zisfactory = 1 and s.zisdeleted = 0
+        inner join zlabelhead l on l.zlabelheadid = s.zsuperiorid
+        inner join zfactorydept f on f.zdeptid = r.zcheckunit and f.zmonitorclass = 0 and f.zisdeleted = 0
+        where r.zisdeleted = 0
+        <if test="sourceId != null">
+            and s.zdatasourid = #{sourceId}
+        </if>
+        <if test="townId != null">
+            and s.zsuperiorid = #{townId}
+        </if>
+        <if test="year != null and month != null">
+            and r.zreportmonth = #{year} || '/' || #{month}
+        </if>
+        <if test="year != null and month == null">
+            and r.zreportmonth like #{year} || '%'
+        </if>
+        <if test="year != null and month == null">
+            and r.zreportmonth like '%' || #{month}
+        </if>
+        <if test="status != null">
+            and r.zstatus = #{status}
+        </if>
+        <choose>
+            <when test="issue == 0">
+                and r.zissue is null
+            </when>
+            <when test="issue == 1">
+                and r.zissue is not null
+            </when>
+        </choose>
+    </select>
+
+    <resultMap id="checkReportModel" type="CheckReportModel">
+        <result column="zsrcreportid" property="reportId"/>
+        <result column="zcheckby" property="checkBy"/>
+        <result column="zdatechecked" property="dateChecked"/>
+        <result column="zstatus" property="status"/>
+        <result column="zissue" property="issue"/>
+        <result column="zrequest" property="request"/>
+        <result column="zprocresult" property="procResult"/>
+        <result column="zmemo" property="memo"/>
+    </resultMap>
+
+    <select id="getCheckReportModel" parameterType="int" resultMap="checkReportModel">
+        select * from l_srconlinecheckreport where zsrcreportid = #{reportId}
+    </select>
+
+    <update id="updateCheckReport" parameterType="CheckReportModel">
+        update l_srconlinecheckreport
+        <set>
+            zcheckby = #{checkBy},
+            zdatechecked = #{dateChecked},
+            zstatus = #{status},
+            zissue = #{issue},
+            zrequest = #{request},
+            zprocresult = #{procResult},
+            zmemo = #{memo},
+            zupdatedby = #{updatedBy},
+            zdateupdated = sysdate
+        </set>
+        where zsrcreportid = #{reportId}
+    </update>
+</mapper>

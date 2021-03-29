@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.youyan.mapper.YYGatherMapper">
+    <resultMap id="entity" type="YYExportGatherEntity">
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+        <result property="constructionUnit" column="construction_unit"/>
+        <result property="warnLevel" column="warn_level"/>
+        <result property="levelName" column="dict_label"/>
+        <result property="warnCount" column="warn_count"/>
+        <result property="factoryCount" column="factory_count"/>
+        <result property="dutyCount" column="duty_count"/>
+        <result property="substationCount" column="substation_count"/>
+        <result property="isExceed" column="is_exceed"/>
+        <result property="totalAmt" column="total_discharge_amt"/>
+        <result property="dailyAmt" column="daily_discharge_amt"/>
+        <result property="unitName" column="survey_unitname"/>
+    </resultMap>
+
+    <select id="getEnterpriseList" resultType="YYGatherEntity" resultMap="entity">
+        select s.source_id, s.full_name, s.town_code, s.town_name, c.construction_unit,h.warn_level,sd.dict_label,
+        count(1) warn_count, sum(decode(proc_state,0,1,0)) factory_count,
+        sum(decode(proc_state,2,1,0)) duty_count, sum(decode(proc_state,5,1,0)) substation_count,
+        sum(decode(proc_state,6,1,0)) finish_count
+        from dat_warnmsgheads h
+        left join basecenter.sys_dict_data sd on h.warn_level=sd.dict_value and sd.dict_type='ty_warn_level'
+        inner join bas_source s on s.source_id = h.source_id
+        inner join basecenter.pf_bas_constructioninfo c
+        on c.pf_source_id = s.source_id and c.tag_head_id = 1006 and c.is_deleted = 0
+        where h.is_deleted = 0
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'||#{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="constructionUnit != null and constructionUnit != ''">
+            and c.construction_unit like '%'||#{constructionUnit}||'%'
+        </if>
+        <if test="warnLevel != null and warnLevel != ''">
+            and h.warn_level = #{warnLevel}
+        </if>
+        <if test="endTime != null and beginTime != null ">
+            and h.end_date >= to_date(#{beginTime},'yyyy-MM-dd')
+            and h.start_date &lt; to_date(#{endTime},'yyyy-MM-dd')+1
+        </if>
+        group by s.source_id, s.full_name, s.town_code, s.town_name,c.construction_unit,h.warn_level,sd.dict_label
+        order by source_id desc
+    </select>
+
+    <select id="getTownAbnormalList" resultType="YYGatherEntity" resultMap="entity">
+        select s.town_code, s.town_name,h.warn_level,sd.dict_label,
+        count(1) warn_count, sum(decode(proc_state,0,1,0)) factory_count,
+        sum(decode(proc_state,2,1,0)) duty_count, sum(decode(proc_state,5,1,0)) substation_count,
+        sum(decode(proc_state,6,1,0)) finish_count
+        from dat_warnmsgheads h
+        left join basecenter.sys_dict_data sd on h.warn_level=sd.dict_value and sd.dict_type='ty_warn_level'
+        inner join bas_source s on s.source_id = h.source_id
+        inner join basecenter.pf_bas_constructioninfo c
+        on c.pf_source_id = s.source_id and c.tag_head_id = 1006 and c.is_deleted = 0
+        where h.is_deleted = 0
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="warnLevel != null and warnLevel != ''">
+            and h.warn_level = #{warnLevel}
+        </if>
+        <if test="endTime != null and beginTime != null ">
+            and h.end_date >= to_date(#{beginTime},'yyyy-MM-dd')
+            and h.start_date &lt; to_date(#{endTime},'yyyy-MM-dd')+1
+        </if>
+        group by s.town_code, s.town_name,h.warn_level,sd.dict_label
+        order by town_code desc
+    </select>
+
+    <select id="getCalculateHead" resultType="map">
+        select
+        count(distinct w.source_id) source_cnt,
+        count(1) cnt
+        from basecenter.sys_dict_data t
+        inner join dat_warnmsgheads w on w.warn_type = t.dict_value
+        where dict_type = 'yy_warn_type'
+        and w.start_date &lt; trunc(sysdate, 'MM') and w.end_date >= trunc(sysdate + 1, 'MM')
+    </select>
+
+    <select id="getCalculateBody" resultType="map">
+        select w.warn_level, t.dict_label,
+        count(distinct w.source_id) source_cnt,
+        count(1) cnt
+        from basecenter.sys_dict_data t
+        inner join dat_warnmsgheads w on w.warn_type = t.dict_value
+        where dict_type = 'yy_warn_type'
+        and w.start_date &lt; trunc(sysdate, 'MM') and w.end_date >= trunc(sysdate + 1, 'MM')
+        group by w.warn_level, t.dict_label
+    </select>
+
+    <select id="getBrandTransHead" resultType="map">
+        select acquisition_brand, rownum rn
+        from (
+                 select c.acquisition_brand
+                 from bas_checkpoint c
+                          inner join bas_source s on s.source_id = c.source_id
+                 where c.is_deleted = 0 and s.source_id != '999999999999999'
+                 group by c.acquisition_brand
+                 order by count(1) desc
+             ) where rownum &lt; 10
+    </select>
+
+    <select id="getBrandTransData" resultType="map">
+        select c.town_name, sum(t.cnt) town_cnt,
+               sum(case when rn = 1 then t.cnt else 0 end) one_cnt,
+               sum(case when rn = 2 then t.cnt else 0 end) two_cnt,
+               sum(case when rn = 3 then t.cnt else 0 end) three_cnt,
+               sum(case when rn = 4 then t.cnt else 0 end) four_cnt,
+               sum(case when rn = 5 then t.cnt else 0 end) five_cnt,
+               sum(case when rn = 6 then t.cnt else 0 end) six_cnt,
+               sum(case when rn = 7 then t.cnt else 0 end) seven_cnt,
+               sum(case when rn = 8 then t.cnt else 0 end) eight_cnt,
+               sum(case when rn = 9 then t.cnt else 0 end) nine_cnt,
+               sum(case when rn > 9 then t.cnt else 0 end) other_cnt,
+               round(sum(case when rn = 1 then val else 0 end), 2) one_trans,
+               round(sum(case when rn = 2 then val else 0 end), 2) two_trans,
+               round(sum(case when rn = 3 then val else 0 end), 2) three_trans,
+               round(sum(case when rn = 4 then val else 0 end), 2) four_trans,
+               round(sum(case when rn = 5 then val else 0 end), 2) five_trans,
+               round(sum(case when rn = 6 then val else 0 end), 2) six_trans,
+               round(sum(case when rn = 7 then val else 0 end), 2) seven_trans,
+               round(sum(case when rn = 8 then val else 0 end), 2) eight_trans,
+               round(sum(case when rn = 9 then val else 0 end), 2) nine_trans,
+               case when max(rn) > 9
+                        then round(sum(case when rn > 9 then val else 0 end) / (max(rn) - 9), 2) end other_trans
+        from (
+                 select town_code, town_name, acquisition_brand, avg(hourcnt / 0.24 / 3) val
+                 from dat_completerate r
+                          inner join bas_checkpoint_element ce on ce.cp_elem_id = r.cp_elem_id and ce.is_deleted = 0
+                          inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+                          inner join bas_source s on s.source_id = c.source_id
+                 where datadate between sysdate - 3 and sysdate and s.source_id != '999999999999999'
+                 group by town_code, town_name, acquisition_brand
+             ) c
+                 inner join (
+            select s.town_code, c.acquisition_brand, count(1) cnt
+            from bas_checkpoint c
+                     inner join bas_source s on s.source_id = c.source_id
+            where c.is_deleted = 0 and s.source_id != '999999999999999'
+            group by s.town_code, c.acquisition_brand
+        ) t on t.town_code = c.town_code and t.acquisition_brand = c.acquisition_brand
+                 inner join (
+            select acquisition_brand, cnt, rownum rn
+            from (
+                     select c.acquisition_brand, count(1) cnt
+                     from bas_checkpoint c
+                     where c.is_deleted = 0 and c.source_id != '999999999999999'
+                     group by c.acquisition_brand
+                     order by count(1) desc
+                 )
+        ) b on nvl(b.acquisition_brand, '-') = nvl(c.acquisition_brand, '-')
+        group by c.town_name
+        order by town_cnt desc
+    </select>
+
+    <select id="getConstructionTransHead" resultType="map">
+        select short_name, rownum rn
+        from (
+                 select c.short_name
+                 from basecenter.pf_bas_constructioninfo c
+                          inner join bas_source s on s.source_id = c.pf_source_id
+                 where c.is_deleted = 0 and c.tag_head_id = 1006 and c.short_name is not null
+                   and s.source_id != '999999999999999'
+                 group by c.short_name
+                 order by count(1) desc
+             ) where rownum &lt; 10
+    </select>
+
+    <select id="getConstructionTransData" resultType="map">
+        select c.town_name, sum(t.cnt) town_cnt,
+               sum(case when rn = 1 then t.cnt else 0 end) one_cnt,
+               sum(case when rn = 2 then t.cnt else 0 end) two_cnt,
+               sum(case when rn = 3 then t.cnt else 0 end) three_cnt,
+               sum(case when rn = 4 then t.cnt else 0 end) four_cnt,
+               sum(case when rn = 5 then t.cnt else 0 end) five_cnt,
+               sum(case when rn = 6 then t.cnt else 0 end) six_cnt,
+               sum(case when rn = 7 then t.cnt else 0 end) seven_cnt,
+               sum(case when rn = 8 then t.cnt else 0 end) eight_cnt,
+               sum(case when rn = 9 then t.cnt else 0 end) nine_cnt,
+               sum(case when rn > 9 then t.cnt else 0 end) other_cnt,
+               round(sum(case when rn = 1 then val else 0 end), 2) one_trans,
+               round(sum(case when rn = 2 then val else 0 end), 2) two_trans,
+               round(sum(case when rn = 3 then val else 0 end), 2) three_trans,
+               round(sum(case when rn = 4 then val else 0 end), 2) four_trans,
+               round(sum(case when rn = 5 then val else 0 end), 2) five_trans,
+               round(sum(case when rn = 6 then val else 0 end), 2) six_trans,
+               round(sum(case when rn = 7 then val else 0 end), 2) seven_trans,
+               round(sum(case when rn = 8 then val else 0 end), 2) eight_trans,
+               round(sum(case when rn = 9 then val else 0 end), 2) nine_trans,
+               case when max(rn) > 9
+                        then round(sum(case when rn > 9 then val else 0 end) / (max(rn) - 9), 2) end other_trans
+        from (
+                 select town_code, town_name, short_name, avg(hourcnt / 0.24 / 3) val
+                 from dat_completerate r
+                          inner join bas_checkpoint_element ce on ce.cp_elem_id = r.cp_elem_id and ce.is_deleted = 0
+                          inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+                          inner join bas_source s on s.source_id = c.source_id
+                          inner join basecenter.pf_bas_constructioninfo c on c.pf_source_id = s.source_id
+                 where datadate between sysdate - 3 and sysdate and c.tag_head_id = 1006 and c.short_name is not null
+                   and s.source_id != '999999999999999'
+                 group by town_code, town_name, short_name
+             ) c
+                 inner join (
+            select s.town_code, c.short_name, count(1) cnt
+            from basecenter.pf_bas_constructioninfo c
+                     inner join bas_source s on s.source_id = c.pf_source_id
+            where c.is_deleted = 0 and c.tag_head_id = 1006 and c.short_name is not null
+              and s.source_id != '999999999999999'
+            group by s.town_code, c.short_name
+        ) t on t.town_code = c.town_code and t.short_name = c.short_name
+                 inner join (
+            select short_name, cnt, rownum rn
+            from (
+                     select c.short_name, count(1) cnt
+                     from basecenter.pf_bas_constructioninfo c
+                     where c.is_deleted = 0 and c.tag_head_id = 1006 and c.short_name is not null
+                       and c.pf_source_id != '999999999999999'
+                     group by c.short_name
+                     order by count(1) desc
+                 )
+        ) b on b.short_name = c.short_name
+        group by c.town_name
+        order by town_cnt desc
+    </select>
+
+
+    <select id="getSourceAbnor" parameterType="YYSourceAbnorEntity" resultType="YYSourceAbnorEntity">
+        select s.full_name fullName,s.SOCIAL_CREDIT_CODE socialCreditCode,s.town_name townName,
+        s.town_code townCode,to_char(dtmon,'yyyy-MM')dtmon,
+        totalcnt1,proccnt1,totalcnt1-proccnt1 factcnt1,totalcnt2,proccnt2,totalcnt2-proccnt2 factcnt2,
+        totalcnt3,proccnt3,totalcnt3-proccnt3 factcnt3
+        from bas_source s inner join (
+        select source_id,trunc(start_date,'MM') dtmon,
+        sum(decode(w.warn_level,1,1,0)) totalcnt1,sum(case when w.warn_level=1 and warnid is not null then 1 else 0 end)
+        proccnt1,
+        sum(decode(w.warn_level,2,1,0)) totalcnt2,sum(case when w.warn_level=2 and warnid is not null then 1 else 0 end)
+        proccnt2,
+        sum(decode(w.warn_level,3,1,0)) totalcnt3,sum(case when w.warn_level=3 and warnid is not null then 1 else 0 end)
+        proccnt3
+        from dat_warnmsgheads w
+        left join (select warnid from dat_warnprocesses where is_deleted=0 group by warnid) p on p.warnid=w.id
+        where is_deleted=0
+        <if test="dtmon != null and dtmon !='' ">
+            and start_date > to_date(#{dtmon},'YYYY-MM') and start_date &lt; add_months(to_date(#{dtmon},'YYYY-MM') ,1)
+        </if>
+        group by source_id, trunc(start_date,'MM')
+        ) a on s.source_id=a.source_id and s.is_deleted=0
+        <trim prefix="WHERE" prefixOverrides="AND">
+            <if test="fullName != null and fullName !='' ">
+                and s.full_name like '%'|| #{fullName}||'%'
+            </if>
+            <if test="townName != null and townName !='' ">
+                and s.town_name like '%'|| #{townName}||'%'
+            </if>
+            <if test="townCode != null">
+                and s.town_code = #{townCode}
+            </if>
+            ${labelQuery}
+        </trim>
+        order by dtmon,s.town_name,s.full_name
+    </select>
+
+    <select id="getTownNetworkCount" resultType="map">
+        select town_name townName,town_code townCode,count(*) source_cnt,
+        sum(case when construction_status>=3 then 1 else 0 end) network_cnt,
+               sum(case when construction_status>=3 and not (nvl(mcnt,0)>90 and nvl(hcnt,0)>90 and nvl(dcnt,0)>=100) then 1 else 0 end) nocnt
+        from bas_source s
+        inner join dat_constructioninfo d on s.source_id=d.source_id
+        left join (
+            select source_id,round(avg(minucnt / 1.44), 2) mcnt,round(avg(hourcnt / 0.24), 2) hcnt,round(avg(daycnt / 0.01), 2) dcnt
+            from dat_completerate a
+                     inner join bas_checkpoint_element b on a.cp_elem_id=b.cp_elem_id and b.is_deleted=0
+                     inner join bas_checkpoint c on c.collect_id=b.collect_id and c.is_deleted=0
+        where datadate>=trunc(sysdate-7) and datadate &lt; trunc(sysdate)
+        group by source_id
+        ) c on s.source_id=c.source_id
+        where s.is_deleted=0 and d.is_deleted=0
+        group by town_name,town_code
+    </select>
+
+    <select id="getEnterpriseNetwork" parameterType="EnterpriseNetworkEntity" resultType="EnterpriseNetworkEntity">
+        select s.full_name fullName, s.town_name townName,s.town_code townCode, s.social_credit_code socialCreditCode,
+        d.construction_status status, d.short_name shortName,mcnt, hcnt, dcnt
+        from bas_source s
+        inner join dat_constructioninfo d on s.source_id=d.source_id and d.is_deleted=0
+        left join (
+        select source_id,round(avg(minucnt / 1.44), 2) mcnt,round(avg(hourcnt / 0.24), 2) hcnt,round(avg(daycnt / 0.01),
+        2) dcnt
+        from dat_completerate a
+        inner join bas_checkpoint_element b on a.cp_elem_id=b.cp_elem_id and b.is_deleted=0
+        inner join bas_checkpoint c on c.collect_id=b.collect_id and c.is_deleted=0
+        where datadate>=trunc(sysdate-7) and datadate &lt; trunc(sysdate)
+        group by source_id
+        ) c on s.source_id=c.source_id
+        where s.is_deleted=0 and construction_status>=3 and not (nvl(mcnt,0)>90 and nvl(hcnt,0)>90 and nvl(dcnt,0)>90)
+        <if test="fullName != null and fullName !='' ">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townName != null and townName !='' ">
+            and s.town_name like '%'|| #{townName}||'%'
+        </if>
+        <if test="townCode != null and townCode !='' ">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="shortName != null and shortName !='' ">
+            d.short_name like '%'|| #{shortName}||'%'
+        </if>
+        <if test="status != null">
+            d.construction_status = #{status}
+        </if>
+    </select>
+
+    <select id="getTownEmissionAmt" parameterType="string" resultType="map">
+        select s.town_name,
+        round(avg(d.avg_amt), 2) avg_amt,max(d.avg_amt) max_amt
+        from dat_day d
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id=ce.collect_id and c.is_deleted=0
+        inner join bas_source s on s.source_id = c.source_id
+        where ce.ele_type_id in ('g591') and d.datadate = to_date(#{dataDate},'yyyy-mm')
+        group by s.town_name
+        order by avg_amt
+    </select>
+
+    <select id="getEnterpriseEmissionAmt" parameterType="string" resultType="map">
+        select to_char(trunc(d.datadate, 'mm'), 'yyyy-mm') datadate,
+        round(avg(d.avg_amt), 2) avg_amt,
+        max(d.avg_amt) max_amt
+        from dat_day d
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id=ce.collect_id and c.is_deleted=0
+        inner join bas_source s on s.source_id = c.source_id
+        where ce.ele_type_id in ('g591')
+        and d.datadate >= add_months(trunc(sysdate, 'mm'), -5) and d.datadate &lt;= trunc(sysdate, 'mm')
+        <if test="townName != null and townName != ''">and s.town_name = #{townName}</if>
+        group by trunc(d.datadate, 'mm')
+        order by trunc(d.datadate, 'mm')
+    </select>
+
+    <select id="getTownCheckpointAmt" resultType="map">
+        select s.town_name, count(1) cnt,
+        count(case c.is_online when 1 then 1 end) online_cnt,
+        count(case c.is_online when 0 then 1 end) offline_cnt
+        from bas_checkpoint c
+        inner join bas_source s on s.source_id = c.source_id
+        where c.is_deleted = 0 and c.is_online is not null
+        group by s.town_name
+        order by cnt
+    </select>
+
+    <select id="getElementByEndDischarge" parameterType="string" resultType="map">
+        select cp_elem_id, element_desc from bas_checkpoint_element
+        where ele_type_id in ('g591','g592') and collect_id = #{collectId}
+    </select>
+
+    <select id="getDischargeTrend" parameterType="map" resultType="map">
+        select to_char(t.datadate, 'yyyy-mm-dd') datadate, d.amt from (
+            select trunc(to_date(#{datadate},'yyyy-mm'), 'dd') + level - 1 datadate from dual
+            connect by level &lt;= to_char(last_day(to_date(#{datadate},'yyyy-mm')),'dd')
+        ) t
+        left join (
+            select d.datadate, case when e.val_type &lt; 10 then avg_amt else cou_amt end amt
+            from dat_day d
+            inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+            inner join bas_element e on e.ele_type_id = ce.ele_type_id
+            where ce.cp_elem_id = #{cpElemId}
+        ) d on d.datadate = t.datadate
+        where t.datadate &lt; sysdate - 1
+        order by t.datadate
+    </select>
+</mapper>

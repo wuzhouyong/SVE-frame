@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.voc.mapper.VocOutletMapper">
+
+    <resultMap id="entity" type="VocOutletEntity">
+        <result property="outletId"       column="outlet_id"      />
+        <result property="sourceId"       column="source_id"      />
+        <result property="outletName"       column="outlet_name"      />
+        <result property="memo"       column="memo"      />
+        <result property="sourceName"       column="sourceName"      />
+    </resultMap>
+
+    <select id="selectOutlet" parameterType="VocOutletEntity" resultMap="entity">
+        select c.*,s.full_name sourceName
+        from BAS_OUTLET c
+        left join bas_source s on s.source_id = c.source_id
+        where c.is_deleted = 0
+        <if test="outletName != null and outletName != ''">
+            and c.outlet_name like '%'|| #{outletName}||'%'
+        </if>
+        <if test="sourceName != null and sourceName != ''">
+            and s.full_name like '%'|| #{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="outletId != null and outletId != ''">
+            and c.outletId = #{outletId}
+        </if>
+        ${dataScope}
+    </select>
+
+    <insert id="insertOutlet" parameterType="VocOutletEntity">
+        INSERT INTO BAS_OUTLET
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            OUTLET_ID,
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="outletName != null  and outletName != ''">OUTLET_NAME,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            IS_DELETED,UPDATED_BY,DATE_UPDATED
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{outletId},
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="outletName != null  and outletName != ''">#{outletName},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            0,#{updatedBy},SYSDATE
+        </trim>
+    </insert>
+
+    <delete id="deleteOutlet" parameterType="VocDeleteEntity">
+        UPDATE BAS_OUTLET
+        <set>
+            IS_DELETED = 1,
+            <if test="userName != null and userName != ''">
+                UPDATED_BY = #{userName},
+            </if>
+            DATE_UPDATED = SYSDATE
+        </set>
+        where OUTLET_ID in
+        <foreach collection="array" item="outletId" open="(" separator="," close=")">
+            #{outletId}
+        </foreach>
+    </delete>
+
+    <update id="updateOutlet" parameterType="VocOutletEntity">
+        UPDATE BAS_OUTLET SET
+        SOURCE_ID = #{sourceId, jdbcType=VARCHAR},
+        OUTLET_NAME = #{outletName, jdbcType=VARCHAR},
+        MEMO = #{memo, jdbcType=VARCHAR},
+        UPDATED_BY = #{updatedBy},DATE_UPDATED = SYSDATE
+        WHERE OUTLET_ID =  #{outletId}
+    </update>
+
+</mapper>

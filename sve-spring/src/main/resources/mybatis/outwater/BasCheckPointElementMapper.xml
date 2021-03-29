@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.outwater.mapper.BasCheckPointElementMapper">
+
+    <resultMap id="basEntity" type="BasCheckPointElement">
+        <result property="cpElementId"       column="CP_Elem_Id"/>
+        <result property="collectId"       column="COLLECT_ID"/>
+        <result property="checkPointName"     column="CheckPoint_Name"/>
+        <result property="fullName"       column="Full_Name"/>
+        <result property="collectName"       column="Collect_Name"/>
+        <result property="isOnline"       column="Is_Online"/>
+        <result property="checkDate"       column="Check_Date"/>
+        <result property="elemName"     column="element_desc"/>
+        <result property="elemTypeId"      column="ELE_TYPE_ID"/>
+        <result property="elemCode"     column="ELEMENT_CODE"/>
+        <result property="rangeMin"      column="Range_Min"/>
+        <result property="rangeMax"     column="Range_Max"/>
+        <result property="warnMin"      column="Warn_Min"/>
+        <result property="warnMax"      column="Warn_Max"/>
+        <result property="elemTypeDesc"      column="ELE_TYPE_DESC"/>
+    </resultMap>
+
+    <resultMap id="nameAndId" type="NameAndIdEntity">
+        <result property="Name"     column="ELE_TYPE_DESC"      />
+        <result property="Id"      column="ELE_TYPE_ID"       />
+    </resultMap>
+
+    <select id="selectCheckPointElementList" parameterType="BasCheckPointElement" resultMap="basEntity">
+        SELECT s.Full_Name,p.full_name CheckPoint_Name,b.ELE_TYPE_DESC,e.* FROM BAS_CHECKPOINT_ELEMENT e
+        left join BAS_CHECKPOINT p on e.COLLECT_ID = p.COLLECT_ID
+        left join pf_bas_source s on p.SOURCE_ID = s.SOURCE_ID
+        left join BAS_ELEMENT b on b.ELE_TYPE_ID = e.ELE_TYPE_ID
+        where e.IS_DELETED = 0 and p.is_deleted = 0
+        <if test="fullName != null and fullName != ''">
+            and s.Full_Name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="collectId != null and collectId != ''">
+            and p.COLLECT_ID = #{collectId}
+        </if>
+        <if test="checkPointName != null and checkPointName != ''">
+            and p.FULL_NAME like '%'|| #{checkPointName}||'%'
+        </if>
+        <if test="elemName != null and elemName != ''">
+            and e.ELEMENT_DESC like '%'|| #{elemName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.SOURCE_ID = #{sourceId}
+        </if>
+        ORDER BY e.date_created DESC
+    </select>
+
+    <select id="getTotal" resultType="int" parameterType="BasCheckPointElement">
+        select count(1) from BAS_CHECKPOINT_ELEMENT e
+        left join BAS_CHECKPOINT p on e.COLLECT_ID = p.COLLECT_ID
+        left join pf_bas_source s on p.SOURCE_ID = s.SOURCE_ID
+        left join BAS_ELEMENT b on b.ELE_TYPE_ID = e.ELE_TYPE_ID
+        where e.IS_DELETED = 0
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="checkPointName != null and checkPointName != ''">
+            and p.FULL_NAME like '%'|| #{checkPointName}||'%'
+        </if>
+        <if test="elemName != null and elemName != ''">
+            and e.ELEMENT_DESC like '%'|| #{elemName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <update id="deleteCheckPointElementById" parameterType="String">
+        UPDATE BAS_CHECKPOINT_ELEMENT
+        <set>
+            is_deleted = 1,
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = SYSDATE
+        </set>
+        where CP_ELEM_ID = #{cpElementId}
+    </update>
+
+    <select id="repeatCheck" resultType="int" parameterType="BasCheckPointElement">
+        select count(1) from Bas_CheckPoint_Element
+        where ELEMENT_CODE = #{elemCode} and COLLECT_ID = #{collectId} and is_deleted = 0
+    </select>
+
+    <insert id="insertCheckPointElement" parameterType="BasCheckPointElement">
+        INSERT INTO Bas_CheckPoint_Element (
+            CP_ELEM_ID,
+            COLLECT_ID,
+            ELEMENT_DESC,
+            ELE_TYPE_ID,
+            ELEMENT_CODE,
+            Range_Min,
+            Range_Max,
+            Warn_Min,
+            Warn_Max,
+            is_deleted,
+            created_by,
+            updated_by,
+            date_created,
+            date_updated
+        ) VALUES (
+            SEQ_CPELEMID.nextval,
+            <if test="collectId != null and collectId != ''">#{collectId},</if>
+            <if test="elemName != null and elemName != ''">#{elemName},</if>
+            <if test="elemTypeId != null and elemTypeId != ''">#{elemTypeId},</if>
+            <if test="elemCode != null and elemCode != ''">#{elemCode},</if>
+            <if test="rangeMin != null and rangeMin != ''">#{rangeMin},</if>
+            <if test="rangeMax != null and rangeMax != ''">#{rangeMax},</if>
+            <if test="warnMin != null and warnMin != ''">#{warnMin},</if>
+            <if test="warnMax != null and warnMax != ''">#{warnMax},</if>
+            0,
+            <if test="createdBy != null and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null and updatedBy != ''">#{updatedBy},</if>
+            sysdate,
+            sysdate
+        )
+    </insert>
+
+    <update id="updateCheckPointElement" parameterType="BasCheckPointElement">
+        UPDATE Bas_CheckPoint_Element
+        <set>
+            COLLECT_ID = #{collectId, jdbcType=VARCHAR},
+            ELEMENT_DESC = #{elemName, jdbcType=VARCHAR},
+            ELE_TYPE_ID = #{elemTypeId, jdbcType=VARCHAR},
+            ELEMENT_CODE = #{elemCode, jdbcType=VARCHAR},
+            <if test="rangeMin != null">Range_Min = #{rangeMin},</if>
+            <if test="rangeMax != null">Range_Max = #{rangeMax},</if>
+            <if test="warnMin != null">Warn_Min = #{warnMin},</if>
+            <if test="warnMax != null">Warn_Max = #{warnMax},</if>
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where CP_ELEM_ID = #{cpElementId}
+    </update>
+
+    <select id="selectElementIdNameListList" parameterType="String" resultMap="nameAndId">
+        SELECT ELE_TYPE_ID, ELE_TYPE_DESC FROM
+        (select rownum num, ELE_TYPE_ID, ELE_TYPE_DESC
+        from Bas_Element
+        where IS_DELETED = 0
+        <if test="elemTypeDesc != null and elemTypeDesc != ''">
+            and ELE_TYPE_DESC like '%'|| #{elemTypeDesc}||'%'
+        </if>
+        <if test="elemTypeId != null and elemTypeId != ''">
+            and ELE_TYPE_ID like '%'|| #{elemTypeId}||'%'
+        </if>
+        ORDER by date_updated DESC)
+        WHERE num BETWEEN 1 AND 30
+    </select>
+
+</mapper>

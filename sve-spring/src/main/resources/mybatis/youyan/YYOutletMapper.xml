@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.youyan.mapper.YYOutletMapper">
+
+    <resultMap type="YYOutletEntity" id="BasOutletResult">
+        <result property="outletId" column="OUTLET_ID"/>
+        <result property="sourceId" column="SOURCE_ID"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="outletName" column="OUTLET_NAME"/>
+        <result property="memo" column="MEMO"/>
+    </resultMap>
+
+    <select id="selectBasOutletList" parameterType="YYOutletEntity" resultMap="BasOutletResult">
+        select c.*,s.full_name sourceName
+        from BAS_OUTLET c
+        left join bas_source s on s.source_id = c.source_id
+        where c.is_deleted = 0
+        <if test="outletName != null and outletName != ''">
+            and c.outlet_name like '%'|| #{outletName}||'%'
+        </if>
+        <if test="sourceName != null and sourceName != ''">
+            and s.full_name like '%'|| #{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="outletId != null and outletId != ''">
+            and c.outletId = #{outletId}
+        </if>
+        ${dataScope}
+    </select>
+
+    <insert id="insertBasOutlet" parameterType="YYOutletEntity">
+        insert into bas_outlet
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="outletId != null  and outletId != ''">OUTLET_ID,</if>
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="outletName != null  and outletName != ''">OUTLET_NAME,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            IS_DELETED,UPDATED_BY,DATE_UPDATED
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="outletId != null  and outletId != ''">#{outletId},</if>
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="outletName != null  and outletName != ''">#{outletName},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            0,#{updatedBy},SYSDATE
+        </trim>
+    </insert>
+
+    <update id="updateBasOutlet" parameterType="YYOutletEntity">
+        update bas_outlet
+        <trim prefix="SET" suffixOverrides=",">
+            SOURCE_ID = #{sourceId,jdbcType=VARCHAR},
+            DATE_UPDATED = sysdate,
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY = #{updatedBy},</if>
+            OUTLET_NAME = #{outletName,jdbcType=VARCHAR},
+            MEMO = #{memo,jdbcType=VARCHAR}
+        </trim>
+        where OUTLET_ID = #{outletId} and IS_DELETED=0
+    </update>
+
+    <update id="deleteBasOutletByIds" parameterType="String">
+        UPDATE BAS_OUTLET set IS_DELETED = 1,UPDATED_BY = #{updatedBy},DATE_UPDATED = SYSDATE
+        where OUTLET_ID in
+        <foreach collection="outletIds" item="outletId" open="(" separator="," close=")">
+            #{outletId}
+        </foreach>
+    </update>
+
+</mapper>

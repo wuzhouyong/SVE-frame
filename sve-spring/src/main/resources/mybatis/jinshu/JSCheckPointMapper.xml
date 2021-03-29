@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.jinshu.mapper.JSCheckPointMapper">
+
+    <resultMap id="sourceList" type="JSNameIdEntity">
+        <result property="id"       column="source_id"      />
+        <result property="name"       column="full_name"      />
+    </resultMap>
+
+    <resultMap id="cpList" type="JSNameIdEntity">
+        <result property="id"       column="collect_id"      />
+        <result property="name"       column="full_name"      />
+    </resultMap>
+
+    <resultMap id="bizSourceId" type="JSNameIdEntity">
+        <result property="id"       column="biz_source_id"      />
+    </resultMap>
+
+    <resultMap id="checkPointList" type="JSCheckPointEntity">
+        <result property="sourceId"       column="source_id"      />
+        <result property="cpName"       column="cpName"      />
+        <result property="collectId"       column="collect_id"      />
+        <result property="ipAddress"       column="ip_address"      />
+        <result property="isOnline"       column="is_online"      />
+        <result property="mn"       column="mn"      />
+        <result property="sourceName"       column="sourceName"      />
+        <result property="checkDate"       column="check_date"      />
+        <result property="acquisitionBrand"       column="acquisition_brand"      />
+        <result property="isEnvcert"       column="is_envcert"      />
+    </resultMap>
+
+    <select id="checkConstruction" parameterType="String" resultType="int">
+        SELECT CONSTRUCTION_STATUS FROM DAT_CONSTRUCTIONINFO WHERE IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            and SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <select id="selectCPList" parameterType="String" resultMap="cpList" >
+        select s.collect_id, s.full_name
+        FROM bas_checkpoint s
+        where s.is_deleted = 0
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        order by s.full_name
+    </select>
+
+    <select id="selectBizSourceId" parameterType="String" resultMap="bizSourceId">
+        SELECT biz_source_id from BASECENTER.PF_BAS_TAG_DETAIL where tag_head_id = 1015 and pf_source_id = #{sourceId}
+    </select>
+
+    <select id="selectCheckPoint" parameterType="JSCheckPointEntity" resultMap="checkPointList">
+        select c.collect_id, c.ip_address, c.is_online, c.mn, c.source_id, s.full_name sourceName, c.check_date, c.full_name cpName, c.acquisition_brand, c.is_envcert
+        from bas_checkpoint c
+        left join bas_source s on s.source_id = c.source_id
+        where c.is_deleted = 0
+        <if test="cpName != null and cpName != ''">
+            and c.full_name like '%'|| #{cpName}||'%'
+        </if>
+        <if test="sourceName != null and sourceName != ''">
+            and s.full_name like '%'|| #{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="mn != null and mn != ''">
+            and c.mn like '%'|| #{mn}||'%'
+        </if>
+        <if test="isOnline != null and isOnline != ''">
+            and s.is_online = #{isOnline}
+        </if>
+        ${dataScope}
+    </select>
+
+    <select id="selectSourceList" parameterType="JSSourceParam" resultMap="sourceList" >
+        select s.source_id, s.full_name
+        FROM bas_source s
+        where s.is_deleted = 0
+        <if test="sourceName != null and sourceName != ''">
+            and s.full_name like '%'|| #{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        ${dataScope}
+        order by s.full_name
+    </select>
+
+    <update id="updateCheckPoint" parameterType="JSCheckPointEntity">
+        UPDATE BAS_CHECKPOINT SET
+        SOURCE_ID = #{sourceId, jdbcType=VARCHAR},
+        FULL_NAME = #{cpName, jdbcType=VARCHAR},
+        IP_ADDRESS = #{ipAddress, jdbcType=VARCHAR},
+        ACQUISITION_BRAND = #{acquisitionBrand, jdbcType=VARCHAR},
+        <if test="isEnvcert != null">IS_ENVCERT = #{isEnvcert},</if>
+        UPDATED_BY = #{updatedBy},DATE_UPDATED = SYSDATE
+        WHERE COLLECT_ID =  #{collectId}
+    </update>
+
+    <insert id="insertCheckPoint" parameterType="JSCheckPointEntity">
+        INSERT INTO BAS_CHECKPOINT
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            COLLECT_ID,
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="cpName != null  and cpName != ''">FULL_NAME,</if>
+            MN,
+            <if test="ipAddress != null  and ipAddress != ''">IP_ADDRESS,</if>
+            <if test="acquisitionBrand != null  and acquisitionBrand != ''">ACQUISITION_BRAND,</if>
+            <if test="isEnvcert != null  and isEnvcert != ''">IS_ENVCERT,</if>
+            COLLECT_PASS,IS_DELETED,CREATED_BY,UPDATED_BY,DATE_CREATED,DATE_UPDATED
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{collectId},
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="cpName != null  and cpName != ''">#{cpName},</if>
+            getId('JS'),
+            <if test="ipAddress != null  and ipAddress != ''">#{ipAddress},</if>
+            <if test="acquisitionBrand != null  and acquisitionBrand != ''">#{acquisitionBrand},</if>
+            <if test="isEnvcert != null  and isEnvcert != ''">#{isEnvcert},</if>
+            #{collectPass, jdbcType=VARCHAR},0,#{createdBy},#{updatedBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <update id="modifyPassWord" parameterType="map">
+        UPDATE BAS_CHECKPOINT set COLLECT_PASS = #{collectPass} where IS_DELETED = 0 and COLLECT_ID = #{collectId}
+    </update>
+
+    <delete id="deleteCheckPoint" parameterType="JSDeleteEntity">
+        UPDATE BAS_CHECKPOINT
+        <set>
+            IS_DELETED = 1,
+            <if test="userName != null and userName != ''">
+                UPDATED_BY = #{userName},
+            </if>
+            DATE_UPDATED = SYSDATE
+        </set>
+        where COLLECT_ID in
+        <foreach collection="array" item="collectId" open="(" separator="," close=")">
+            #{collectId}
+        </foreach>
+    </delete>
+
+
+    <select id="isExitCon" resultType="int">
+      select  count(1) from Dat_ConStructionInfo where source_id=#{sourceId}
+    </select>
+
+</mapper>

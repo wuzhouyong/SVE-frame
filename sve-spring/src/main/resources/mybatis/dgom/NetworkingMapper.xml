@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.NetworkingMapper">
+    <!--新增联网申请-->
+    <insert id="insertConnectapply" parameterType="com.ruoyi.project.dgom.domain.network_apply.RegisterModel">
+        insert into ent_connectapply (
+        zapplyid, zsourceid,zindustryid,zsocialcreditcode,
+        <if test="sourceId !=null and sourceId !=''">zsourcename,</if>
+        <if test="envChargeMan !=null and envChargeMan !=''">zenvchargeman,</if>
+        <if test="contactTel !=null and contactTel !=''">zcontacttel,</if>
+        <if test="networkOperator !=null and networkOperator !=''">znetworkoperator,</if>
+        <if test="contactCellPhone !=null and contactCellPhone !=''">zcontactcellphone,</if>
+        ztownid, zaddress, zlongitude, zlatitude, zstatus,
+        zapplyperson, zapplydate, zisdeleted, zcreatedby, zupdatedby, zdatecreated, zdateupdated
+        )values (
+        #{applyId,jdbcType=VARCHAR},#{sourceId,jdbcType=INTEGER},
+        #{industryId,jdbcType=INTEGER},#{socialCreditCode,jdbcType=VARCHAR},
+        <if test="sourceName !=null and sourceName !=''">#{sourceName,jdbcType=VARCHAR},</if>
+        <if test="envChargeMan !=null and envChargeMan !=''">#{envChargeMan,jdbcType=VARCHAR},</if>
+        <if test="contactTel !=null and contactTel !=''">#{contactTel,jdbcType=VARCHAR},</if>
+        <if test="networkOperator !=null and networkOperator !=''">#{networkOperator,jdbcType=VARCHAR},</if>
+        <if test="contactCellPhone !=null and contactCellPhone !=''">#{contactCellPhone,jdbcType=VARCHAR},</if>
+        #{townId,jdbcType=INTEGER},#{address,jdbcType=INTEGER},#{longitude,jdbcType=VARCHAR},
+        #{latitude,jdbcType=VARCHAR},0,#{applyPerson,jdbcType=VARCHAR},sysdate, 0,
+        #{createdBy,jdbcType=VARCHAR}, #{updatedBy,jdbcType=VARCHAR} , sysdate, sysdate )
+    </insert>
+
+    <select id="selectSourceNameById" parameterType="int" resultType="string">
+        select zdatasourname sourceName from zdatasoursetting where zdatasourid=#{sourceId} and ZISDELETED=0
+    </select>
+
+    <!--插入数采信息到数据库-->
+    <insert id="insertCollectdevdetail" parameterType="com.ruoyi.project.dgom.domain.CollectModel">
+        insert into ent_collectdevdetail (
+        zdetailid, zapplyid,
+        <if test="checkpointDesc !=null and checkpointDesc !=''">zcheckpointdesc,</if>
+        <if test="collectDevDesc !=null and collectDevDesc !=''">zcollectdevdesc,</if>
+        <if test="collectDevSpec !=null and collectDevSpec !=''">zcollectdevspec,</if>
+        zmn, zisdeleted, zdateupdated
+        )values (
+        #{detailId,jdbcType=VARCHAR},#{applyId,jdbcType=INTEGER},
+        <if test="checkpointDesc !=null and checkpointDesc !=''">#{checkpointDesc,jdbcType=VARCHAR},</if>
+        <if test="collectDevDesc !=null and collectDevDesc !=''">#{collectDevDesc,jdbcType=VARCHAR},</if>
+        <if test="collectDevSpec !=null and collectDevSpec !=''">#{collectDevSpec,jdbcType=VARCHAR},</if>
+        #{mn,jdbcType=INTEGER},0, sysdate )
+    </insert>
+    <!--插入设备因子到数据库-->
+    <insert id="insertConnectApplydetail" parameterType="com.ruoyi.project.dgom.domain.DeviceModel">
+        insert into ent_connectapplydetail (
+        zdetailid, zcollectdevid,
+        <if test="element !=null and element !=''">zelement,</if>
+        <if test="brand !=null and brand !=''">zbrand,</if>
+        <if test="type !=null and type !=''">ztype,</if>
+        <if test="alarmMin !=null and alarmMin !=''">zalarmmin,</if>
+        <if test="alarmMax !=null and alarmMax !=''">zalarmmax,</if>
+        zisdeleted, zdateupdated
+        )values (
+        #{detailId,jdbcType=VARCHAR},#{collectDevId,jdbcType=INTEGER},
+        <if test="element !=null and element !=''">#{element,jdbcType=INTEGER},</if>
+        <if test="brand !=null and brand !=''">#{brand,jdbcType=INTEGER},</if>
+        <if test="type !=null and type !=''">#{type,jdbcType=INTEGER},</if>
+        <if test="alarmMin !=null and alarmMin !=''">#{alarmMin,jdbcType=INTEGER},</if>
+        <if test="alarmMax !=null and alarmMax !=''">#{alarmMax,jdbcType=INTEGER},</if>
+        0, sysdate )
+    </insert>
+
+    <resultMap id="rmEntity" type="com.ruoyi.project.dgom.domain.network_apply.RegisterModel">
+        <result property="applyId" column="zapplyid"/>
+        <result property="sourceId" column="zsourceid"/>
+        <result property="sourceName" column="zsourcename"/>
+        <result property="industryId" column="zindustryid"/>
+        <result property="socialCreditCode" column="zsocialcreditcode"/>
+        <result property="envChargeMan" column="zenvchargeman"/>
+        <result property="contactTel" column="zcontacttel"/>
+        <result property="networkOperator" column="znetworkoperator"/>
+        <result property="townId" column="ztownid"/>
+        <result property="address" column="zaddress"/>
+        <result property="longitude" column="zlongitude"/>
+        <result property="latitude" column="zlatitude"/>
+        <result property="status" column="zstatus"/>
+        <result property="applyPerson" column="zapplyperson"/>
+        <result property="applyDate" column="zapplydate"/>
+        <result property="contactCellPhone" column="zcontactcellphone"/>
+        <result property="approvalDesc" column="zapprovaldesc"/>
+        <result property="approvedBy" column="zapprovedby"/>
+        <result property="approvedDate" column="zapproveddate"/>
+        <result property="muApprovalDesc" column="zmuapprovaldesc"/>
+        <result property="muApprovedBy" column="zmuapprovedby"/>
+        <result property="muApprovedDate" column="zmuapproveddate"/>
+    </resultMap>
+
+    <select id="selectConnectApplyList" resultMap="rmEntity"
+            parameterType="com.ruoyi.project.dgom.domain.network_apply.NetworkingSearchModel">
+        select c.*,l.zlabelname townName,f.zlabelname industryName from ent_connectapply c
+        left join zlabelhead l on c.ZTOWNID =l.zlabelheadid and l.ZISDELETED =0
+        left join zlabelhead f on c.zindustryid =f.zlabelheadid and f.ZISDELETED =0
+        where c.zisdeleted = 0
+        <if test="sourceId !=null">
+            and c.zsourceid=#{sourceId,jdbcType=INTEGER}
+        </if>
+        <if test="sourceName !=null and sourceName !=''">
+            and c.zsourcename like '%' || #{sourceName,jdbcType=VARCHAR} || '%'
+        </if>
+        <if test="townId !=null ">
+            and c.ztownid=#{townId,jdbcType=INTEGER}
+        </if>
+        <if test="industryId !=null ">
+            and c.zindustryid=#{industryId,jdbcType=INTEGER}
+        </if>
+        <if test="statu !=null">
+            and c.zstatus in
+            <foreach collection="statu" item="stat" open="(" separator="," close=")" index="index">
+                #{stat}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="selectRegisterModelById" resultMap="rmEntity" parameterType="string">
+        select c.*,l.zlabelname townName,f.zlabelname industryName from ent_connectapply c
+        left join zlabelhead l on c.ZTOWNID =l.zlabelheadid and l.ZISDELETED =0
+        left join zlabelhead f on c.zindustryid =f.zlabelheadid and f.ZISDELETED =0
+        where c.ZISDELETED=0 and zapplyid=#{applyId,jdbcType=VARCHAR}
+    </select>
+
+    <resultMap id="cEntity" type="com.ruoyi.project.dgom.domain.CollectModel">
+        <result property="detailId" column="zdetailid"/>
+        <result property="applyId" column="zapplyid"/>
+        <result property="checkpointDesc" column="zcheckpointdesc"/>
+        <result property="collectDevDesc" column="zcollectdevdesc"/>
+        <result property="collectDevSpec" column="zcollectdevspec"/>
+        <result property="mn" column="zmn"/>
+    </resultMap>
+
+    <select id="selectCollectdevdetailById" resultMap="cEntity" parameterType="string">
+        select * from ent_collectdevdetail where zisdeleted = 0 and zapplyid=#{applyId,jdbcType=VARCHAR}
+    </select>
+
+    <resultMap id="dEntity" type="com.ruoyi.project.dgom.domain.DeviceModel">
+        <result property="detailId" column="zdetailid"/>
+        <result property="collectDevId" column="zcollectdevid"/>
+        <result property="element" column="zelement"/>
+        <result property="brand" column="zbrand"/>
+        <result property="type" column="ztype"/>
+        <result property="alarmMin" column="zalarmmin"/>
+        <result property="alarmMax" column="zalarmmax"/>
+    </resultMap>
+
+    <select id="selectDeviceModelById" resultMap="dEntity" parameterType="string">
+        select c.*,d.zcheckpointdesc checkpointDesc,d.zmn mn from ent_connectapplydetail c
+        left join ent_collectdevdetail d on c.zcollectdevid = d.zdetailid and d.ZISDELETED=0
+        where c.ZISDELETED=0 and c.zcollectdevid=#{detailId,jdbcType=VARCHAR}
+    </select>
+
+    <!--分局审批  zstatus// 2.同意  3.拒绝-->
+    <update id="substationApproval" parameterType="com.ruoyi.project.dgom.domain.network_apply.ApprovalModel">
+        update ent_connectapply set
+        zstatus = #{status,jdbcType=VARCHAR},
+        zapprovaldesc = #{approvalDesc,jdbcType=VARCHAR},
+        zapprovedby = #{approvedBy,jdbcType=VARCHAR},
+        zapproveddate = sysdate,
+        zupdatedby=#{updatedBy,jdbcType=VARCHAR},
+        zdateupdated = sysdate
+        where zapplyid = #{applyId,jdbcType=VARCHAR} and zisdeleted=0
+    </update>
+
+    <!--状态改为1-->
+    <update id="updateConnectapplyById" parameterType="string">
+        update ent_connectapply set zstatus = 1,zdateupdated=sysdate
+        where zapplyid = #{applyId,jdbcType=VARCHAR} and zisdeleted=0
+    </update>
+
+    <!--市局审批  zstatus// 4.同意  5.拒绝 -->
+    <update id="municipalApproval" parameterType="com.ruoyi.project.dgom.domain.network_apply.MuApprovalModel">
+        update ent_connectapply set zstatus = #{status,jdbcType=VARCHAR},
+        zmuapprovaldesc = #{muApprovalDesc,jdbcType=VARCHAR},
+        zmuapprovedby = #{muApprovedBy,jdbcType=VARCHAR},
+        zmuapproveddate = sysdate,zupdatedby=#{updatedBy,jdbcType=VARCHAR},
+        zdateupdated = sysdate
+        where zapplyid = #{applyId,jdbcType=VARCHAR} and zisdeleted=0
+    </update>
+
+    <!--值守 zstatus变为6-->
+    <update id="dutyApproval" parameterType="com.ruoyi.project.dgom.domain.network_apply.DutyApprovalModel">
+        update ent_connectapply set zstatus = 6,
+        zconnecteddesc = #{connectedDesc,jdbcType=VARCHAR},
+        zconnectedby = #{connectedBy,jdbcType=VARCHAR},
+        zconnecteddate = sysdate,zupdatedby=#{updatedBy,jdbcType=VARCHAR},
+        zdateupdated = sysdate
+        where zapplyid in
+        <foreach collection="applyIds" item="applyId" open="(" separator="," close=")" index="index">
+            #{applyId,jdbcType=VARCHAR}
+        </foreach>
+        and zisdeleted=0
+    </update>
+
+    <update id="deleteRegister" parameterType="string">
+        update ent_connectapply set zisdeleted = 1,
+        zupdatedby = #{updatedBy,jdbcType=VARCHAR},
+        zdateupdated = sysdate
+        where zapplyid = #{applyId}
+    </update>
+
+    <update id="deleteCollects" parameterType="string">
+        update ent_collectdevdetail set zisdeleted = 1,
+        zdateupdated = sysdate
+        where zapplyid = #{applyId}
+    </update>
+
+    <update id="deleteDevices" parameterType="string">
+        update ent_connectapplydetail set zisdeleted = 1, zdateupdated = sysdate
+         where zcollectdevid in (
+            select zdetailid from ent_collectdevdetail where zapplyid = #{applyId}
+           )
+    </update>
+
+    <resultMap id="aEntity" type="com.ruoyi.project.dgom.domain.AnnexEntity">
+        <result property="updatedby" column="zupdatedby"/>
+        <result property="type" column="ztype"/>
+        <result property="masterType" column="zmastertype"/>
+        <result property="applyId" column="zmasterrecordid"/>
+        <result property="fileName" column="zfilename"/>
+        <result property="savePath" column="zsavepath"/>
+        <result property="createdby" column="zcreatedby"/>
+        <result property="attachfileid" column="zattachfileid"/>
+    </resultMap>
+
+    <!--查询附件列表-->
+    <select id="selectAnnexList" resultMap="aEntity"
+            parameterType="com.ruoyi.project.dgom.domain.AnnexEntity">
+        select * from zonlineattachfile
+        where zmastertype in ('Ent_ConnectApply', 'Ent_ConnectApply_Approval')
+        and zisdeleted=0
+        <if test="applyId !=null and applyId !=''">
+            and zmasterrecordid = #{applyId}
+        </if>
+        <if test="fileName !=null and fileName !=''">
+            and zfilename like '%'||#{fileName}||'%'
+        </if>
+    </select>
+
+    <!--查询附件-->
+    <select id="selectOnlineattachfile" resultMap="aEntity" parameterType="string">
+        select * from zonlineattachfile where zisdeleted=0 and zattachfileid=#{attachfileid}
+    </select>
+
+    <!--新增附件-->
+    <insert id="insertAnnex" parameterType="com.ruoyi.project.dgom.domain.AnnexEntity">
+        insert into zonlineattachfile
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            zattachfileid,
+            <if test="type != null  and type != ''">ztype,</if>
+            <if test="masterType != null  and masterType != ''">zmastertype,</if>
+            <if test="fileName != null  and fileName != ''">zfilename,</if>
+            <if test="savePath != null  and savePath != ''">zsavepath,</if>
+            <if test="applyId != null and applyId != ''">zmasterrecordid,</if>
+            zisdeleted,zcreatedby,zupdatedby,zdatecreated,zdateupdated
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{attachfileid},
+            <if test="type != null  and type != ''">#{type},</if>
+            <if test="masterType != null  and masterType != ''">#{masterType},</if>
+            <if test="fileName != null  and fileName != ''">#{fileName},</if>
+            <if test="savePath != null  and savePath != ''">#{savePath},</if>
+            <if test="applyId != null  and applyId != ''">#{applyId},</if>
+            0,#{createdby},#{updatedby},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--删除附件-->
+    <update id="deleteAnnex">
+        update zonlineattachfile set zupdatedby = #{updatedby,jdbcType=VARCHAR},zdateupdated=SYSDATE,zisdeleted=1
+        where zattachfileid in
+        <foreach collection="attachfileids" item="attachfileid" open="(" separator="," close=")" index="index">
+            #{attachfileid}
+        </foreach>
+    </update>
+
+</mapper>

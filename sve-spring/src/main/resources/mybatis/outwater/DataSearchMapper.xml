@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.outwater.mapper.DataSearchMapper">
+
+    <resultMap id="elemData" type="ElemDataEntity">
+        <result property="dataDate" column="DataDate"/>
+        <result property="checkPointName" column="CheckPoint_Name"/>
+        <result property="pH" column="pH"/>
+        <result property="conductivity" column="conductivity"/>
+        <result property="WQI" column="WQI"/>
+    </resultMap>
+
+    <select id="selectRealDataS" parameterType="DataSearchParam" resultMap="elemData">
+        select s.DataDate,c.FULL_NAME CheckPoint_Name,sum(case when ce.ELE_TYPE_ID = 'ea70' then s.Amount end) pH,
+        sum(case when
+        ce.ELE_TYPE_ID = 'ea71' then s.Amount end) conductivity,
+        sum(case when ce.ELE_TYPE_ID = 'ps00' then s.Amount end) WQI
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Second s on s.CP_Elem_Id = ce.CP_Elem_Id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss') and s.DataDate &lt; to_date(#{endDate},
+        'yyyy-mm-dd hh24:mi:ss')
+        and c.Source_Id = #{sourceId} and c.is_deleted = 0 and ce.is_deleted = 0 and c.CheckPoint_Type = '1'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        group by s.DataDate,c.FULL_NAME
+        order by s.DataDate desc
+    </select>
+
+    <select id="selectRealDataR" parameterType="DataSearchParam" resultMap="elemData">
+        select s.DataDate,c.FULL_NAME CheckPoint_Name,sum(case when ce.ELE_TYPE_ID = 'ea73' then s.Amount end)
+        pH,sum(case when
+        ce.ELE_TYPE_ID = 'ea74' then s.Amount end) conductivity,
+        sum(case when ce.ELE_TYPE_ID = 'ps00' then s.Amount end) WQI
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Second s on s.CP_Elem_Id = ce.CP_Elem_Id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss') and s.DataDate &lt; to_date(#{endDate},
+        'yyyy-mm-dd hh24:mi:ss')
+        and c.Source_Id = #{sourceId} and c.is_deleted = 0 and ce.is_deleted = 0 and c.CheckPoint_Type = '2'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        group by s.DataDate,c.FULL_NAME
+        order by s.DataDate desc
+    </select>
+
+    <select id="selectMinuteDataS" parameterType="DataSearchParam" resultMap="elemData">
+        select DataDate, CheckPoint_Name,sum(case when ELE_TYPE_ID = 'ea70' then Amount end) pH, sum(case when
+        ELE_TYPE_ID = 'ea71' then Amount end) conductivity,
+        sum(case when ELE_TYPE_ID = 'ps00' then Amount end) WQI
+        from (
+        select s.DataDate,c.FULL_NAME CheckPoint_Name, ce.ELE_TYPE_ID, s.Avg_Amt Amount
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Minute s on s.CP_Elem_Id = ce.CP_Elem_Id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd') and s.DataDate &lt; to_date(#{endDate}, 'yyyy-mm-dd')
+        and c.Source_Id = #{sourceId} and c.is_deleted = 0 and ce.is_deleted = 0 and c.CheckPoint_Type = '1'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        )
+        group by DataDate,CheckPoint_Name
+        order by DataDate desc
+    </select>
+
+    <select id="selectMinuteDataR" parameterType="DataSearchParam" resultMap="elemData">
+        select DataDate, CheckPoint_Name,sum(case when ELE_TYPE_ID = 'ea73' then Amount end) pH, sum(case when
+        ELE_TYPE_ID = 'ea74' then Amount end) conductivity,
+        sum(case when ELE_TYPE_ID = 'ps00' then Amount end) WQI
+        from (
+        select s.DataDate,c.FULL_NAME CheckPoint_Name, ce.ELE_TYPE_ID, s.Avg_Amt Amount
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Minute s on s.CP_Elem_Id = ce.CP_Elem_Id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd') and s.DataDate &lt; to_date(#{endDate}, 'yyyy-mm-dd')
+        and c.Source_Id = #{sourceId} and c.is_deleted = 0 and ce.is_deleted = 0 and c.CheckPoint_Type = '2'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        )
+        group by DataDate,CheckPoint_Name
+        order by DataDate desc
+    </select>
+
+    <select id="selectHourDataS" parameterType="DataSearchParam" resultMap="elemData">
+        select DataDate, CheckPoint_Name,sum(case when ELE_TYPE_ID = 'ea70' then Amount end) pH, sum(case when
+        ELE_TYPE_ID = 'ea71' then Amount end) conductivity,
+        sum(case when ELE_TYPE_ID = 'ps00' then Amount end) WQI
+        from (
+        select s.DataDate,c.FULL_NAME CheckPoint_Name, ce.ELE_TYPE_ID, s.Avg_Amt Amount
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Hour s on s.CP_Elem_Id = ce.CP_Elem_Id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd')
+        and s.DataDate &lt; to_date(#{endDate}, 'yyyy-mm-dd')
+        and c.Source_Id = #{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+        and c.CheckPoint_Type = '1'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        )
+        group by DataDate,CheckPoint_Name
+        order by DataDate desc
+    </select>
+
+    <select id="getFullNameBySourceId" parameterType="string" resultType="string">
+        select full_name fullName from basecenter.pf_bas_source where source_id=#{sourceId} and is_deleted=0
+    </select>
+
+    <select id="selectHourDataR" parameterType="DataSearchParam" resultMap="elemData">
+        select DataDate, CheckPoint_Name,sum(case when ELE_TYPE_ID = 'ea73' then Amount end) pH, sum(case when
+        ELE_TYPE_ID = 'ea74' then Amount end) conductivity
+        ,sum(case when ELE_TYPE_ID = 'ps00' then Amount end) WQI
+        from (
+        select s.DataDate,c.FULL_NAME CheckPoint_Name, ce.ELE_TYPE_ID, s.Avg_Amt Amount
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Hour s on s.CP_Elem_Id = ce.CP_Elem_Id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd')
+        and s.DataDate &lt; to_date(#{endDate}, 'yyyy-mm-dd')
+        and c.Source_Id = #{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+        and c.CheckPoint_Type = '2'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        )
+        group by DataDate,CheckPoint_Name
+        order by DataDate desc
+    </select>
+
+    <select id="selectDayDataS" parameterType="DataSearchParam" resultMap="elemData">
+        select DataDate,CheckPoint_Name,sum(case when ELE_TYPE_ID = 'ea70' then Amount end) pH, sum(case when
+        ELE_TYPE_ID = 'ea71' then Amount end) conductivity,
+        sum(case when ELE_TYPE_ID = 'ps00' then Amount end) WQI
+        from (
+        select s.DataDate,c.FULL_NAME CheckPoint_Name, ce.ELE_TYPE_ID, s.Avg_Amt Amount
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Day s on s.cp_elem_id = ce.cp_elem_id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd')
+        and s.DataDate &lt;= to_date(#{endDate}, 'yyyy-mm-dd')
+        and c.Source_Id = #{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+        and c.CheckPoint_Type = '1'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        )
+        group by DataDate,CheckPoint_Name
+        order by DataDate desc
+    </select>
+
+    <select id="selectDayDataR" parameterType="DataSearchParam" resultMap="elemData">
+        select DataDate,CheckPoint_Name,sum(case when ELE_TYPE_ID = 'ea73' then Amount end) pH,sum(case when
+        ELE_TYPE_ID = 'ea74' then Amount end) conductivity,
+        sum(case when ELE_TYPE_ID = 'ps00' then Amount end) WQI
+        from (
+        select s.DataDate,c.FULL_NAME CheckPoint_Name, ce.ELE_TYPE_ID, s.Avg_Amt Amount
+        from Bas_CheckPoint c
+        inner join Bas_CheckPoint_Element ce on ce.COLLECT_ID = c.COLLECT_ID
+        inner join Bas_Element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        inner join Dat_Day s on s.cp_elem_id = ce.cp_elem_id
+        where s.DataDate >= to_date(#{startDate}, 'yyyy-mm-dd')
+        and s.DataDate &lt;= to_date(#{endDate}, 'yyyy-mm-dd')
+        and c.Source_Id = #{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+        and c.CheckPoint_Type = '2'
+        <if test="checkPointId != null and checkPointId != ''">
+            and c.COLLECT_ID = #{checkPointId}
+        </if>
+        )
+        group by DataDate,CheckPoint_Name
+        order by DataDate desc
+    </select>
+
+    <resultMap id="transferRateEntity" type="TransferRateEntity">
+        <result property="sourceId" column="source_id"/>
+        <result property="checkpointName" column="checkpoint_name"/>
+        <result property="dataDate" column="datadate"/>
+        <result property="real" column="real"/>
+        <result property="minute" column="minute"/>
+        <result property="hour" column="hour"/>
+        <result property="day" column="day"/>
+        <result property="shortName" column="short_name"/>
+        <result property="brandName" column="brand_name"/>
+    </resultMap>
+
+    <!--日传输率-->
+    <select id="transferDayRateForSource" parameterType="DataSearchParam" resultMap="transferRateEntity">
+        select s.source_id, s.full_name checkpoint_name, dc.construction_unit short_name, r.datadate,
+        ROUND(avg(realcnt/28.8),2) real,ROUND(avg(minucnt/1.44),2) minute,
+        ROUND(avg(hourcnt/0.24), 2) hour, ROUND(avg(daycnt/0.01), 2) day
+        from dat_completerate r
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = r.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id=ce.collect_id and c.is_deleted = 0
+        inner join bas_source s on s.source_id = c.source_id
+        inner join dat_constructioninfo dc on dc.source_id = s.source_id and dc.is_deleted = 0
+        where datadate &gt;= to_date(#{startDate}, 'yyyy-mm-dd') and datadate &lt; to_date(#{endDate}, 'yyyy-mm-dd') +1
+        <if test="sourceId != null and sourceId != ''">
+            and c.source_id = #{sourceId}
+        </if>
+        <if test="shortName != null and shortName != ''">
+            and (dc.construction_unit like '%'|| #{shortName}||'%' or dc.SHORT_NAME like '%'|| #{shortName}||'%')
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and c.acquisition_brand like '%'|| #{brandName}||'%'
+        </if>
+        ${labelQuery}
+        <!-- 数据范围过滤 -->
+        ${dataScope}
+        group by s.source_id, s.full_name, dc.construction_unit, r.datadate
+        order by datadate desc
+    </select>
+
+    <!--日传输率-->
+    <select id="transferDayRateForCheckpoint" parameterType="DataSearchParam" resultMap="transferRateEntity">
+        select c.source_id,b.element_desc checkpoint_name,c.acquisition_brand brand_name,datadate,
+        ROUND(realcnt/28.8,2) real,ROUND(minucnt/1.44,2) minute,
+        ROUND(hourcnt/0.24, 2) hour, ROUND(daycnt/0.01, 2) day
+        from bas_checkpoint_element b
+        inner join bas_checkpoint c on c.collect_id=b.collect_id and c.is_deleted=0
+        inner join basecenter.pf_bas_source s on c.source_id=s.source_id and s.is_deleted=0
+        inner join dat_constructioninfo e on s.source_id = e.source_id and e.is_deleted = 0
+        left join dat_completerate a on a.cp_elem_id=b.cp_elem_id and datadate = to_date(#{startDate}, 'yyyy-mm-dd')
+        where b.is_deleted=0
+        <if test="sourceId != null and sourceId != ''">
+            and c.source_id = #{sourceId}
+        </if>
+        <if test="shortName != null and shortName != ''">
+            and (e.construction_unit like '%'|| #{shortName}||'%' or e.SHORT_NAME like '%'|| #{shortName}||'%')
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and c.acquisition_brand like '%'|| #{brandName}||'%'
+        </if>
+        ${labelQuery}
+        <!-- 数据范围过滤 -->
+        ${dataScope}
+        order by b.element_desc desc
+    </select>
+
+    <!--月传输率-->
+    <select id="transferMonthRateForSource" parameterType="DataSearchParam" resultMap="transferRateEntity">
+        select c.source_id,s.full_name checkpoint_name,e.construction_unit short_name,
+        TRUNC(a.datadate, 'mm') datadate,
+        ROUND(avg(realcnt/28.8),2) real,ROUND(avg(minucnt/1.44),2) minute,
+        ROUND(avg(hourcnt/0.24), 2) hour, ROUND(avg(daycnt/0.01), 2) day
+        from dat_completerate a
+        inner join bas_checkpoint_element b on a.cp_elem_id=b.cp_elem_id and b.is_deleted=0
+        inner join bas_checkpoint c on c.COLLECT_ID=b.COLLECT_ID and c.is_deleted=0
+        inner join basecenter.pf_bas_source s on c.source_id=s.source_id and s.is_deleted=0
+        inner join basecenter.pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted=0 and tag_head_id =
+        '1012'
+        inner join dat_constructioninfo e on e.source_id = d.pf_source_id and e.is_deleted=0
+        where TRUNC(a.datadate, 'mm') &gt;= to_date(#{startDate}, 'yyyy-mm')
+        and TRUNC(a.datadate, 'mm') &lt;= to_date(#{endDate}, 'yyyy-mm') + 1
+        <if test="sourceId != null and sourceId != ''">
+            and c.source_id = #{sourceId}
+        </if>
+        <if test="shortName != null and shortName != ''">
+            and (e.construction_unit like '%'|| #{shortName}||'%' or e.SHORT_NAME like '%'|| #{shortName}||'%')
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and c.ACQUISITION_BRAND like '%'|| #{brandName}||'%'
+        </if>
+        ${labelQuery}
+        <!-- 数据范围过滤 -->
+        ${dataScope}
+        group by c.source_id,s.full_name,TRUNC(a.datadate, 'mm'),e.construction_unit
+    </select>
+
+    <!--月传输率-->
+    <select id="transferMonthRateForCheckpoint" parameterType="DataSearchParam" resultMap="transferRateEntity">
+        select c.source_id,b.ELEMENT_DESC checkpoint_name,c.ACQUISITION_BRAND brand_name,TRUNC(a.datadate, 'mm')
+        datadate,
+        ROUND(avg(realcnt/28.8),2) real,ROUND(avg(minucnt/1.44),2) minute,
+        ROUND(avg(hourcnt/0.24), 2) hour,ROUND(avg(daycnt/0.01), 2) day
+        from dat_completerate a
+        inner join bas_checkpoint_element b on a.cp_elem_id=b.cp_elem_id and b.is_deleted=0
+        inner join bas_checkpoint c on c.COLLECT_ID=b.COLLECT_ID and c.is_deleted=0
+        inner join basecenter.pf_bas_source s on c.source_id=s.source_id and s.is_deleted=0
+        inner join basecenter.pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted=0 and tag_head_id =
+        '1012'
+        inner join dat_constructioninfo e on e.source_id = d.pf_source_id and e.is_deleted=0
+        where TRUNC(a.datadate, 'mm') = to_date(#{startDate}, 'yyyy-mm')
+        <if test="sourceId != null and sourceId != ''">
+            and c.source_id = #{sourceId}
+        </if>
+        <if test="shortName != null and shortName != ''">
+            and (e.construction_unit like '%'|| #{shortName}||'%' or e.SHORT_NAME like '%'|| #{shortName}||'%')
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and c.ACQUISITION_BRAND like '%'|| #{brandName}||'%'
+        </if>
+        ${labelQuery}
+        <!-- 数据范围过滤 -->
+        ${dataScope}
+        group by c.source_id,b.ELEMENT_DESC,TRUNC(a.datadate, 'mm'),c.ACQUISITION_BRAND
+    </select>
+
+    <resultMap id="dataSearchEntity" type="DataSearchEntity">
+        <result property="dataDate" column="datadate"/>
+        <result property="elementCode" column="element_code"/>
+        <result property="elementDesc" column="element_desc"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <!--统计传输率统计头-->
+    <select id="getTransfer" resultType="DataSearchColEntity">
+        select 'day' dataIndex, '日传输率' title from dual
+        union all
+        select 'hour' dataIndex, '小时传输率' title from dual
+        union all
+        select 'minute' dataIndex, '分钟传输率' title from dual
+     </select>
+
+    <!--获取排水户近30天传输率图总数据,分钟,小时,天 数据-->
+    <select id="getTransferCharts" resultMap="dataSearchEntity">
+        select t.datadate,'day' element_code,round(avg(daycnt/0.01), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate
+        union all
+        select t.datadate,'hour' element_code,round(avg(hourcnt/0.24), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate
+        union all
+        select t.datadate,'minute' element_code,round(avg(minucnt/1.44), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate
+
+    </select>
+
+    <!--传输率统计头-->
+    <select id="getColEntity" resultType="DataSearchColEntity">
+            select * from (
+            select distinct e.ele_type_id dataIndex, e.ele_type_desc title, e.orderby
+            from bas_checkpoint_element ce
+            left join bas_element e on e.ELE_TYPE_ID = ce.ELE_TYPE_ID
+            left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+            where c.source_id = #{sourceId,jdbcType=VARCHAR}
+            and ce.is_deleted = 0 and c.is_deleted = 0
+            union all
+            select 'total' ELE_TYPE_ID, '总传输率' ELE_TYPE_DESC, 9999 from dual
+            )
+            order by orderby
+    </select>
+
+    <!--排水户近30天传输率曲线图数据-Day-->
+    <select id="getDay" resultMap="dataSearchEntity">
+        select t.datadate,ce.ELE_TYPE_ID element_code,round(avg(daycnt/0.01), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate, ce.ELE_TYPE_ID
+        union all
+        select t.datadate,'total' element_code,round(avg(daycnt/0.01), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate
+    </select>
+
+    <!--排水户近30天传输率曲线图数据-Hour-->
+    <select id="getHour" resultMap="dataSearchEntity">
+        select t.datadate,ce.ELE_TYPE_ID element_code,round(avg(hourcnt/0.24), 2)amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0 and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate, ce.ELE_TYPE_ID
+         union all
+        select t.datadate,'total' element_code,round(avg(hourcnt/0.24), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate
+    </select>
+
+    <!--排水户近30天传输率曲线图数据-Minute-->
+    <select id="getMinute" resultMap="dataSearchEntity">
+        select t.datadate,ce.ELE_TYPE_ID element_code,round(avg(minucnt/1.44), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate, ce.ELE_TYPE_ID
+        union all
+        select t.datadate,'total' element_code,round(avg(minucnt/1.44), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        left join dat_completerate d on d.datadate = t.datadate
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id
+        left join bas_checkpoint c on c.COLLECT_ID = ce.COLLECT_ID
+        where ce.is_deleted = 0 and c.is_deleted = 0
+        and c.source_id = #{sourceId,jdbcType=VARCHAR}
+        group by t.datadate
+    </select>
+
+    <select id="getProcStateCount" parameterType="string" resultType="int">
+        select count(1) from dat_warnmsgheads
+        where proc_State &lt; 2 and source_id = #{sourceId,jdbcType=VARCHAR}
+        and IS_DELETED = 0
+    </select>
+
+</mapper>

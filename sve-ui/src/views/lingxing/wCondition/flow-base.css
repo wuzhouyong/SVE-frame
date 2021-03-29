@@ -1,0 +1,214 @@
+.flow-canvas {
+  height: 80vh;
+  width: 1024px;
+  /* background-color: #f5f5f5; */
+  position: relative;
+}
+
+.flow-name {
+  color: #5d5c5c;
+  width: 200%;
+  text-align: center;
+  display: block;
+  position: absolute;
+  bottom: -18px;
+  font-size: 10px;
+  left: -50%;
+  /*font-weight: bold;*/
+}
+
+/*管*/
+.flow-pipeline {
+}
+
+/*元件*/
+.flow-element {
+}
+
+[class^="flow-pool-"] {
+  position: absolute;
+  height: 60px;
+  width: 60px;
+  background: url("./flow/pool.gif");
+  -moz-background-size: 60px 180px;
+  -webkit-background-size: 60px 180px;
+  -o-background-size: 60px 180px;
+  background-size: 60px 180px;
+}
+
+.flow-pool-water {
+  background-position: 0 0;
+}
+
+.flow-pool-soil {
+  background-position: 0px 60px;
+}
+
+.flow-pool-med {
+  background-position: 0px 120px;
+}
+
+.flow-pump-up {
+  position: absolute;
+  height: 46px;
+  width: 33px;
+  background: url("./flow/uppump.gif");
+  -moz-background-size: 33px 93px;
+  -webkit-background-size: 33px 93px;
+  -o-background-size: 33px 93px;
+  background-size: 33px 93px;
+}
+
+.flow-pump-med {
+  position: absolute;
+  height: 71px;
+  width: 50px;
+  background: url("./flow/medstore.gif");
+  -moz-background-size: 50px 142px;
+  -webkit-background-size: 50px 142px;
+  -o-background-size: 50px 142px;
+  background-size: 50px 142px;
+}
+
+.flow-pump-soil {
+  position: absolute;
+  height: 38px;
+  width: 50px;
+  background: url("./flow/solidpump.gif");
+  -moz-background-size: 50px 77px;
+  -webkit-background-size: 50px 77px;
+  -o-background-size: 50px 77px;
+  background-size: 50px 77px;
+}
+
+.flow-machine-filter {
+  position: absolute;
+  height: 46px;
+  width: 150px;
+  background: url("./flow/filter.gif");
+  -moz-background-size: 150px 93px;
+  -webkit-background-size: 150px 93px;
+  -o-background-size: 150px 93px;
+  background-size: 150px 93px;
+}
+
+.flow-machine-fan {
+  position: absolute;
+  height: 57px;
+  width: 50px;
+  background: url("./flow/fan.gif");
+  -moz-background-size: 50px 115px;
+  -webkit-background-size: 50px 115px;
+  -o-background-size: 50px 115px;
+  background-size: 50px 115px;
+}
+
+.flow-start {
+  background-position: top left;
+}
+
+.flow-stop {
+  background-position: bottom left;
+}
+
+/*pipe*/
+
+.flow-pipe-left {
+  position: absolute;
+  height: 10px;
+  background: url("./flow/pipe_left.gif");
+}
+
+.flow-pipe-right {
+  position: absolute;
+  height: 10px;
+  background: url("./flow/pipe_right.gif");
+}
+
+.flow-pipe-top {
+  position: absolute;
+  width: 10px;
+  background: url("./flow/pipe_top.gif");
+}
+
+.flow-pipe-bottom {
+  position: absolute;
+  width: 10px;
+  background: url("./flow/pipe_bottom.gif");
+}
+
+.water {
+  background-color: #03a9f4;
+}
+
+.air {
+  background-color: #4caf50;
+}
+
+.solid {
+  background-color: #795548;
+}
+
+.med {
+  background-color: #ffc107;
+}
+
+/*tag*/
+.flow-label-tag {
+  position: absolute;
+  font-size: 12px;
+  font-weight: bold;
+  color: #009688;
+  padding: 5px;
+  /*background-color: #CDDC39;*/
+  border: 1px solid #009688;
+  border-radius: 5px;
+}
+
+.top-name span {
+  top: -18px !important;
+}
+
+.flow-online-data {
+  position: absolute;
+  background-color: #cddc39;
+  padding: 10px;
+}
+
+.flow-online-data li {
+  color: #795548;
+  font-weight: bold;
+  /*font-size: 14px;*/
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.pipe-stop {
+  background-color: #fa744a !important;
+  background: #fa744a !important;
+}
+
+.body-name span {
+  top: 50%;
+}
+
+.flow-style {
+  width: 100%;
+  height: 100%;
+  /*overflow: hidden;*/
+  overflow: auto;
+}
+
+.flow-label [id] {
+  cursor: pointer;
+}
+
+.lxworking .el-dialog__body {
+  padding: 5px 10px;
+}
+
+.lxworking .el-dialog__body h3 {
+  margin: 5px 0;
+  width: 100%;
+  text-align: center;
+}

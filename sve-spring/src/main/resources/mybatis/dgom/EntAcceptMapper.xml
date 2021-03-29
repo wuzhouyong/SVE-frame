@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.dgom.mapper.EntAcceptMapper">
+    <resultMap id="entAcceptResult" type="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptResult">
+        <result column="zapplyid" property="applyId"/>
+        <result column="zdatasourname" property="sourceName"/>
+        <result column="townname" property="townName"/>
+        <result column="zstatus" property="status"/>
+        <result column="zacceptdate" property="acceptDate"/>
+        <result column="zchargeman" property="chargeMan"/>
+        <result column="zchargemantitle" property="chargeManTitle"/>
+        <result column="zchargemantel" property="chargeManTel"/>
+        <result column="zmemo" property="memo"/>
+        <result column="zapprovedby" property="approvedBy"/>
+        <result column="zapprovaldesc" property="approvalDesc"/>
+        <result column="zapproveddate" property="approvedDate"/>
+    </resultMap>
+    <select id="getEntAcceptList" parameterType="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptParam" resultMap="entAcceptResult">
+        select a.zapplyid, s.zdatasourname, l.zlabelname townname, a.zstatus, a.zacceptdate,
+               a.zchargeman, a.zchargemantitle, a.zchargemantel, a.zmemo,
+               a.zapprovedby, a.zapprovaldesc, a.zapproveddate
+        from ent_acceptapplyhead a
+                 inner join zdatasoursetting s on s.zdatasourid = a.zsourceid and s.zfactorystatus in(3,4) and s.zisdeleted = 0
+                 left join zlabelhead l on l.zlabelheadid = s.zsuperiorid
+        where a.zisdeleted = 0
+        <if test="sourceId != null">and s.zdatasourid = #{sourceId}</if>
+        <if test="townId != null">and s.zsuperiorid = #{townId}</if>
+        <if test="status != null">and a.zstatus = #{status}</if>
+        <if test="startDate != null">and a.zacceptdate >= #{startDate}</if>
+        <if test="endDate != null">and a.zacceptdate &lt; #{endDate}</if>
+    </select>
+
+    <select id="getEntAcceptModel" parameterType="string" resultMap="entAcceptResult">
+        select a.zapplyid, s.zdatasourname, l.zlabelname townname, a.zstatus, a.zacceptdate,
+               a.zchargeman, a.zchargemantitle, a.zchargemantel, a.zmemo,
+               a.zapprovedby, a.zapprovaldesc, a.zapproveddate
+        from ent_acceptapplyhead a
+                 inner join zdatasoursetting s on s.zdatasourid = a.zsourceid and s.zfactorystatus in(3,4) and s.zisdeleted = 0
+                 left join zlabelhead l on l.zlabelheadid = s.zsuperiorid
+        where a.zisdeleted = 0 and a.zapplyid = #{applyId}
+    </select>
+
+    <resultMap id="entAcceptDetailResult" type="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptDetailResult">
+        <result column="zdetailid" property="detailId"/>
+        <result column="zcheckpointid" property="checkPointId"/>
+        <result column="zcheckpointdesc" property="checkPointDesc"/>
+        <result column="zdatadevid" property="dataDevId"/>
+        <result column="zdatadevdesc" property="dataDevDesc"/>
+    </resultMap>
+    <select id="getEntAcceptDetailList" parameterType="string" resultMap="entAcceptDetailResult">
+        select a.zdetailid, a.zcheckpointid, c.zcheckpointdesc, a.zdatadevid, d.zdatadevdesc
+        from ent_acceptapplydetail a
+                 inner join zdatadevdef d on d.zdatadevid = a.zdatadevid and d.zisdeleted = 0
+                 inner join zcheckpointdef c on c.zcheckpointid = a.zcheckpointid
+        where a.zisdeleted = 0 and zapplyid = #{applyId}
+    </select>
+
+    <insert id="addEntAcceptHead" parameterType="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptEntity">
+        insert into ent_acceptapplyhead (zapplyid, zstatus, zsourceid, zacceptdate, zchargeman, zchargemantitle, zchargemantel, zmemo, zcreatedby, zupdatedby)
+        values (#{applyId}, 1, #{sourceId}, #{acceptDate}, #{chargeMan}, #{chargeManTitle}, #{chargeManTel}, #{memo, jdbcType=VARCHAR}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <insert id="addEntAcceptDetail" parameterType="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptDetailEntity">
+        insert into ent_acceptapplydetail (zdetailid, zapplyid, zcheckpointid, zdatadevid, zelementid)
+        values (#{detailId}, #{applyId}, #{checkPointId}, #{dataDevId}, 0)
+    </insert>
+
+    <update id="editEntAcceptHead" parameterType="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptEntity">
+        update ent_acceptapplyhead
+        <set>
+            zacceptdate = #{acceptDate},
+            zchargeman = #{chargeMan},
+            zchargemantitle = #{chargeManTitle},
+            zchargemantel = #{chargeManTel},
+            zmemo = #{memo, jdbcType=VARCHAR},
+            zupdatedby = #{updatedBy},
+            zdateupdated = sysdate
+        </set>
+        where zapplyid = #{applyId}
+    </update>
+
+    <update id="editEntAcceptDetail" parameterType="com.ruoyi.project.dgom.domain.ent_accept.EntAcceptDetailEntity">
+        update ent_acceptapplydetail
+        <set>
+            zcheckpointid = #{checkPointId},
+            zdatadevid = #{dataDevId}
+        </set>
+        where zdetailid = #{detailId}
+    </update>
+
+    <update id="submitEntAccept">
+        update ent_acceptapplyhead set zstatus = 2, zupdatedby = #{updatedBy}, zdateupdated = sysdate where zapplyid = #{applyId}
+    </update>
+
+    <update id="deleteEntAccept">
+        update ent_acceptapplyhead set zisdeleted = 1, zupdatedby = #{updatedBy}, zdateupdated = sysdate where zapplyid = #{applyId}
+    </update>
+
+    <delete id="deleteEntAcceptDetail">
+        delete from ent_acceptapplydetail where zdetailid = #{detailId}
+    </delete>
+
+    <update id="approval" parameterType="com.ruoyi.project.dgom.domain.ent_accept.EntApprovalEntity">
+        update ent_acceptapplyhead
+        <set>
+            zstatus = #{status},
+            zapprovedby = #{approvedBy},
+            zapprovaldesc = #{approvalDesc},
+            zapproveddate = trunc(sysdate, 'dd'),
+            zupdatedby = #{updatedBy},
+            zdateupdated = sysdate
+        </set>
+        where zapplyid = #{applyId}
+    </update>
+</mapper>

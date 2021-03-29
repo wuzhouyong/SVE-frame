@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.SuperviseTaskMapper">
+
+    <resultMap type="SuperviseEntity" id="Entity">
+        <result property="suptaskId" column="zsuptaskid"/>
+        <result property="townName" column="ztownname"/>
+        <result property="factoryName" column="zfactoryname"/>
+        <result property="checkpointName" column="zcheckpointname"/>
+        <result property="elementName" column="zelementname"/>
+        <result property="monitorTime" column="zmonitortime"/>
+        <result property="taskType" column="ztasktype"/>
+        <result property="amount" column="zamount"/>
+        <result property="standardval" column="zstandardval"/>
+        <result property="overTimes" column="zovertimes"/>
+        <result property="overDays" column="zoverdays"/>
+        <result property="taskStatus" column="ztaskstatus"/>
+        <result property="startDate" column="zbegintime"/>
+        <result property="endDate" column="zendtime"/>
+        <result property="untownId" column="zuntownid"/>
+        <result property="omtownId" column="zomtownId"/>
+        <result property="townId" column="ztownid"/>
+        <result property="datasourId" column="zdatasourid"/>
+        <result property="checkpointId" column="zcheckpointid"/>
+        <result property="elementId" column="zelementid"/>
+        <result property="handleby" column="zhandleby"/>
+        <result property="contactPhone" column="zcontactphone"/>
+        <result property="handleTime" column="zhandletime"/>
+        <result property="istrue" column="zistrue"/>
+        <result property="reason" column="zreason"/>
+        <result property="situation" column="zsituation"/>
+        <result property="recityinfo" column="zrecityinfo"/>
+        <result property="dateCreated" column="zdatecreated"/>
+        <result property="dateUpdated" column="zdateupdated"/>
+        <result property="createdby" column="zcreatedby"/>
+        <result property="updatedby" column="zupdatedby"/>
+    </resultMap>
+
+    <!--新增督办任务-->
+    <insert id="insertSuperviseTask" parameterType="SuperviseEntity">
+        insert into zSuperviseTask
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            zsuptaskid,
+            <if test="townName != null  and townName != ''">ztownname,</if>
+            <if test="factoryName != null and factoryName != ''">zfactoryname,</if>
+            <if test="checkpointName != null and checkpointName != ''">zcheckpointname,</if>
+            <if test="elementName != null and elementName != ''">zelementname,</if>
+            <if test="monitorTime != null">zmonitortime,</if>
+            <if test="taskType != null">ztasktype,</if>
+            <if test="amount != null ">zamount,</if>
+            <if test="standardval != null ">zstandardval,</if>
+            <if test="overTimes != null ">zovertimes,</if>
+            <if test="overDays != null ">zoverdays,</if>
+            <if test="taskStatus != null">ztaskstatus,</if>
+            <if test="startDate != null">zbegintime,</if>
+            <if test="endDate != null">zendtime,</if>
+            <if test="untownId != null">zuntownid,</if>
+            <if test="omtownId != null">zomtownid,</if>
+            <if test="handleby != null and handleby != ''">zhandleby,</if>
+            <if test="contactPhone != null and contactPhone != ''">zcontactphone,</if>
+            <if test="handleTime != null and handleTime != ''">zhandletime,</if>
+            <if test="istrue != null">zistrue,</if>
+            <if test="reason != null and reason != ''">zreason,</if>
+            <if test="situation != null and situation != ''">zsituation,</if>
+            <if test="recityinfo != null and recityinfo != ''">zrecityinfo,</if>
+            <if test="createdby != null  and createdby != ''">zcreatedby,</if>
+            <if test="updatedby != null  and updatedby != ''">zupdatedby,</if>
+            zdatecreated,zdateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_supervisetaskid.nextval,
+            <if test="townName != null  and townName != ''">#{townName},</if>
+            <if test="factoryName != null and factoryName != ''">#{factoryName},</if>
+            <if test="checkpointName != null and checkpointName != ''">#{checkpointName},</if>
+            <if test="elementName != null and elementName != ''">#{elementName},</if>
+            <if test="monitorTime != null">to_date(to_char(#{monitorTime},'yyyy-MM-dd'),'yyyy-MM-dd'),</if>
+            <if test="taskType != null ">#{taskType},</if>
+            <if test="amount != null ">#{amount},</if>
+            <if test="standardval != null ">#{standardval},</if>
+            <if test="overTimes != null ">#{overTimes},</if>
+            <if test="overDays != null ">#{overDays},</if>
+            <if test="taskStatus != null">#{taskStatus},</if>
+            <if test="startDate != null">to_date(to_char(#{startDate},'yyyy-MM-dd'),'yyyy-MM-dd'),</if>
+            <if test="endDate != null">to_date(to_char(#{endDate},'yyyy-MM-dd'),'yyyy-MM-dd'),</if>
+            <if test="untownId != null">#{untownId},</if>
+            <if test="omtownId != null">#{omtownId},</if>
+            <if test="handleby != null and handleby != ''">#{handleby},</if>
+            <if test="contactPhone != null and contactPhone != ''">#{contactPhone},</if>
+            <if test="handleTime != null and handleTime != ''">
+                to_date(to_char(#{handleTime},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            <if test="istrue != null">#{istrue},</if>
+            <if test="reason != null and reason != ''">#{reason},</if>
+            <if test="situation != null and situation != ''">#{situation},</if>
+            <if test="recityinfo != null and recityinfo != ''">#{recityinfo},</if>
+            <if test="createdby != null  and createdby != ''">#{createdby},</if>
+            <if test="updatedby != null  and updatedby != ''">#{updatedby},</if>
+            SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--批量新增督办任务-->
+    <insert id="insertBatchSuperviseTask" parameterType="SuperviseEntity">
+        insert into zSuperviseTask
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            zsuptaskid, ztownname,zfactoryname,zcheckpointname,zelementname,zmonitortime,ztasktype,
+            zamount,zstandardval,zovertimes,zoverdays,ztaskstatus,zbegintime,zendtime,zuntownid,zomtownid,
+            zcreatedby,zupdatedby,zdatecreated,zdateupdated
+        </trim>
+        VALUES
+        <foreach collection="list" item="model" separator=",">
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                seq_supervisetaskid.nextval,
+                #{model.townName,jdbcType=VARCHAR},#{model.factoryName,jdbcType=VARCHAR},
+                #{model.checkpointName,jdbcType=VARCHAR},#{model.elementName,jdbcType=VARCHAR},
+                to_date(to_char(#{model.monitorTime,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+                #{model.taskType,jdbcType=VARCHAR},
+                #{model.amount,jdbcType=DOUBLE},#{model.standardval,jdbcType=DOUBLE},
+                #{model.overTimes,jdbcType=DOUBLE},
+                #{model.overDays,jdbcType=INTEGER},#{model.taskStatus,jdbcType=INTEGER},
+                to_date(to_char(#{model.startDate,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+                to_date(to_char(#{model.endDate,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+                #{model.untownId,jdbcType=INTEGER},#{model.omtownId,jdbcType=INTEGER},
+                #{model.createdby,jdbcType=VARCHAR},#{model.updatedby,jdbcType=VARCHAR},
+                SYSDATE,SYSDATE
+            </trim>
+        </foreach>
+    </insert>
+
+    <sql id="selectSuperviseTaskVo">
+        select * from zSuperviseTask
+    </sql>
+
+    <!--查询督办任务列表-->
+    <select id="selectSuperviseTaskList" parameterType="SuperviseEntity" resultMap="Entity">
+        <include refid="selectSuperviseTaskVo"/>
+        where zisdeleted=0
+        <if test="townName != null  and townName != ''">
+            and ztownname like '%'||#{townName}||'%'
+        </if>
+        <if test="factoryName != null and factoryName != ''">
+            and zfactoryname like '%'||#{factoryName}||'%'
+        </if>
+        <if test="checkpointName != null and checkpointName != ''">
+            and zcheckpointname like '%'||#{checkpointName}||'%'
+        </if>
+        <if test="elementName != null and elementName != ''">
+            and zelementname like '%'||#{elementName}||'%'
+        </if>
+        <if test="beginTime != null and endTime != null ">
+            and trunc(zmonitortime) >= to_date(#{beginTime},'yyyy-MM-dd')
+            and trunc(zmonitortime) &lt; to_date(#{endTime},'yyyy-MM-dd')+1
+        </if>
+        <if test="taskStatus != null">and ztaskstatus = #{taskStatus}</if>
+        <if test="taskType != null">and ztasktype = #{taskType}</if>
+        <if test="untownId != null">and zuntownid = #{untownId}</if>
+        <if test="omtownId != null">and zomtownid = #{omtownId}</if>
+        <if test="startDate != null">
+            and trunc(zbegintime) = to_date(to_char(#{startDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="endDate != null">
+            and trunc(zendtime) = to_date(to_char(#{endDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        order by zdatecreated desc,zfactoryname,zendtime desc
+    </select>
+
+    <!--查询分局处理列表-->
+    <select id="selectDivideTaskList" parameterType="SuperviseEntity" resultMap="Entity">
+        select s.* from (
+        select
+        zsuptaskid,ztownname,zfactoryname,zcheckpointname,zelementname,zmonitortime,ztasktype,zamount,zstandardval,zovertimes,
+        zoverdays,ztaskstatus,zbegintime,zendtime ,zuntownid as town_code ,zomtownid ,zdatasourid ,zcheckpointid ,
+        zelementid ,zhandleby ,zcontactphone ,zhandletime,zistrue,zreason
+        ,zsituation,zrecityinfo,zdatecreated,zdateupdated,zisdeleted,zcreatedby,zupdatedby
+        from zSuperviseTask )s
+        where s.zisdeleted=0 ${dataScope}
+        <choose>
+            <when test="taskStatus != null">
+                and ztaskstatus = #{taskStatus}
+            </when>
+            <otherwise>
+                and ztaskstatus in (2,3,5)
+            </otherwise>
+        </choose>
+        <if test="townName != null  and townName != ''">
+            and ztownname like '%'||#{townName}||'%'
+        </if>
+        <if test="factoryName != null and factoryName != ''">
+            and zfactoryname like '%'||#{factoryName}||'%'
+        </if>
+        <if test="checkpointName != null and checkpointName != ''">
+            and zcheckpointname like '%'||#{checkpointName}||'%'
+        </if>
+        <if test="elementName != null and elementName != ''">
+            and zelementname like '%'||#{elementName}||'%'
+        </if>
+        <if test="beginTime != null and endTime != null ">
+            and trunc(zmonitortime) >= to_date(#{beginTime},'yyyy-MM-dd')
+            and trunc(zmonitortime) &lt; to_date(#{endTime},'yyyy-MM-dd')+1
+        </if>
+        <if test="startDate != null">
+            and trunc(zbegintime) = to_date(to_char(#{startDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        <if test="endDate != null">
+            and trunc(zendtime) = to_date(to_char(#{endDate},'yyyy-MM-dd'),'yyyy-MM-dd')
+        </if>
+        order by zdatecreated desc,zfactoryname,zendtime desc
+    </select>
+
+    <!--查询督办任务-->
+    <select id="selectSuperviseTaskById" parameterType="int" resultMap="Entity">
+        <include refid="selectSuperviseTaskVo"/>
+        where zsuptaskid=#{suptaskId} and zisdeleted=0
+    </select>
+
+    <!--查询督办任务-->
+    <select id="selectSuperviseTaskByIds" parameterType="int" resultMap="Entity">
+        <include refid="selectSuperviseTaskVo"/>
+        where zisdeleted = 0 and zsuptaskid in
+        <foreach collection="suptaskIds" item="suptaskId" open="(" separator="," close=")" index="index">
+            #{suptaskId}
+        </foreach>
+    </select>
+
+    <!--编辑督办任务-->
+    <update id="editSuperviseTask" parameterType="SuperviseEntity">
+        update zSuperviseTask
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="townName != null  and townName != ''">
+                ztownname=#{townName,jdbcType=VARCHAR},
+            </if>
+            <if test="factoryName != null and factoryName != ''">
+                zfactoryname=#{factoryName,jdbcType=VARCHAR},
+            </if>
+            <if test="checkpointName != null and checkpointName != ''">
+                zcheckpointname=#{checkpointName,jdbcType=VARCHAR},
+            </if>
+            <if test="elementName != null and elementName != ''">
+                zelementname=#{elementName,jdbcType=VARCHAR},
+            </if>
+            <if test="monitorTime != null">
+                zmonitortime=to_date(to_char(#{monitorTime,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            <if test="amount != null ">zamount=#{amount,jdbcType=DOUBLE},</if>
+            <if test="taskType != null ">ztasktype=#{taskType,jdbcType=VARCHAR},</if>
+            <if test="standardval != null ">zstandardval=#{standardval,jdbcType=DOUBLE},</if>
+            <if test="overTimes != null ">zovertimes=#{overTimes,jdbcType=DOUBLE},</if>
+            <if test="overDays != null ">zoverdays=#{overDays,jdbcType=INTEGER},</if>
+            <if test="taskStatus != null">ztaskstatus=#{taskStatus,jdbcType=INTEGER},</if>
+            <if test="startDate != null">
+                zbegintime=to_date(to_char(#{startDate,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            <if test="endDate != null">
+                zendtime=to_date(to_char(#{endDate,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            <if test="untownId != null">zuntownid=#{untownId,jdbcType=INTEGER},</if>
+            <if test="omtownId != null">zomtownid=#{omtownId,jdbcType=INTEGER},</if>
+            <if test="handleby != null and handleby != ''">zhandleby=#{handleby,jdbcType=VARCHAR},</if>
+            <if test="contactPhone != null and contactPhone != ''">zcontactphone=#{contactPhone,jdbcType=VARCHAR},</if>
+            <if test="handleTime != null">
+                zhandletime=to_date(to_char(#{handleTime,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            <if test="istrue != null">zistrue=#{istrue,jdbcType=INTEGER},</if>
+            <if test="reason != null and reason != ''">zreason=#{reason,jdbcType=VARCHAR},</if>
+            <if test="situation != null and situation != ''">zsituation=#{situation,jdbcType=VARCHAR},</if>
+            <if test="recityinfo != null and recityinfo != ''">zrecityinfo=#{recityinfo,jdbcType=VARCHAR},</if>
+            zupdatedby=#{updatedby,jdbcType=VARCHAR}, zdateupdated= sysdate
+        </trim>
+        where zsuptaskid = #{suptaskId} and zisdeleted = 0
+    </update>
+
+    <!--市局处理任务，只改状态-->
+    <update id="editMunicipalTask" parameterType="SuperviseEntity">
+        update zSuperviseTask set ztaskstatus=#{taskStatus,jdbcType=INTEGER},
+          zupdatedby=#{updatedby,jdbcType=VARCHAR}, zdateupdated= sysdate
+        where zsuptaskid = #{suptaskId} and zisdeleted = 0
+    </update>
+
+    <!--删除督办任务-->
+    <update id="deleteSuperviseTaskByIds" parameterType="string">
+        update zSuperviseTask SET zupdatedby = #{updatedBy,jdbcType=VARCHAR},
+        zdateupdated=SYSDATE,zisdeleted=1 where zsuptaskid in
+        <foreach collection="suptaskIds" item="suptaskId" open="(" separator="," close=")" index="index">
+            #{suptaskId}
+        </foreach>
+    </update>
+
+    <!--查找在线监控平台街镇id-->
+    <select id="selectTownIdByTownName" parameterType="string" resultType="int">
+        select zlabelheadid from zlabelhead
+        where zisdeleted=0 and zparentid=100 and zlabelname like '%'||#{townName}||'%'
+    </select>
+
+    <!--查找中心平台街镇id-->
+    <select id="selectTownCodeByOmtownId" parameterType="int" resultType="map">
+        select DISTINCT s.region_code town_code,s.region_name town_name from pf_bas_region_ref re
+		inner join PF_BAS_REGION s on re.un_region_code=s.REGION_CODE and s.is_deleted=0
+		where re.om_region_code=#{omtownId}
+    </select>
+
+    <select id="getOMTownIdByCode" parameterType="string" resultType="int">
+        select om_region_code from pf_bas_region_ref where un_region_code = ${townCode} and is_deleted = 0
+    </select>
+</mapper>

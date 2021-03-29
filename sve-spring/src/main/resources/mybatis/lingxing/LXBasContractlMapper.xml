@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.lingxing.mapper.LXBasContractlMapper">
+
+    <resultMap type="LXBasContract" id="contract">
+        <result property="contractId" column="contract_id"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="procSourceId" column="proc_source_id"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="fullName" column="full_name"/>
+        <result property="shortName" column="short_name"/>
+    </resultMap>
+
+    <sql id="selectLXBasContractVo">
+        select contract_id,source_id,proc_source_id,start_date,end_date from bas_transfer_contract
+    </sql>
+
+    <select id="getContractList" parameterType="LXBasContract" resultMap="contract">
+        select contract_id,tc.source_id,tc.proc_source_id,s.full_name,ps.full_name short_name,
+        to_char(start_date,'yyyy-mm-dd') start_date,to_char(end_date,'yyyy-mm-dd') end_date
+        from bas_transfer_contract tc
+        left join bas_source s on tc.source_id = s.source_id and s.is_deleted=0
+        left join bas_procsource ps on tc.proc_source_id = ps.source_id
+        where tc.is_deleted=0
+        <if test="fullName != null  and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="procSourceId != null  and procSourceId != ''">and tc.proc_source_id = #{procSourceId}</if>
+        <if test="startDate != null and startDate != ''">
+            and trunc(tc.start_date, 'dd') = to_date(#{startDate},'yyyy-mm-dd')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            and trunc(tc.end_date, 'dd') = to_date(#{endDate},'yyyy-mm-dd')
+        </if>
+        <!-- 数据范围过滤 -->
+        ${dataScope}
+        order by tc.date_created
+    </select>
+
+    <select id="selectContractCount" parameterType="LXBasContract" resultType="int">
+        select count(1) from bas_transfer_contract where contract_id=#{contractId} and is_deleted=0
+    </select>
+
+    <!--新增转运合同管理-->
+    <insert id="insertBasContract" parameterType="LXBasContract">
+        insert into bas_transfer_contract
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            contract_id,
+            <if test="sourceId != null  and sourceId != ''">source_id,</if>
+            <if test="procSourceId != null  and procSourceId != ''">proc_source_id,</if>
+            <if test="startDate != null  and startDate != ''">start_date,</if>
+            <if test="endDate != null  and endDate != ''">end_date,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+            is_deleted,date_created,date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{contractId},
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="procSourceId != null  and procSourceId != ''">#{procSourceId},</if>
+            <if test="startDate != null  and startDate != ''">to_date(#{startDate},'yyyy-mm-dd'),</if>
+            <if test="endDate != null  and endDate != ''">to_date(#{endDate},'yyyy-mm-dd'),</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--编辑转运合同管理-->
+    <update id="updateBasContract" parameterType="LXBasContract">
+        update bas_transfer_contract
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="procSourceId != null  and procSourceId != ''">
+                proc_source_id = #{procSourceId,jdbcType=VARCHAR},
+            </if>
+            <if test="startDate != null  and startDate != ''">start_date =to_date(#{startDate},'yyyy-mm-dd'),</if>
+            <if test="endDate != null  and endDate != ''">end_date = to_date(#{endDate},'yyyy-mm-dd'),</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by = #{updatedBy,jdbcType=VARCHAR},</if>
+            date_updated = SYSDATE
+        </trim>
+        where contract_id = #{contractId} and is_deleted=0
+    </update>
+
+    <!--删除转运合同管理-->
+    <delete id="deleteBasContractByIds" parameterType="string">
+        UPDATE bas_transfer_contract
+        set IS_DELETED = 1,DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        where contract_id in
+        <foreach collection="contractIds" item="contractId" open="(" separator="," close=")">
+            #{contractId}
+        </foreach>
+    </delete>
+
+    <!--删除转运合同附件-->
+    <delete id="deleteContractAttFile" parameterType="string">
+        UPDATE pf_file_attachment
+        set IS_DELETED = 1,DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        where biz_record_id in
+        <foreach collection="contractIds" item="contractId" open="(" separator="," close=")">
+            #{contractId}
+        </foreach>
+    </delete>
+
+</mapper>

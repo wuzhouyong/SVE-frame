@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.enterprise.mapper.ComplexCountMapper">
+
+    <select id="getTownComplexCount" resultType="map" parameterType="string">
+        select town_name,count(distinct a.source_id) cnt,
+        sum(case when warn_date+30 &lt; trunc(sysdate) and warn_level=1 then 1 else 0 end) lastcnt1,
+        sum(case when warn_date+30 &lt; trunc(sysdate) and warn_level=2 then 1 else 0 end) lastcnt2,
+        sum(case when warn_date+30 &lt; trunc(sysdate) and warn_level=3 then 1 else 0 end) lastcnt3,
+        sum(case when warn_date+30>=trunc(sysdate) and warn_level=1 then 1 else 0 end) currcnt1,
+        sum(case when warn_date+30>=trunc(sysdate) and warn_level=2 then 1 else 0 end) currcnt2,
+        sum(case when warn_date+30>=trunc(sysdate) and warn_level=3 then 1 else 0 end) currcnt3,
+        sum(case when warn_date+30 &lt; trunc(sysdate) and warn_level=1 and proc_state=6 then 1 else 0 end) lastproccnt1,
+        sum(case when warn_date+30 &lt;  trunc(sysdate) and warn_level=2 and proc_state=6 then 1 else 0 end) lastproccnt2,
+        sum(case when warn_date+30 &lt;  trunc(sysdate) and warn_level=3 and proc_state=6 then 1 else 0 end) lastproccnt3,
+        sum(case when warn_date+30>=trunc(sysdate) and warn_level=1 and proc_state=6 then 1 else 0 end) currproccnt1,
+        sum(case when warn_date+30>=trunc(sysdate) and warn_level=2 and proc_state=6 then 1 else 0 end) currproccnt2,
+        sum(case when warn_date+30>=trunc(sysdate) and warn_level=3 and proc_state=6 then 1 else 0 end) currproccnt3
+        from dat_warnstat a inner join pf_bas_source b on a.source_id=b.source_id
+        where warn_date>=trunc(sysdate-60) and tag_head_id = #{tagHeadId,jdbcType=INTEGER}
+        group by town_name
+    </select>
+
+
+</mapper>

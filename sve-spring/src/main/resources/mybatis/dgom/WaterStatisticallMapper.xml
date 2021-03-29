@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.WaterStatisticalMapper">
+
+    <select id="getTownWastewater" parameterType="string" resultType="map">
+        select h.zlabelname town_name, sum(d.zmonthamount) amt from zdataofmonth_100002 d
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisdeleted = 0
+        inner join zlabelhead h on h.zlabelheadid = s.zsuperiorid
+        where d.zdatadate >= to_date(#{startDate,jdbcType=VARCHAR}, 'yyyy-mm') and d.zdatadate &lt; add_months(to_date(#{endDate,jdbcType=VARCHAR}, 'yyyy-mm'),1)
+        group by h.zlabelname
+        order by sum(d.zmonthamount)
+    </select>
+
+    <select id="getMonthWastewater" parameterType="string" resultType="map">
+        select to_char(d.zdatadate, 'yyyy-mm') datadate, sum(d.zmonthamount) amt from zdataofmonth_100002 d
+        where d.zdatadate >= to_date(#{startDate}, 'yyyy-mm') and d.zdatadate &lt; add_months(to_date(#{endDate}, 'yyyy-mm'),1)
+        group by to_char(d.zdatadate, 'yyyy-mm')
+        order by to_char(d.zdatadate, 'yyyy-mm')
+    </select>
+
+    <select id="getTownMonthWastewater" parameterType="map" resultType="map">
+        select to_char(d.zdatadate, 'yyyy-mm') datadate, sum(d.zmonthamount) amt from zdataofmonth_100002 d
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisdeleted = 0
+        inner join zlabelhead h on h.zlabelheadid = s.zsuperiorid
+        where d.zdatadate >= to_date(#{startDate}, 'yyyy-mm')
+        and d.zdatadate &lt; add_months(to_date(#{endDate}, 'yyyy-mm'),1)
+        and h.zlabelname = #{townName}
+        group by to_char(d.zdatadate, 'yyyy-mm')
+        order by to_char(d.zdatadate, 'yyyy-mm')
+    </select>
+
+</mapper>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.AbnorTaskMapper">
+
+    <resultMap id="abnorTaskResult" type="AbnorTaskResult">
+        <result property="taskHeadId" column="ztaskheadid"/>
+        <result property="taskTitle" column="ztasktitle"/>
+        <result property="taskStatus" column="ztaskstatus"/>
+        <result property="sourceId" column="zdatasourid"/>
+        <result property="sourceName" column="zdatasourname"/>
+        <result property="townName" column="townName"/>
+        <result property="abnorTaskType" column="zabnortasktype"/>
+        <result property="alarmLevel" column="zalarmlevel"/>
+        <result property="taskSentDate" column="ztasksentdate"/>
+        <result property="startDate" column="zstarttime"/>
+        <result property="endDate" column="zendtime"/>
+        <result property="checkpointId" column="zcheckpointid"/>
+        <result property="checkpointDesc" column="zcheckpointdesc"/>
+        <result property="abnorDesc" column="zabnordesc"/>
+        <result property="abnorReason" column="zabnorreason"/>
+        <result property="returnApproveDate" column="zreturnapprovedate"/>
+        <result property="isReported" column="zisreported"/>
+        <result property="dateReported" column="zdatereported"/>
+        <result property="isReturnNormal" column="zisreturnnormal"/>
+        <result property="returnNormalDate" column="zreturnnormaldate"/>
+        <result property="entProcessMemo" column="zentprocessmemo"/>
+        <result property="adminUnitName" column="adminunitname"/>
+        <result property="adminUnitProcDate" column="adminunitprocdate"/>
+        <result property="adminUnitProcDesc" column="adminunitprocdesc"/>
+        <result property="elementId" column="zelementid"/>
+        <result property="elementDesc" column="zelementdesc"/>
+        <result property="deptName" column="zdeptcode"/>
+    </resultMap>
+
+    <select id="getAbnorTaskList" parameterType="AbnorTaskParam" resultMap="abnorTaskResult">
+        select a.ztaskheadid, a.ztasktitle, a.ztaskstatus, s.zdatasourid, s.zdatasourname, t.zlabelname townName, a.zabnortasktype,
+        a.zalarmlevel, a.ztasksentdate, a.zstarttime, a.zendtime, c.zcheckpointid, c.zcheckpointdesc,
+        a.zabnordesc, a.zabnorreason, a.zreturnapprovedate,
+        a.zisreported, a.zdatereported, a.zisreturnnormal, a.zreturnnormaldate, a.zentprocessmemo,
+        a.adminunitname, a.adminunitprocdate, a.adminunitprocdesc, ae.zelementid, ae.zelementdesc, d.zdeptcode
+        from zabnortaskhead a
+        inner join zcheckpointdef c on c.zcheckpointid = a.zcheckpointid and c.zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = a.zsourceid and s.zisdeleted = 0
+        inner join zfactorydept d on d.znewtownid = s.zsuperiorid and d.zmonitorclass = 0 and d.zisdeleted = 0
+        left join zlabelhead t on t.zlabelheadid = s.zsuperiorid
+        left join (
+        select distinct ae.ztaskheadid, e.zelementid, e.zelementdesc from zabnortaskelement ae
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(ae.zelementid, 1000) and e.zisdeleted = 0
+        where ae.zisdeleted = 0
+        <if test="startDate != null and endDate !=null ">
+            and ae.zdatadate between #{startDate} and #{endDate}
+        </if>
+        ) ae on ae.ztaskheadid = a.ztaskheadid
+        where a.zisdeleted = 0
+        <if test="startDate != null and endDate !=null ">
+            and a.zstarttime between #{startDate} and #{endDate}
+        </if>
+        <if test="sourceName != null and sourceName != '' ">
+            and s.zdatasourname like '%'||#{sourceName}||'%'
+        </if>
+        <if test="townId != null">
+            and s.zsuperiorid = #{townId}
+        </if>
+        <if test="sourceId != null and sourceId != '' ">
+            and s.zdatasourid = #{sourceId}
+        </if>
+        <if test="elementId != null and elementId != '' ">
+            and ae.zelementid = #{elementId}
+        </if>
+        <if test="isReported != null">
+            and a.zisreported = #{isReported}
+        </if>
+        <if test="isReturnNormal != null">
+            and a.zisreturnnormal = #{isReturnNormal}
+        </if>
+        <if test="isManualTask != null">
+            and a.zismanualtask = #{isManualTask}
+        </if>
+         <if test="taskStatus != null ">
+            and a.ztaskstatus = #{taskStatus}
+        </if>
+        <if test="abnorTaskType != null ">
+            and a.zabnortasktype = #{abnorTaskType}
+        </if>
+    </select>
+
+    <resultMap id="taskElementResult" type="TaskElementResult">
+        <result column="zelementdetailid" property="elementDetailId"/>
+        <result column="ztaskheadid" property="taskHeadId"/>
+        <result column="zelementid" property="elementId"/>
+        <result column="zelementdesc" property="elementDesc"/>
+        <result column="zdatadate" property="dataDate"/>
+        <result column="zamount" property="amount"/>
+        <result column="zupperlimit" property="upperLimit"/>
+        <result column="zlowerlimit" property="lowerLimit"/>
+    </resultMap>
+
+    <select id="getElementListByTaskIds" parameterType="string" resultMap="taskElementResult">
+        select ae.zelementdetailid, ae.ztaskheadid, e.zelementid, e.zelementdesc, ae.zdatadate, ae.zamount, ae.zupperlimit, ae.zlowerlimit
+        from zabnortaskelement ae
+        inner join zelementdef e on e.zelementid = ae.zelementid - 23000 and e.zisdeleted = 0
+        where ae.zisdeleted = 0 and ztaskheadid in
+        <foreach collection="taskHeadIds" item="taskHeadId" open="(" separator="," close=")">
+            #{taskHeadId}
+        </foreach>
+    </select>
+
+    <select id="getAbnorHeadId" parameterType="map" statementType="CALLABLE">
+        call sp_getcomplexid(#{keyword,mode=IN,jdbcType=VARCHAR}, #{complexid,mode=OUT,jdbcType=VARCHAR})
+    </select>
+
+    <insert id="addManualTask" parameterType="ManualTaskModel">
+        insert into zabnortaskhead(ztaskheadid, zabnortitle, zsourceid, ztaskstatus,
+         zabnortasktype, zcheckpointid, ztasksentdate, zstarttime, zendtime, zalarmlevel,
+         zabnordesc, zismanualtask, zcreatedby, zupdatedby, zdatecreated, zdateupdated )
+        values (#{taskHeadId}, #{abnorTitle}, #{sourceId}, #{taskStatus}, #{abnorTaskType},
+         #{checkpointId}, #{taskSentDate}, #{startTime}, #{endTime}, #{alarmLevel}, #{abnorDesc},
+         #{isManualTask}, #{createdBy}, #{updatedBy}, sysdate, sysdate)
+    </insert>
+
+    <update id="enterpriseProcess" parameterType="EnterpriseProcessModel">
+        update zabnortaskhead set ztaskstatus = #{taskStatus},
+        zabnorreason = #{abnorReason},
+        <if test="isReported != null">zisreported = #{isReported},</if>
+        <if test="dateReported != null">zdatereported = #{dateReported},</if>
+        <if test="isReturnNormal != null">zisreturnnormal = #{isReturnNormal},</if>
+        <if test="returnNormalDate != null">zreturnnormaldate = #{returnNormalDate},</if>
+        zentprocessmemo = #{entProcessMemo},
+        zupdatedby = #{updatedBy},
+        zdateupdated = sysdate
+        where ztaskheadid = #{taskHeadId}
+    </update>
+
+    <update id="branchProcess" parameterType="BranchProcessModel">
+        update zabnortaskhead set ztaskstatus = 5,
+        adminunitname = #{adminUnitName},
+        adminunitprocdate = sysdate,
+        adminunitprocdesc = #{adminUnitProcDesc},
+        zupdatedby = #{updatedBy},
+        zdateupdated = sysdate
+        where ztaskheadid = #{taskHeadId}
+    </update>
+
+    <update id="branchReturn" parameterType="BranchReturnModel">
+        update zabnortaskhead set ztaskstatus = 3,
+        zisreturnnormal = 0,
+        zreturnnormaldate = null,
+        zreturnapprovedate = sysdate,
+        zupdatedby = #{updatedBy},
+        zdateupdated = sysdate
+        where ztaskheadid = #{taskHeadId}
+    </update>
+    
+    <update id="cityReturn" parameterType="string">
+        update zabnortaskhead set ztaskstatus = 4,
+        zupdatedby = #{updatedBy},
+        zdateupdated = sysdate
+        where ztaskheadid = #{taskHeadId}
+    </update>
+
+    <resultMap id="procDetailModel" type="ProcDetailModel">
+        <result column="zprocdetailid" property="procDetailId"/>
+        <result column="ztaskheadid" property="taskHeadId"/>
+        <result column="zusertype" property="userType"/>
+        <result column="zprocdate" property="procDate"/>
+        <result column="zprocdesc" property="procDesc"/>
+        <result column="zprocunit" property="procUnit"/>
+        <result column="zprocusername" property="procUserName"/>
+    </resultMap>
+
+    <select id="getSourceNameById" parameterType="string" resultType="string">
+        select zdatasourname from zdatasoursetting where zdatasourid = #{dataSourId}
+    </select>
+
+    <select id="getProcDetailList" parameterType="string" resultMap="procDetailModel">
+        select * from zabnortaskprocdetail where ztaskheadid = #{taskHeadId} order by zprocdate desc
+    </select>
+
+    <insert id="addAbnorTaskProcDetail" parameterType="ProcDetailModel">
+        insert into zabnortaskprocdetail(
+        zprocdetailid, ztaskheadid, zusertype, zprocdate, zprocdesc, zprocunit,
+        zprocusername, zdateupdated)
+        values (#{procDetailId}, #{taskHeadId}, #{userType}, sysdate, #{procDesc},
+         #{procUnit}, #{procUserName}, sysdate)
+    </insert>
+</mapper>

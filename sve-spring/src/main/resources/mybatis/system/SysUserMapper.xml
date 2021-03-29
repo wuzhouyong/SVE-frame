@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.system.mapper.SysUserMapper">
+
+    <resultMap type="SysUser" id="SysUserResult">
+        <id property="userId" column="user_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="nickName" column="nick_name"/>
+        <result property="email" column="email"/>
+        <result property="phonenumber" column="phonenumber"/>
+        <result property="sex" column="sex"/>
+        <result property="avatar" column="avatar"/>
+        <result property="password" column="password"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="loginIp" column="login_ip"/>
+        <result property="loginDate" column="login_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="mobile" column="mobile"/>
+        <result property="isBinding" column="is_binding"/>
+        <association property="dept" column="dept_id" javaType="SysDept" resultMap="deptResult"/>
+        <collection property="roles" javaType="java.util.List" resultMap="RoleResult"/>
+    </resultMap>
+
+    <resultMap id="deptResult" type="SysDept">
+        <id property="deptId" column="dept_id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="leader" column="leader"/>
+        <result property="status" column="dept_status"/>
+    </resultMap>
+
+    <resultMap id="RoleResult" type="SysRole">
+        <id property="roleId" column="role_id"/>
+        <result property="roleName" column="role_name"/>
+        <result property="roleKey" column="role_key"/>
+        <result property="roleSort" column="role_sort"/>
+        <result property="dataScope" column="data_scope"/>
+        <result property="status" column="role_status"/>
+    </resultMap>
+
+    <sql id="selectUserVo">
+        select u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, 
+        d.dept_id, d.parent_id, d.dept_name, d.order_num, d.leader, d.status as dept_status,
+        r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status as role_status
+        from sys_user u
+		    left join sys_dept d on u.dept_id = d.dept_id
+		    left join sys_user_role ur on u.user_id = ur.user_id
+		    left join sys_role r on r.role_id = ur.role_id
+    </sql>
+
+    <select id="selectUserList" parameterType="SysUser" resultMap="SysUserResult">
+        select u.user_id, u.dept_id, u.nick_name, u.user_name, u.email, u.avatar, u.phonenumber, u.password, u.sex,
+        u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark,
+        nvl(ddu.dept_name,d.dept_name) as dept_name, d.leader from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        left join sys_dept_user du on du.USER_ID = u.USER_ID and du.del_flag = 0
+        left join sys_dept ddu on ddu.dept_id = du.dept_id
+        where u.del_flag = '0'
+        <if test="userName != null and userName != ''">
+            AND u.user_name like '%'|| #{userName}||'%'
+        </if>
+        <if test="status != null and status != ''">
+            AND u.status = #{status}
+        </if>
+        <if test="phonenumber != null and phonenumber != ''">
+            AND u.phonenumber like '%'|| #{phonenumber}||'%'
+        </if>
+        <if test="beginTime != null and beginTime != ''"><!-- 开始时间检索 -->
+            AND u.CREATE_TIME BETWEEN to_date(#{beginTime},'yyyy-MM-dd') and to_date(#{endTime},'yyyy-MM-dd') + 1
+        </if>
+        <if test="deptId != null and deptId != 0">
+            AND (
+            (u.dept_id = #{deptId} OR u.dept_id IN ( SELECT t.dept_id FROM sys_dept t WHERE FIND_IN_SET
+            (#{deptId},ancestors) <![CDATA[<>]]> 0 ))
+            or (du.dept_id = #{deptId} OR du.dept_id IN ( SELECT t.dept_id FROM sys_dept t WHERE FIND_IN_SET
+            (#{deptId},ancestors) <![CDATA[<>]]> 0 ))
+            )
+        </if>
+        <!-- 数据范围过滤 -->
+        ${dataScope}
+    </select>
+
+    <select id="checkSource" parameterType="String" resultType="int">
+		SELECT COUNT(1) from pf_bas_source_user U
+				LEFT JOIN PF_BAS_SOURCE S ON U.SOURCE_ID = S.SOURCE_ID
+				where U.USER_NAME = #{userName} AND S.IS_DELETED = 0
+	</select>
+
+    <select id="checkSourceByMobile" parameterType="String" resultType="int">
+		SELECT COUNT(1) from pf_bas_source_user U
+				LEFT JOIN PF_BAS_SOURCE S ON U.SOURCE_ID = S.SOURCE_ID
+				where U.mobile = #{mobile} and u.is_binding = 1 AND S.IS_DELETED = 0
+	</select>
+
+    <select id="checkTagDetail" parameterType="String" resultType="int">
+		SELECT COUNT(1) from pf_bas_source_user U
+		inner JOIN PF_BAS_TAG_DETAIL D ON U.SOURCE_ID = D.PF_SOURCE_ID
+        inner join pf_bas_tag_head h on h.tag_head_id = d.tag_head_id and h.is_active = 1
+		WHERE U.USER_NAME = #{userName} AND D.IS_DELETED = 0
+-- 				AND D.TAG_HEAD_ID IN (1012, 1003, 1013, 1002, 1019, 1014, 1004, 1006, 1015, 1017, 1021)
+	</select>
+
+    <select id="checkTagDetailByMobile" parameterType="String" resultType="int">
+		SELECT COUNT(1) from pf_bas_source_user U
+				LEFT JOIN PF_BAS_TAG_DETAIL D ON U.SOURCE_ID = D.PF_SOURCE_ID
+                inner join pf_bas_tag_head h on h.tag_head_id = d.tag_head_id and h.is_active = 1
+				WHERE U.mobile = #{mobile} and is_binding = 1 AND D.IS_DELETED = 0
+-- 				AND D.TAG_HEAD_ID IN (1012, 1003, 1013, 1002, 1019, 1014, 1004, 1006, 1015, 1017, 1021)
+	</select>
+
+    <select id="selectUserByUserName" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.user_name = #{userName}
+    </select>
+
+    <select id="selectUserById" parameterType="Long" resultMap="SysUserResult">
+        <include refid="selectUserVo"/>
+        where u.user_id = #{userId}
+    </select>
+
+    <select id="checkUserNameUnique" parameterType="String" resultType="int">
+		select count(1) from sys_user where user_name = #{userName}
+	</select>
+
+    <select id="checkPhoneUnique" parameterType="String" resultMap="SysUserResult">
+		select user_id, phonenumber from sys_user where phonenumber = #{phonenumber}
+	</select>
+
+    <select id="checkEmailUnique" parameterType="String" resultMap="SysUserResult">
+		select user_id, email from sys_user where email = #{email}
+	</select>
+
+    <insert id="insertUser" parameterType="SysUser" useGeneratedKeys="true" keyProperty="userId">
+        <selectKey keyProperty="userId" order="BEFORE" resultType="Long">
+            select seq_sys_user.nextval as userId from DUAL
+        </selectKey>
+        insert into sys_user(
+        <if test="userId != null and userId != 0">user_id,</if>
+        <if test="deptId != null and deptId != 0">dept_id,</if>
+        <if test="userName != null and userName != ''">user_name,</if>
+        <if test="nickName != null and nickName != ''">nick_name,</if>
+        <if test="email != null and email != ''">email,</if>
+        <if test="avatar != null and avatar != ''">avatar,</if>
+        <if test="phonenumber != null and phonenumber != ''">phonenumber,</if>
+        <if test="sex != null and sex != ''">sex,</if>
+        <if test="password != null and password != ''">password,</if>
+        <if test="status != null and status != ''">status,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        create_time,update_time,del_flag
+        )values(
+        <if test="userId != null and userId != 0">#{userId},</if>
+        <if test="deptId != null and deptId != ''">#{deptId},</if>
+        <if test="userName != null and userName != ''">#{userName},</if>
+        <if test="nickName != null and nickName != ''">#{nickName},</if>
+        <if test="email != null and email != ''">#{email},</if>
+        <if test="avatar != null and avatar != ''">#{avatar},</if>
+        <if test="phonenumber != null and phonenumber != ''">#{phonenumber},</if>
+        <if test="sex != null and sex != ''">#{sex},</if>
+        <if test="password != null and password != ''">#{password},</if>
+        <if test="status != null and status != ''">#{status},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        sysdate,sysdate,0
+        )
+    </insert>
+
+    <update id="updateUser" parameterType="SysUser">
+        update sys_user
+        <set>
+            dept_id = #{deptId,jdbcType=BIGINT},
+            user_name = #{userName,jdbcType=VARCHAR},
+            nick_name = #{nickName,jdbcType=VARCHAR},
+            email = #{email,jdbcType=VARCHAR},
+            phonenumber = #{phonenumber,jdbcType=VARCHAR},
+            sex = #{sex,jdbcType=CHAR},
+            avatar = #{avatar,jdbcType=VARCHAR},
+            status = #{status,jdbcType=CHAR},
+            login_ip = #{loginIp,jdbcType=VARCHAR},
+            login_date = #{loginDate,jdbcType=DATE},
+            update_by = #{updateBy,jdbcType=VARCHAR},
+            remark = #{remark,jdbcType=VARCHAR},
+            update_time = sysdate
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <update id="updateUserStatus" parameterType="SysUser">
+ 		update sys_user set status = #{status} where user_id = #{userId}
+	</update>
+
+    <update id="updateUserAvatar" parameterType="SysUser">
+ 		update sys_user set avatar = #{avatar} where user_name = #{userName}
+	</update>
+
+    <!--查找原始密码-->
+    <select id="selectOriginalPossword" parameterType="string" resultType="map">
+ 		select user_name username,password,memo from pf_bas_source_user where user_name = #{userName}
+	</select>
+
+    <!--修改原始密码-->
+    <update id="updateOriginalPossword" parameterType="string">
+ 		update pf_bas_source_user set memo = null, login_flag = 1 where user_name = #{userName}
+	</update>
+
+    <!--修改密码-->
+    <update id="updateUserPossword" parameterType="string">
+ 		update pf_bas_source_user set memo=#{memo,jdbcType=VARCHAR},password=#{newPsw,jdbcType=VARCHAR}, login_flag = 1 where user_name = #{userName}
+	</update>
+
+    <update id="resetUserPwd" parameterType="SysUser">
+ 		update sys_user set password = #{password} where user_name = #{userName}
+	</update>
+
+    <delete id="deleteUserById" parameterType="Long">
+ 		delete from sys_user where user_id = #{userId}
+ 	</delete>
+
+    <delete id="deleteUserByIds" parameterType="Long">
+        update sys_user set del_flag = '2' where user_id in
+        <foreach collection="array" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <select id="selectPfBasSourceUser" parameterType="String"
+            resultType="com.ruoyi.project.enterprise.domain.PfBasSourceUser">
+        select source_user_id sourceUserId,user_name userName,nick_name nickName,mobile,
+        source_user_id sourceUserId,user_flag userFlag,source_id sourceId,is_binding isBinding,
+        to_char(login_date) loginDate
+        from pf_bas_source_user where source_id = #{sourceId,jdbcType=VARCHAR}
+    </select>
+
+</mapper> 

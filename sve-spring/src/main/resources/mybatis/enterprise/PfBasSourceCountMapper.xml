@@ -1,0 +1,1076 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.enterprise.mapper.PfBasSourceCountMapper">
+
+    <resultMap id="sourceCount" type="PfBasSourceCount">
+        <result property="townName" column="town_name"></result>
+        <result property="townCode" column="town_code"></result>
+        <result property="qyzs" column="qyzs"></result>
+        <result property="shuizhongdian" column="shuizhongdian"></result>
+        <result property="qizhongdian" column="qizhongdian"></result>
+        <result property="paishui" column="paishui"></result>
+        <result property="lsprodlsprod" column="lsprodlsprod"></result>
+        <result property="lsprocess" column="lsprocess"></result>
+        <result property="lxfs" column="lxfs"></result>
+        <result property="guocheng" column="guocheng"></result>
+        <result property="zaozhi" column="zaozhi"></result>
+        <result property="jinshu" column="jinshu"></result>
+        <result property="yitihua" column="yitihua"></result>
+        <result property="voc" column="voc"></result>
+        <result property="qixiu" column="qixiu"></result>
+        <result property="youyan" column="youyan"></result>
+        <result property="jiayou" column="jiayou"></result>
+        <result property="gasv" column="gasv"></result>
+        <result property="waterv" column="waterv"></result>
+        <result property="xinfang" column="xinfang"></result>
+    </resultMap>
+
+    <resultMap id="sourceList" type="PfBasSourceList">
+        <result property="fullName" column="full_name"></result>
+        <result property="townName" column="town_name"></result>
+        <result property="townCode" column="town_code"></result>
+        <result property="industryName" column="industry_name"></result>
+        <result property="sourceStatus" column="source_status"></result>
+        <result property="envContactName" column="env_contact_name"></result>
+        <result property="envContactPhone" column="env_contact_phone"></result>
+        <result property="qyzs" column="qyzs"></result>
+        <result property="shuizhongdian" column="shuizhongdian"></result>
+        <result property="qizhongdian" column="qizhongdian"></result>
+        <result property="paishui" column="paishui"></result>
+        <result property="lsprodlsprod" column="lsprodlsprod"></result>
+        <result property="lsprocess" column="lsprocess"></result>
+        <result property="lxfs" column="lxfs"></result>
+        <result property="guocheng" column="guocheng"></result>
+        <result property="zaozhi" column="zaozhi"></result>
+        <result property="jinshu" column="jinshu"></result>
+        <result property="yitihua" column="yitihua"></result>
+        <result property="voc" column="voc"></result>
+        <result property="qixiu" column="qixiu"></result>
+        <result property="youyan" column="youyan"></result>
+        <result property="jiayou" column="jiayou"></result>
+        <result property="gasv" column="gasv"></result>
+        <result property="waterv" column="waterv"></result>
+        <result property="xinfang" column="xinfang"></result>
+    </resultMap>
+
+    <resultMap id="taskSourceEntity" type="TaskSourceEntity">
+        <result property="sourceId" column="source_id"></result>
+        <result property="tagHeadId" column="tag_head_id"></result>
+        <result property="tagHeadName" column="tag_head_name"></result>
+        <result property="fullName" column="full_name"></result>
+        <result property="townName" column="town_name"></result>
+        <result property="constructionUnit" column="construction_unit"></result>
+        <result property="constructionPerson" column="construction_person"></result>
+        <result property="constructionPhone" column="construction_phone"></result>
+        <result property="constructionStatus" column="construction_status"></result>
+        <result property="loginFlag" column="login_flag"></result>
+        <result property="verifyStatus" column="verify_status"></result>
+        <result property="envContactName" column="envContact_name"></result>
+        <result property="envContactPhone" column="envContact_phone"></result>
+        <result property="auditDate" column="audit_date"></result>
+        <result property="acceptDate" column="accept_date"></result>
+        <result property="acceptBy" column="accept_by"></result>
+        <result property="acceptResult" column="accept_result"></result>
+        <result property="status" column="status"></result>
+        <result property="sourceStatus" column="source_status"></result>
+        <result property="envContactName" column="env_contact_name"></result>
+        <result property="envContactPhone" column="env_contact_phone"></result>
+        <result property="constructionUnit" column="short_name"></result>
+        <result property="taskAdjustId" column="task_adjust_id"></result>
+        <result property="waitReview" column="wait_review"></result>
+        <result property="nickName" column="nick_name"></result>
+    </resultMap>
+
+    <select id="getSourceList" resultMap="sourceList" parameterType="MonitorTaskParam">
+        select full_name,town_code,town_name,industry_name,source_status,env_contact_name,env_contact_phone,
+        shuizhongdian,qizhongdian,paishui,guocheng,lsprod,lsprocess,jinshu,zaozhi,yitihua,voc,qixiu,youyan,jiayou,gasv,waterv,xinfang
+        from pf_bas_source a inner join (
+        select b.pf_source_id,
+        sum(decode(b.tag_head_id,1017,c.construction_status+2,0)) shuizhongdian,
+        sum(decode(b.tag_head_id,1021,c.construction_status+2,0)) qizhongdian,
+        sum(decode(b.tag_head_id,1012,c.construction_status+2,0)) paishui,
+        sum(decode(b.tag_head_id,1002,c.construction_status+2,0)) guocheng,
+        sum(decode(b.tag_head_id,1003,c.construction_status+2,0)) lsprod,
+        sum(decode(b.tag_head_id,1018,c.construction_status+2,0)) lsprocess,
+        sum(decode(b.tag_head_id,1015,c.construction_status+2,0)) jinshu,
+        sum(decode(b.tag_head_id,1019,c.construction_status+2,0)) zaozhi,
+        sum(decode(b.tag_head_id,1016,c.construction_status+2,0)) yitihua,
+        sum(decode(b.tag_head_id,1004,c.construction_status+2,0)) voc,
+        sum(decode(b.tag_head_id,1013,c.construction_status+2,0)) qixiu,
+        sum(decode(b.tag_head_id,1006,c.construction_status+2,0)) youyan,
+        sum(decode(b.tag_head_id,1014,c.construction_status+2,0)) jiayou,
+        sum(decode(b.tag_head_id,1022,c.construction_status+2,0)) gasv,
+        sum(decode(b.tag_head_id,1023,c.construction_status+2,0)) waterv,
+        sum(decode(b.tag_head_id,1024,c.construction_status+2,0)) xinfang
+        from pf_bas_tag_detail b
+        inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+        left join pf_bas_constructioninfo c on c.pf_source_id=b.pf_source_id and
+        c.tag_head_id=b.tag_head_id
+        where b.is_deleted=0 and c.is_deleted=0 and b.list_type in
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+--         and b.tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+        group by b.pf_source_id) b on a.source_id=b.pf_source_id
+        where a.is_deleted=0 ${labelQuery}
+        ${dataScope}
+        <if test="fullName != null and fullName != ''">
+            and full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and town_code = #{townCode}
+        </if>
+        UNION ALL
+        select ' 合计',null,null,null,null,null,null,
+        sum(decode(b.tag_head_id,1017,1,0)) shuizhongdian,
+        sum(decode(b.tag_head_id,1021,1,0)) qizhongdian,
+        sum(decode(b.tag_head_id,1012,1,0)) paishui,
+        sum(decode(b.tag_head_id,1002,1,0)) guocheng,
+        sum(decode(b.tag_head_id,1003,1,0)) lsprod,
+        sum(decode(b.tag_head_id,1018,1,0)) lsprocess,
+        sum(decode(b.tag_head_id,1015,1,0)) jinshu,
+        sum(decode(b.tag_head_id,1019,1,0)) zaozhi,
+        sum(decode(b.tag_head_id,1016,1,0)) yitihua,
+        sum(decode(b.tag_head_id,1004,1,0)) voc,
+        sum(decode(b.tag_head_id,1013,1,0)) qixiu,
+        sum(decode(b.tag_head_id,1006,1,0)) youyan,
+        sum(decode(b.tag_head_id,1014,1,0)) jiayou,
+        sum(decode(b.tag_head_id,1022,1,0)) gasv,
+        sum(decode(b.tag_head_id,1023,1,0)) waterv,
+        sum(decode(b.tag_head_id,1024,1,0)) xinfang
+        from pf_bas_source a
+        inner join pf_bas_tag_detail b on a.source_id=b.pf_source_id
+        inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+        where b.is_deleted=0 and a.is_deleted=0 ${labelQuery}
+        and list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+--         and b.tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+        <if test="fullName != null and fullName != ''">
+            and full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and town_code = #{townCode}
+        </if>
+        ${dataScope}
+        order by full_name
+    </select>
+
+    <select id="getCountList" resultMap="sourceCount" parameterType="MonitorTaskParam">
+        select town_name,town_code,count(*) qyzs,sum(nvl2(d1.pf_source_id,1,0))
+        shuizhongdian,sum(nvl2(dd.pf_source_id,1,0)) qizhongdian,sum(nvl2(d2.pf_source_id,1,0)) paishui
+        ,sum(nvl2(d3.pf_source_id,1,0)) lsprod,sum(nvl2(d4.pf_source_id,1,0)) lsprocess,sum(nvl2(d5.pf_source_id,1,0))
+        guocheng,sum(nvl2(d6.pf_source_id,1,0)) zaozhi
+        ,sum(nvl2(d7.pf_source_id,1,0)) jinshu,sum(nvl2(d8.pf_source_id,1,0)) yitihua,sum(nvl2(d9.pf_source_id,1,0))
+        voc,sum(nvl2(da.pf_source_id,1,0)) qixiu,
+        sum(nvl2(db.pf_source_id,1,0)) youyan,sum(nvl2(dc.pf_source_id,1,0)) jiayou,
+        sum(nvl2(de.pf_source_id,1,0)) gasv,sum(nvl2(df.pf_source_id,1,0)) waterv,
+        sum(nvl2(dg.pf_source_id,1,0)) xinfang
+        from pf_bas_source a
+        inner join (
+            select * from (
+                select pf_source_id from pf_bas_tag_detail b
+                inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+                where b.is_deleted=0
+                -- and tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+                and list_type IN
+                <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+                    #{listType}
+                </foreach>
+                group by pf_source_id
+            )
+        ) b
+        on a.source_id=b.pf_source_id and a.is_deleted=0
+        left join pf_bas_tag_detail d1 on d1.is_deleted=0 and d1.pf_source_id=a.source_id and d1.tag_head_id=1017 and
+        d1.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d2 on d2.is_deleted=0 and d2.pf_source_id=a.source_id and d2.tag_head_id=1012 and
+        d2.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d3 on d3.is_deleted=0 and d3.pf_source_id=a.source_id and d3.tag_head_id=1003 and
+        d3.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d4 on d4.is_deleted=0 and d4.pf_source_id=a.source_id and d4.tag_head_id=1018 and
+        d4.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d5 on d5.is_deleted=0 and d5.pf_source_id=a.source_id and d5.tag_head_id=1002 and
+        d5.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d6 on d6.is_deleted=0 and d6.pf_source_id=a.source_id and d6.tag_head_id=1019 and
+        d6.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d7 on d7.is_deleted=0 and d7.pf_source_id=a.source_id and d7.tag_head_id=1015 and
+        d7.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d8 on d8.is_deleted=0 and d8.pf_source_id=a.source_id and d8.tag_head_id=1016 and
+        d8.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d9 on d9.is_deleted=0 and d9.pf_source_id=a.source_id and d9.tag_head_id=1004 and
+        d9.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail da on da.is_deleted=0 and da.pf_source_id=a.source_id and da.tag_head_id=1013 and
+        da.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail db on db.is_deleted=0 and db.pf_source_id=a.source_id and db.tag_head_id=1006 and
+        db.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dc on dc.is_deleted=0 and dc.pf_source_id=a.source_id and dc.tag_head_id=1014 and
+        dc.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dd on dd.is_deleted=0 and dd.pf_source_id=a.source_id and dd.tag_head_id=1021 and
+        dd.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail de on de.is_deleted=0 and de.pf_source_id=a.source_id and de.tag_head_id=1022 and
+        de.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail df on df.is_deleted=0 and df.pf_source_id=a.source_id and df.tag_head_id=1023 and
+        df.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dg on dg.is_deleted=0 and dg.pf_source_id=a.source_id and dg.tag_head_id=1024 and
+        dg.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        where 1 = 1
+        ${dataScope}
+        group by town_name, town_code
+        union
+        select ' 合计',null,count(*) qyzs,sum(nvl2(d1.pf_source_id,1,0)) shuizhongdian,sum(nvl2(dd.pf_source_id,1,0))
+        qizhongdian,sum(nvl2(d2.pf_source_id,1,0)) paishui
+        ,sum(nvl2(d3.pf_source_id,1,0)) lsprod,sum(nvl2(d4.pf_source_id,1,0)) lsprocess,sum(nvl2(d5.pf_source_id,1,0))
+        guocheng,sum(nvl2(d6.pf_source_id,1,0)) zaozhi
+        ,sum(nvl2(d7.pf_source_id,1,0)) jinshu,sum(nvl2(d8.pf_source_id,1,0)) yitihua,sum(nvl2(d9.pf_source_id,1,0))
+        voc,sum(nvl2(da.pf_source_id,1,0)) qixiu,
+        sum(nvl2(db.pf_source_id,1,0)) youyan,sum(nvl2(dc.pf_source_id,1,0)) jiayou,
+        sum(nvl2(de.pf_source_id,1,0)) gasv,sum(nvl2(df.pf_source_id,1,0)) waterv,
+        sum(nvl2(dg.pf_source_id,1,0)) xinfang
+        from pf_bas_source a
+        inner join (
+            select * from (
+                select pf_source_id from pf_bas_tag_detail b
+                inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+                where b.is_deleted=0
+                -- and tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+                and list_type IN
+                <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+                    #{listType}
+                </foreach>
+                group by pf_source_id
+            )
+        ) b
+        on a.source_id=b.pf_source_id and a.is_deleted=0
+        left join pf_bas_tag_detail d1 on d1.is_deleted=0 and d1.pf_source_id=a.source_id and d1.tag_head_id=1017 and
+        d1.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d2 on d2.is_deleted=0 and d2.pf_source_id=a.source_id and d2.tag_head_id=1012 and
+        d2.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d3 on d3.is_deleted=0 and d3.pf_source_id=a.source_id and d3.tag_head_id=1003 and
+        d3.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d4 on d4.is_deleted=0 and d4.pf_source_id=a.source_id and d4.tag_head_id=1018 and
+        d4.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d5 on d5.is_deleted=0 and d5.pf_source_id=a.source_id and d5.tag_head_id=1002 and
+        d5.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d6 on d6.is_deleted=0 and d6.pf_source_id=a.source_id and d6.tag_head_id=1019 and
+        d6.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d7 on d7.is_deleted=0 and d7.pf_source_id=a.source_id and d7.tag_head_id=1015 and
+        d7.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d8 on d8.is_deleted=0 and d8.pf_source_id=a.source_id and d8.tag_head_id=1016 and
+        d8.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d9 on d9.is_deleted=0 and d9.pf_source_id=a.source_id and d9.tag_head_id=1004 and
+        d9.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail da on da.is_deleted=0 and da.pf_source_id=a.source_id and da.tag_head_id=1013 and
+        da.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail db on db.is_deleted=0 and db.pf_source_id=a.source_id and db.tag_head_id=1006 and
+        db.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dc on dc.is_deleted=0 and dc.pf_source_id=a.source_id and dc.tag_head_id=1014 and
+        dc.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dd on dd.is_deleted=0 and dd.pf_source_id=a.source_id and dd.tag_head_id=1021 and
+        dd.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail de on de.is_deleted=0 and de.pf_source_id=a.source_id and de.tag_head_id=1022 and
+        de.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail df on df.is_deleted=0 and df.pf_source_id=a.source_id and df.tag_head_id=1023 and
+        df.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dg on dg.is_deleted=0 and dg.pf_source_id=a.source_id and dg.tag_head_id=1024 and
+        dg.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        where 1 = 1
+        ${dataScope}
+        order by town_name
+    </select>
+
+    <select id="getSourceList1" resultMap="sourceList" parameterType="MonitorTaskParam">
+        select
+        full_name,town_code,town_name,industry_name,source_status,env_contact_name,env_contact_phone,nvl2(d1.pf_source_id,1,0)
+        shuizhongdian,nvl2(dd.pf_source_id,1,0) qizhongdian
+        ,nvl2(d2.pf_source_id,1+c2.construction_status,nvl2(d2.pf_source_id,1,0))
+        paishui,nvl2(d3.pf_source_id,decode(c3.status,0,1,1,2,6,4,3),0) guocheng
+        ,nvl2(d4.pf_source_id,1,0) lsprod,nvl2(d5.pf_source_id,1,0) lsprocess,nvl2(d6.pf_source_id,1,0)
+        jinshu,nvl2(d7.pf_source_id,1,0) zaozhi,nvl2(d8.pf_source_id,1,0) yitihua
+        ,nvl2(d9.pf_source_id,1,0) voc,nvl2(da.pf_source_id,1,0) qixiu,nvl2(db.pf_source_id,1,0)
+        youyan,nvl2(dc.pf_source_id,1,0) jiayou,
+        sum(nvl2(de.pf_source_id,1,0)) gasv,sum(nvl2(df.pf_source_id,1,0)) waterv,sum(nvl2(dg.pf_source_id,1,0)) xinfang
+        from pf_bas_source a
+        inner join (
+            select * from (
+                select pf_source_id from pf_bas_tag_detail b
+                inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+                where b.is_deleted=0
+                -- and tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+                and list_type IN
+                <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+                    #{listType}
+                </foreach>
+                group by pf_source_id
+            )
+        ) b
+        on a.source_id=b.pf_source_id and a.is_deleted=0
+        left join pf_bas_tag_detail d1 on d1.is_deleted=0 and d1.pf_source_id=a.source_id and d1.tag_head_id=1017 and
+        d1.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d2 on d2.is_deleted=0 and d2.pf_source_id=a.source_id and d2.tag_head_id=1012 and
+        d2.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d3 on d3.is_deleted=0 and d3.pf_source_id=a.source_id and d3.tag_head_id=1002 and
+        d3.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d4 on d4.is_deleted=0 and d4.pf_source_id=a.source_id and d4.tag_head_id=1003 and
+        d4.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d5 on d5.is_deleted=0 and d5.pf_source_id=a.source_id and d5.tag_head_id=1018 and
+        d5.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d6 on d6.is_deleted=0 and d6.pf_source_id=a.source_id and d6.tag_head_id=1015 and
+        d6.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d7 on d7.is_deleted=0 and d7.pf_source_id=a.source_id and d7.tag_head_id=1019 and
+        d7.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d8 on d8.is_deleted=0 and d8.pf_source_id=a.source_id and d8.tag_head_id=1016 and
+        d8.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d9 on d9.is_deleted=0 and d9.pf_source_id=a.source_id and d9.tag_head_id=1004 and
+        d9.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail da on da.is_deleted=0 and da.pf_source_id=a.source_id and da.tag_head_id=1013 and
+        da.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail db on db.is_deleted=0 and db.pf_source_id=a.source_id and db.tag_head_id=1006 and
+        db.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dc on dc.is_deleted=0 and dc.pf_source_id=a.source_id and dc.tag_head_id=1014 and
+        dc.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dd on dd.is_deleted=0 and dd.pf_source_id=a.source_id and dd.tag_head_id=1021 and
+        dd.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail de on de.is_deleted=0 and de.pf_source_id=a.source_id and de.tag_head_id=1022 and
+        de.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail df on df.is_deleted=0 and df.pf_source_id=a.source_id and df.tag_head_id=1023 and
+        df.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dg on dg.is_deleted=0 and dg.pf_source_id=a.source_id and dg.tag_head_id=1024 and
+        dg.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_constructioninfo c2 on c2.is_deleted=0 and c2.pf_source_id=a.source_id and c2.tag_head_id=1012
+        left join GUOCHENGSTATUS c3 on c3.source_id=d3.biz_source_id and d3.tag_head_id=1002
+        where 1=1
+        ${dataScope}
+        <if test="fullName != null and fullName != ''">
+            and full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and town_code = #{townCode}
+        </if>
+        UNION
+        SELECT ' 合计',null,null,null,null,null,null,sum(nvl2(d1.pf_source_id,1,0))
+        shuizhongdian,sum(nvl2(dd.pf_source_id,1,0)) qizhongdian
+        ,sum(nvl2(d2.pf_source_id,1,0)) paishui,sum(nvl2(d3.pf_source_id,1,0)) guocheng
+        ,sum(nvl2(d4.pf_source_id,1,0)) lsprod,sum(nvl2(d5.pf_source_id,1,0)) lsprocess,sum(nvl2(d6.pf_source_id,1,0))
+        jinshu,sum(nvl2(d7.pf_source_id,1,0)) zaozhi,sum(nvl2(d8.pf_source_id,1,0)) yitihua
+        ,sum(nvl2(d9.pf_source_id,1,0)) voc,sum(nvl2(da.pf_source_id,1,0)) qixiu,sum(nvl2(db.pf_source_id,1,0))
+        youyan,sum(nvl2(dc.pf_source_id,1,0)) jiayou,
+        sum(nvl2(de.pf_source_id,1,0)) gasv,sum(nvl2(df.pf_source_id,1,0)) waterv,sum(nvl2(dg.pf_source_id,1,0)) xinfang
+        from pf_bas_source a
+        inner join (
+            select * from (
+                select pf_source_id from pf_bas_tag_detail b
+                inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+                where b.is_deleted=0
+                -- and tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+                and list_type IN
+                <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+                    #{listType}
+                </foreach>
+                group by pf_source_id
+            )
+        ) b
+        on a.source_id=b.pf_source_id and a.is_deleted=0
+        left join pf_bas_tag_detail d1 on d1.is_deleted=0 and d1.pf_source_id=a.source_id and d1.tag_head_id=1017 and
+        d1.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d2 on d2.is_deleted=0 and d2.pf_source_id=a.source_id and d2.tag_head_id=1012 and
+        d2.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d3 on d3.is_deleted=0 and d3.pf_source_id=a.source_id and d3.tag_head_id=1002 and
+        d3.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d4 on d4.is_deleted=0 and d4.pf_source_id=a.source_id and d4.tag_head_id=1003 and
+        d4.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d5 on d5.is_deleted=0 and d5.pf_source_id=a.source_id and d5.tag_head_id=1018 and
+        d5.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d6 on d6.is_deleted=0 and d6.pf_source_id=a.source_id and d6.tag_head_id=1015 and
+        d6.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d7 on d7.is_deleted=0 and d7.pf_source_id=a.source_id and d7.tag_head_id=1019 and
+        d7.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d8 on d8.is_deleted=0 and d8.pf_source_id=a.source_id and d8.tag_head_id=1016 and
+        d8.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail d9 on d9.is_deleted=0 and d9.pf_source_id=a.source_id and d9.tag_head_id=1004 and
+        d9.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail da on da.is_deleted=0 and da.pf_source_id=a.source_id and da.tag_head_id=1013 and
+        da.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail db on db.is_deleted=0 and db.pf_source_id=a.source_id and db.tag_head_id=1006 and
+        db.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dc on dc.is_deleted=0 and dc.pf_source_id=a.source_id and dc.tag_head_id=1014 and
+        dc.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dd on dd.is_deleted=0 and dd.pf_source_id=a.source_id and dd.tag_head_id=1021 and
+        dd.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail de on de.is_deleted=0 and de.pf_source_id=a.source_id and de.tag_head_id=1022 and
+        de.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail df on df.is_deleted=0 and df.pf_source_id=a.source_id and df.tag_head_id=1023 and
+        df.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        left join pf_bas_tag_detail dg on dg.is_deleted=0 and dg.pf_source_id=a.source_id and dg.tag_head_id=1024 and
+        dg.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        where 1=1
+        <if test="fullName != null and fullName != ''">
+            and full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and town_code = #{townCode}
+        </if>
+        ${dataScope}
+        order by full_name
+    </select>
+
+    <select id="getTotal" resultType="int" parameterType="PfBasSourceList">
+        select count(1) from
+        (select
+        full_name,town_code,town_name,industry_name,source_status,env_contact_name,env_contact_phone,nvl2(d1.pf_source_id,1,0)
+        shuizhongdian,nvl2(dd.pf_source_id,1,0) qizhongdian
+        ,nvl2(c2.pf_source_id,1+c2.construction_status,nvl2(d2.pf_source_id,1,0))
+        paishui,nvl2(d3.pf_source_id,decode(c3.status,0,1,1,2,6,4,3),0) guocheng
+        ,nvl2(d4.pf_source_id,1,0) lsprod,nvl2(d5.pf_source_id,1,0) lsprocess,nvl2(d6.pf_source_id,1,0)
+        jinshu,nvl2(d7.pf_source_id,1,0) zaozhi,nvl2(d8.pf_source_id,1,0) yitihua
+        ,nvl2(d9.pf_source_id,1,0) voc,nvl2(da.pf_source_id,1,0) qixiu,nvl2(db.pf_source_id,1,0)
+        youyan,nvl2(dc.pf_source_id,1,0) jiayou from pf_bas_source a
+        inner join (
+            select * from (
+                select pf_source_id from pf_bas_tag_detail b
+                inner join pf_bas_tag_head t on t.tag_head_id = b.tag_head_id and t.is_active = 1
+                where b.is_deleted=0
+                -- and tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021)
+                and list_type IN
+                <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+                    #{listType}
+                </foreach>
+                group by pf_source_id
+            )
+        ) b
+        on a.source_id=b.pf_source_id and a.is_deleted=0
+        left join pf_bas_tag_detail d1 on d1.is_deleted=0 and d1.pf_source_id=a.source_id and d1.tag_head_id=1017
+        left join pf_bas_tag_detail d2 on d2.is_deleted=0 and d2.pf_source_id=a.source_id and d2.tag_head_id=1012
+        left join pf_bas_tag_detail d3 on d3.is_deleted=0 and d3.pf_source_id=a.source_id and d3.tag_head_id=1002
+        left join pf_bas_tag_detail d4 on d4.is_deleted=0 and d4.pf_source_id=a.source_id and d4.tag_head_id=1003
+        left join pf_bas_tag_detail d5 on d5.is_deleted=0 and d5.pf_source_id=a.source_id and d5.tag_head_id=1018
+        left join pf_bas_tag_detail d6 on d6.is_deleted=0 and d6.pf_source_id=a.source_id and d6.tag_head_id=1015
+        left join pf_bas_tag_detail d7 on d7.is_deleted=0 and d7.pf_source_id=a.source_id and d7.tag_head_id=1019
+        left join pf_bas_tag_detail d8 on d8.is_deleted=0 and d8.pf_source_id=a.source_id and d8.tag_head_id=1016
+        left join pf_bas_tag_detail d9 on d9.is_deleted=0 and d9.pf_source_id=a.source_id and d9.tag_head_id=1004
+        left join pf_bas_tag_detail da on da.is_deleted=0 and da.pf_source_id=a.source_id and da.tag_head_id=1013
+        left join pf_bas_tag_detail db on db.is_deleted=0 and db.pf_source_id=a.source_id and db.tag_head_id=1006
+        left join pf_bas_tag_detail dc on dc.is_deleted=0 and dc.pf_source_id=a.source_id and dc.tag_head_id=1014
+        left join pf_bas_tag_detail dd on dd.is_deleted=0 and dd.pf_source_id=a.source_id and dd.tag_head_id=1021
+        left join pf_bas_constructioninfo c2 on c2.is_deleted=0 and c2.pf_source_id=a.source_id and c2.tag_head_id=1012
+        left join GUOCHENGSTATUS c3 on c3.source_id=d3.biz_source_id and d3.tag_head_id=1002
+        where 1=1
+        <if test="fullName != null and fullName != ''">
+            and full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and town_code = #{townCode}
+        </if>
+        )
+    </select>
+
+    <resultMap id="exportCountEntity" type="ExportCountEntity">
+        <result property="townName" column="town_name"></result>
+        <result property="accessRatio" column="access_ratio"></result>
+        <result property="constructionRatio" column="construction_ratio"></result>
+        <result property="connectedRatio" column="connected_ratio"></result>
+        <result property="acceptedratio" column="acceptedRatio"></result>
+        <result property="factorycnt" column="factorycnt"></result>
+        <result property="tagHeadName" column="tag_head_name"></result>
+        <result property="accessQuantity" column="access_quantity"></result>
+        <result property="constructionQuantity" column="construction_quantity"></result>
+        <result property="acceptedQuantity" column="accepted_quantity"></result>
+        <result property="connectedQuantity" column="connected_quantity"></result>
+
+        <result property="cancelRatio" column="cancel_ratio"></result>
+        <result property="suspendRatio" column="suspend_ratio"></result>
+        <result property="cancelQuantity" column="cancel_quantity"></result>
+        <result property="suspendQuantity" column="suspend_quantity"></result>
+    </resultMap>
+
+    <select id="getExportCountData1" resultMap="exportCountEntity" parameterType="MonitorTaskParam">
+        select tag_head_name,town_name,t.factorycnt,t.access_quantity,t.construction_quantity + t.connected_quantity
+        construction_quantity,t.connected_quantity,t.accepted_quantity,t.cancel_quantity,t.suspend_quantity,
+        TO_CHAR(ROUND(access_quantity*100/factorycnt, 2),'FM99990.00') ||'%' access_ratio,
+        TO_CHAR(ROUND((construction_quantity+connected_quantity)*100/factorycnt, 2),'FM99990.00') ||'%'
+        construction_ratio,
+        TO_CHAR(ROUND(connected_quantity*100/factorycnt,2),'FM99990.00') ||'%' connected_ratio,
+        TO_CHAR(ROUND(accepted_quantity*100/factorycnt, 2),'FM99990.00') ||'%' acceptedRatio,
+        TO_CHAR(ROUND(cancel_quantity*100/factorycnt,2),'FM99990.00') ||'%' cancel_ratio,
+        TO_CHAR(ROUND(suspend_quantity*100/factorycnt,2),'FM99990.00') ||'%' suspend_ratio
+        from ( (
+        select tag_head_name,town_name,count(*) factorycnt,
+        count(case when construction_status = 0 and verify_status = 0 then 1 end) access_quantity,
+        count(case when construction_status = 1 and verify_status = 0 then 1 end) construction_quantity,
+        count(case when construction_status in(2,3,4,6) and verify_status != 1 then 1 end) connected_quantity,
+        count(case when construction_status = 6 and verify_status != 1 then 1 end) accepted_quantity,
+        count(case when verify_status = 1 then 1 end) cancel_quantity,
+        count(case when construction_status in(0,1) and verify_status = 2 then 1 end) suspend_quantity
+        from pf_bas_constructioninfo a
+        inner join pf_bas_source b on a.pf_source_id=b.source_id and a.is_deleted=0 and b.is_deleted=0
+        inner join pf_bas_tag_head c on c.tag_head_id=a.tag_head_id and c.is_active = 1
+        inner join pf_bas_tag_detail d on D.PF_SOURCE_ID = a.PF_SOURCE_ID and D.TAG_HEAD_ID = A.TAG_HEAD_ID
+        and D.IS_DELETED = 0 and D.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        where town_code in
+        <foreach collection="townCodes" item="townCode" open="(" separator="," close=")">
+            #{townCode}
+        </foreach>
+        -- and a.TAG_HEAD_ID in (1012,1003,1018,1002,1015,1019,1016,1017,1004,1006,1013,1014,1021,1022,1023)
+        <if test="tagHeadId != null and tagHeadId != ''">
+            and a.TAG_HEAD_ID = #{tagHeadId}
+        </if>
+        group by tag_head_name,town_name) t
+        ) order by tag_head_name asc,town_name desc
+    </select>
+
+    <select id="getExportCountData" resultMap="exportCountEntity" parameterType="MonitorTaskParam">
+        select tag_head_name,town_name,t.factorycnt,t.access_quantity,t.construction_quantity + t.connected_quantity
+        construction_quantity,t.connected_quantity,t.accepted_quantity,t.cancel_quantity,t.suspend_quantity,
+        TO_CHAR(ROUND(access_quantity*100/factorycnt, 2),'FM99990.00') ||'%' access_ratio,
+        TO_CHAR(ROUND((construction_quantity+connected_quantity)*100/factorycnt, 2),'FM99990.00') ||'%'
+        construction_ratio,
+        TO_CHAR(ROUND(connected_quantity*100/factorycnt,2),'FM99990.00') ||'%' connected_ratio,
+        TO_CHAR(ROUND(accepted_quantity*100/factorycnt, 2),'FM99990.00') ||'%' acceptedRatio,
+        TO_CHAR(ROUND(cancel_quantity*100/factorycnt,2),'FM99990.00') ||'%' cancel_ratio,
+        TO_CHAR(ROUND(suspend_quantity*100/factorycnt,2),'FM99990.00') ||'%' suspend_ratio
+        from ( (
+        select tag_head_name,town_name,count(*) factorycnt,
+        count(case when construction_status = 0 and verify_status = 0 then 1 end) access_quantity,
+        count(case when construction_status = 1 and verify_status = 0 then 1 end) construction_quantity,
+        count(case when construction_status in(2,3,4,6) and verify_status != 1 then 1 end) connected_quantity,
+        count(case when construction_status = 6 and verify_status != 1 then 1 end) accepted_quantity,
+        count(case when verify_status = 1 then 1 end) cancel_quantity,
+        count(case when construction_status in(0,1) and verify_status = 2 then 1 end) suspend_quantity
+        from pf_bas_constructioninfo a
+        inner join pf_bas_source b on a.pf_source_id=b.source_id and a.is_deleted=0 and b.is_deleted=0
+        inner join pf_bas_tag_head c on c.tag_head_id=a.tag_head_id and c.is_active = 1
+        inner join pf_bas_tag_detail d on D.PF_SOURCE_ID = a.PF_SOURCE_ID and D.TAG_HEAD_ID = A.TAG_HEAD_ID
+        and D.IS_DELETED = 0 and D.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        where town_code in
+        <foreach collection="townCodes" item="townCode" open="(" separator="," close=")">
+            #{townCode}
+        </foreach>
+        -- and a.TAG_HEAD_ID in (1012,1003,1018,1002,1015,1019,1016,1017,1004,1006,1013,1014,1021,1022,1023)
+        <if test="tagHeadId != null and tagHeadId != ''">
+            and a.TAG_HEAD_ID = #{tagHeadId}
+        </if>
+        group by tag_head_name,town_name
+        union
+        select tag_head_name,' 合计' town_name,count(*) factorycnt,
+        count(case when construction_status = 0 and verify_status = 0 then 1 end) access_quantity,
+        count(case when construction_status = 1 and verify_status = 0 then 1 end) construction_quantity,
+        count(case when construction_status in(2,3,4,6) and verify_status != 1 then 1 end) connected_quantity,
+        count(case when construction_status = 6 and verify_status != 1 then 1 end) accepted_quantity,
+        count(case when verify_status = 1 then 1 end) cancel_quantity,
+        count(case when construction_status in(0,1) and verify_status = 2 then 1 end) suspend_quantity
+        from pf_bas_constructioninfo a
+        inner join pf_bas_source b on a.pf_source_id=b.source_id and a.is_deleted=0 and b.is_deleted=0
+        inner join pf_bas_tag_head c on c.tag_head_id=a.tag_head_id and c.is_active = 1
+        inner join pf_bas_tag_detail d on D.PF_SOURCE_ID = a.PF_SOURCE_ID and D.TAG_HEAD_ID = A.TAG_HEAD_ID
+        and D.IS_DELETED = 0 and D.list_type IN
+        <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+            #{listType}
+        </foreach>
+        where a.construction_status >= 0 and town_code in
+        <foreach collection="townCodes" item="townCode" open="(" separator="," close=")">
+            #{townCode}
+        </foreach>
+--         and a.TAG_HEAD_ID in (1012,1003,1018,1002,1015,1019,1016,1017,1004,1006,1013,1014,1021)
+        <if test="tagHeadId != null and tagHeadId != ''">
+            and a.TAG_HEAD_ID = #{tagHeadId}
+        </if>
+        group by tag_head_name) t
+        ) order by tag_head_name asc,town_name desc
+    </select>
+
+    <select id="taskChanges" parameterType="EnterpriseEntity" resultMap="taskSourceEntity">
+        select td.tag_head_id, s.source_id, th.tag_head_name, s.full_name, s.town_name, s.env_contact_name,
+        s.env_contact_phone, ssd.dict_label source_status,
+        cd.dict_label status,c.construction_status,c.short_name, c.construction_person, c.construction_phone,
+        c.audit_date, c.accept_date, ta.task_adjust_id, decode(ad.detail_id, null, 0, 1) wait_review
+        from pf_bas_tag_detail td
+        left join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted=0
+        left join pf_bas_source s on s.source_id = td.pf_source_id and s.is_deleted=0
+        left join pf_bas_constructioninfo c on c.pf_source_id = s.source_id and c.tag_head_id = td.tag_head_id and
+        c.is_deleted=0
+        INNER JOIN pf_bas_task_adjust ta on ta.pf_source_id = s.source_id and ta.tag_head_id = td.tag_head_id
+        and ta.is_deleted = 0 and ta.aduit_status = 0
+        left join pf_bas_task_adjust_detail ad on ad.task_adjust_id = ta.task_adjust_id and ad.is_deleted = 0 and ad.audit_status = 1
+        left join sys_dict_data ssd on ssd.dict_type = 'source_status' and ssd.dict_value = s.source_status
+        left join sys_dict_data cd on cd.dict_type = 'ty_construct_state' and cd.dict_value = c.construction_status
+        <trim prefix="WHERE" prefixOverrides="AND">
+            and td.tag_head_id IN
+            <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                #{tagHeadId}
+            </foreach>
+            and td.is_deleted = 0
+            <if test="townCode != null and townCode != ''">
+                and s.town_code = #{townCode}
+            </if>
+            <if test="sourceStatus != null and sourceStatus != ''">
+                and s.source_status = #{sourceStatus}
+            </if>
+            <if test="fullName != null and fullName != ''">
+                and s.full_name like '%'||#{fullName}||'%'
+            </if>
+            ${labelQuery}
+            ${dataScope}
+        </trim>
+        order by td.tag_head_id, s.source_id
+    </select>
+
+    <select id="constructionAccepts" parameterType="EnterpriseEntity" resultMap="taskSourceEntity">
+        select td.tag_head_id, s.source_id, th.tag_head_name, s.full_name, s.town_name, s.env_contact_name,
+        s.env_contact_phone, ssd.dict_label source_status,
+        cd.dict_label status,c.construction_status,c.short_name, c.construction_person, c.construction_phone,
+        c.audit_date, c.accept_date, c.accept_by, c.accept_result,u.nick_name
+        from pf_bas_tag_detail td
+        left join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted=0
+        left join pf_bas_source s on s.source_id = td.pf_source_id and s.is_deleted=0
+        INNER JOIN (
+            SELECT * from pf_bas_constructioninfo
+            where is_deleted=0 and construction_status >= 4
+        ) c on c.pf_source_id = s.source_id and c.tag_head_id = td.tag_head_id
+        left join sys_user u on to_char(c.accept_by) = to_char(u.USER_NAME)
+        left join (
+            select distinct tag_head_id, pf_source_id from pf_bas_construction_return
+        ) r on r.tag_head_id = c.tag_head_id and r.pf_source_id = c.pf_source_id
+        left join sys_dict_data ssd on ssd.dict_type = 'source_status' and ssd.dict_value = s.source_status
+        left join sys_dict_data cd on cd.dict_type = 'ty_construct_state' and cd.dict_value = c.construction_status
+        <trim prefix="WHERE" prefixOverrides="AND">
+            and td.tag_head_id IN
+            <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                #{tagHeadId}
+            </foreach>
+            and td.is_deleted=0
+            <if test="townCode != null and townCode != ''">
+                and s.town_code = #{townCode}
+            </if>
+            <if test="sourceStatus != null and sourceStatus != ''">
+                and s.source_status = #{sourceStatus}
+            </if>
+            <if test="fullName != null and fullName != ''">
+                and s.full_name like '%'||#{fullName}||'%'
+            </if>
+            <choose>
+                <when test="isAudited == 1">
+                    and r.pf_source_id is not null
+                </when>
+                <when test="isAudited == 0">
+                    and r.pf_source_id is null
+                </when>
+            </choose>
+            ${labelQuery}
+            ${dataScope}
+        </trim>
+        order by td.tag_head_id, s.source_id
+    </select>
+
+    <!--查询企业信息-->
+    <select id="selectEnterpriseInformation" parameterType="EnterpriseEntity" resultMap="taskSourceEntity">
+        select td.tag_head_id, s.source_id, th.tag_head_name, s.full_name, s.town_name, s.env_contact_name,
+        s.env_contact_phone, ssd.dict_label source_status, cd.dict_label status, su.login_flag,c.construction_status,
+        c.verify_status,
+        c.short_name, c.construction_person, c.construction_phone, c.audit_date, c.accept_date, ta.task_adjust_id,
+        c.date_updated, c.updated_by
+        from pf_bas_tag_detail td
+        left join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted=0
+        left join pf_bas_source s on s.source_id = td.pf_source_id and s.is_deleted=0
+        left join pf_bas_constructioninfo c on c.pf_source_id = s.source_id and c.tag_head_id = td.tag_head_id and
+        c.is_deleted=0
+        left join sys_dict_data ssd on ssd.dict_type = 'source_status' and ssd.dict_value = s.source_status
+        left join sys_dict_data cd on cd.dict_type = 'ty_construct_state' and cd.dict_value = c.construction_status
+        left join pf_bas_task_adjust ta on ta.pf_source_id = s.source_id and ta.tag_head_id = td.tag_head_id and
+        ta.is_deleted = 0 and ta.aduit_status = 0
+        left join pf_bas_source_user su on su.source_id = s.source_id
+        <trim prefix="WHERE" prefixOverrides="AND">
+            and td.tag_head_id IN
+            <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                #{tagHeadId}
+            </foreach>
+            and td.is_deleted=0
+            and td.list_type IN
+            <foreach collection="listTypes" item="listType" open="(" separator="," close=")">
+                #{listType}
+            </foreach>
+            <if test="townCode != null and townCode != ''">
+                and town_code = #{townCode}
+            </if>
+            <if test="sourceStatus != null and sourceStatus != ''">
+                and s.source_status = #{sourceStatus}
+            </if>
+            <if test="constructionStatus != null and constructionStatus != ''">
+                and c.construction_status = #{constructionStatus}
+            </if>
+            <if test="loginFlag != null and loginFlag != ''">
+                and su.login_flag = #{loginFlag}
+            </if>
+            <if test="verifyStatus != null and verifyStatus != ''">
+                and c.verify_status = #{verifyStatus}
+            </if>
+            <if test="fullName != null and fullName != ''">
+                and full_name like '%'||#{fullName}||'%'
+            </if>
+            <if test="isApply != null">
+                and exists (select * from pf_bas_task_adjust ta where ta.tag_head_id = td.tag_head_id and
+                ta.pf_source_id = s.source_id)
+            </if>
+            <if test="isFinish != null">
+                <choose>
+                    <when test="isFinish == 0">
+                        and c.verify_status != 1 and c.construction_status in (0,1)
+                    </when>
+                    <when test="isFinish == 1">
+                        and ((c.construction_status in (2,3,4,6) and c.verify_status != 1) or c.verify_status = 1)
+                    </when>
+                </choose>
+            </if>
+            ${labelQuery}
+            ${dataScope}
+        </trim>
+        order by s.env_contact_phone,s.town_name
+    </select>
+
+    <!--更新合同审核-->
+    <update id="editConstructioninfo">
+        update pf_bas_constructioninfo
+        set AUDIT_DATE  = sysdate,
+            updated_by=#{username},
+            date_updated=sysdate
+        where tag_head_id = #{tagHeadId}
+          and pf_source_id = #{pfSourceId}
+          and construction_status in (1, 2)
+          and is_deleted = 0
+    </update>
+
+    <!--更新验收审核-->
+    <update id="modifyConstructioninfo">
+        update pf_bas_constructioninfo
+        set ACCEPT_DATE = sysdate,
+            accept_by = #{username},
+            accept_result = #{acceptResult},
+            updated_by=#{username},
+            date_updated=sysdate
+        where tag_head_id = #{tagHeadId}
+          and pf_source_id = #{pfSourceId}
+          and construction_status = 6
+          and is_deleted = 0
+    </update>
+
+    <resultMap id="entity" type="OutwaterCheckPointEntity">
+        <result property="collectId" column="Collect_Id"/>
+        <result property="sourceId" column="Source_Id"/>
+        <result property="checkPointName" column="CheckPoint_Name"/>
+        <result property="checkPointType" column="CheckPoint_Type"/>
+        <result property="isOnline" column="Is_Online"/>
+        <result property="checkDate" column="Check_Date"/>
+        <result property="fullName" column="Full_Name"/>
+        <result property="mn" column="MN"/>
+        <result property="ipAddress" column="IpAddress"/>
+        <result property="brandName" column="Brand_Name"/>
+        <result property="collectName" column="Collect_Name"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+    </resultMap>
+    <!-- 查询排水户信息-->
+    <select id="getExportOutwaterData" parameterType="CollectCheckPointEntity" resultMap="entity">
+        select rownum num,s.Full_Name,p.MN,p.IP_ADDRESS IpAddress,p.ACQUISITION_BRAND Brand_Name,
+        p.collect_id,p.collect_id checkPointId,p.source_id,p.full_name checkpoint_Name,p.full_name Collect_Name,
+        p.checkpoint_type,p.is_online,p.Check_Date,p.is_deleted,p.created_by,p.updated_by,
+        p.date_created,p.date_updated,p.longitude,p.latitude,s.town_name townName,dc.construction_unit constructionUnit
+        from Bas_CheckPoint p
+        left join pf_bas_source s on p.SOURCE_ID = s.SOURCE_ID and s.is_deleted=0
+        left join basecenter.PF_BAS_CONSTRUCTIONINFO dc on s.source_id = dc.pf_source_id and dc.is_deleted=0
+        where p.IS_DELETED = 0 and dc.tag_head_id = 1012
+        <if test="fullName != null and fullName != ''">
+            and s.Full_Name like '%'||#{fullName}||'%'
+        </if>
+        <if test="mn != null and mn != ''">
+            and p.MN like '%'||#{mn}||'%'
+        </if>
+        <if test="checkPointName != null and checkPointName != ''">
+            and p.FULL_NAME like '%'||#{checkPointName}||'%'
+        </if>
+        <if test="checkPointType != null and checkPointType != ''">
+            and p.CheckPoint_Type like '%'||#{checkPointType}||'%'
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and p.ACQUISITION_BRAND like '%'||#{brandName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.SOURCE_ID = #{sourceId}
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="constructionUnit != null and constructionUnit != ''">
+            and dc.construction_unit like '%'||#{constructionUnit}||'%'
+        </if>
+        ${dataScope}
+        ORDER BY p.date_created DESC
+    </select>
+
+    <resultMap id="disallowance" type="DisallowanceEntity">
+        <result property="returnId" column="return_id"/>
+        <result property="sourceId" column="pf_source_id"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="status" column="construction_status"/>
+        <result property="returnResult" column="return_result"/>
+        <result property="returnReason" column="return_reason"/>
+        <result property="contactName" column="contact_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="memo" column="memo"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="dateCreated" column="date_created"/>
+    </resultMap>
+
+    <!--新增施工驳回信息-->
+    <insert id="insertDisallowance" parameterType="DisallowanceEntity">
+        <selectKey keyProperty="returnId" order="BEFORE" resultType="int">
+            select seq_construction_return.nextval as returnId from DUAL
+        </selectKey>
+        insert into pf_bas_construction_return
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="returnId != null ">return_id,</if>
+            <if test="sourceId != null  and sourceId != ''">pf_source_id,</if>
+            <if test="tagHeadId != null  and tagHeadId != ''">tag_head_id,</if>
+            construction_status,
+            <if test="returnResult != null">return_result,</if>
+            <if test="returnReason != null and returnReason != ''">return_reason,</if>
+            <if test="contactName != null and contactName != ''">contact_name,</if>
+            <if test="contactPhone != null and contactPhone != '' ">contact_phone,</if>
+            <if test="memo != null  and memo != ''">memo,</if>
+            <if test="createdBy != null and createdBy != ''">created_by,</if>
+            date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="returnId != null ">#{returnId},</if>
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="tagHeadId != null  and tagHeadId != ''">#{tagHeadId},</if>
+            6,
+            <if test="returnResult != null">#{returnResult},</if>
+            <if test="returnReason != null  and returnReason != ''">#{returnReason},</if>
+            <if test="contactName != null  and contactName != ''">#{contactName},</if>
+            <if test="contactPhone != null and contactPhone != ''">#{contactPhone},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="createdBy != null and createdBy != '' ">#{createdBy},</if>
+            SYSDATE
+        </trim>
+    </insert>
+
+    <update id="updateConstructioninfo" parameterType="DisallowanceEntity">
+        update pf_bas_constructioninfo
+        <set>
+            construction_status=4,
+            acceptance_date=null,
+            accept_date=sysdate,
+            accept_result=#{returnResult},
+            accept_by=#{createdBy},
+            updated_By=#{createdBy, jdbcType=VARCHAR},
+            date_updated=sysdate
+        </set>
+        where pf_source_id=#{sourceId} and tag_head_id = #{tagHeadId}
+    </update>
+
+    <select id="getDisallowanceList" parameterType="DisallowanceEntity" resultMap="disallowance">
+        select return_id,pf_source_id,tag_head_id,construction_status,return_reason,contact_name,contact_phone,memo,date_created,
+		u.nick_name created_by from pf_bas_construction_return cr
+		left join sys_user u on to_char(cr.created_by) = to_char(u.user_name)
+        where pf_source_id = #{sourceId} and tag_head_id = #{tagHeadId}
+        ORDER BY date_created desc
+    </select>
+
+</mapper>

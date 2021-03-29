@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.OMUtilMapper">
+
+    <resultMap id="aEntity" type="com.ruoyi.project.dgom.domain.AnnexEntity">
+        <result property="updatedby" column="zupdatedby"/>
+        <result property="type" column="ztype"/>
+        <result property="masterType" column="zmastertype"/>
+        <result property="applyId" column="zmasterrecordid"/>
+        <result property="fileName" column="zfilename"/>
+        <result property="savePath" column="zsavepath"/>
+        <result property="createdby" column="zcreatedby"/>
+        <result property="attachfileid" column="zattachfileid"/>
+    </resultMap>
+
+    <!--查询附件列表通用接口-->
+    <select id="selectAnnexList" resultMap="aEntity"
+            parameterType="com.ruoyi.project.dgom.domain.AnnexEntity">
+        select * from zonlineattachfile
+        where zisdeleted=0 and zmastertype in
+        <foreach collection="masterTypes" item="types" open="(" separator="," close=")" index="index">
+            #{types}
+        </foreach>
+        <if test="applyId !=null and applyId !=''">
+            and zmasterrecordid = #{applyId}
+        </if>
+        <if test="fileName !=null and fileName !=''">
+            and zfilename like '%'||#{fileName}||'%'
+        </if>
+    </select>
+
+    <!--删除附件-->
+    <update id="deleteAnnex">
+        update zonlineattachfile set zupdatedby = #{updatedby,jdbcType=VARCHAR},zdateupdated=SYSDATE,zisdeleted=1
+        where zattachfileid in
+        <foreach collection="attachfileids" item="attachfileid" open="(" separator="," close=")" index="index">
+            #{attachfileid}
+        </foreach>
+    </update>
+
+    <!--附件下载-->
+    <select id="selectAnnexFileById" parameterType="string" resultMap="aEntity">
+        select * from zonlineattachfile
+        where zisdeleted=0 and zattachfileid = #{attachfileid}
+    </select>
+
+    <!--根据排放口获取设备列表-->
+    <select id="datadevList" parameterType="string" resultType="map">
+        select zdatadevid datadevid, zdatadevdesc datadevdesc from zdatadevdef
+        where zisdeleted = 0 and zcheckpointid = #{checkpointid}
+    </select>
+
+    <!--根据企业获取排放口列表-->
+    <select id="checkpointidList" parameterType="string" resultType="map">
+        select zcheckpointid checkpointid, zcheckpointdesc checkpointdesc from zcheckpointdef
+        where zisvalid = 1 and zdatasourid = #{sourceid}
+    </select>
+
+    <select id="getLabelsByParentId" resultType="LabelEntity" parameterType="int">
+        select zlabelheadid id, zlabelname name from zlabelhead where zparentid = #{parentId} and zisdeleted =0
+    </select>
+
+</mapper>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.lwjh.mapper.LWJHCheckPointElementMapper">
+
+    <resultMap id="basEntity" type="LWJHCheckPointElementEntity">
+        <result property="checkpointId"       column="checkpoint_id"        />
+        <result property="cpelemId"     column="cpelem_id"      />
+        <result property="elementId"      column="element_id"       />
+        <result property="lawStandard"     column="law_standard"      />
+        <result property="accessDate"     column="access_date"    />
+        <result property="elementName"     column="element_name"    />
+    </resultMap>
+
+    <resultMap id="entity" type="ElementData">
+        <result property="elementName"     column="element_name"    />
+        <result property="lawStandard"     column="law_standard"      />
+    </resultMap>
+
+    <select id="selectElementData" resultMap="entity" parameterType="String">
+        select d.dict_label element_name, ce.law_standard
+        from lwjh_checkpointelement ce
+        left join lwjh_checkpoint cp on cp.checkpoint_id = ce.checkpoint_id
+        left join sys_dict_data d on d.dict_type = cp.checkpoint_type and d.dict_value = ce.element_id
+        where ce.checkpoint_id = #{checkpointId} and ce.is_deleted = 0
+        <if test="accessDate != null and accessDate != ''">
+            and access_date = to_date(#{accessDate}, 'yyyy-MM-dd')
+        </if>
+    </select>
+
+    <insert id="insertCheckPointElement" parameterType="LWJHCheckPointElementEntity">
+        insert into lwjh_checkpointelement(cpelem_id, element_id, checkpoint_id, law_standard, access_date,
+        is_deleted, created_by, updated_by, date_created, date_updated)
+        values(#{cpelemId}, #{elementId}, #{checkpointId}, #{lawStandard}, to_date(#{accessDate}, 'yyyy-MM-dd'),
+        0, #{createdBy}, #{updatedBy}, sysdate, sysdate)
+    </insert>
+
+    <select id="selectCheckPointElement" resultMap="basEntity" parameterType="String">
+        select ce.cpelem_id, ce.element_id, ce.checkpoint_id, d.dict_label element_name, ce.law_standard, ce.access_date
+        from lwjh_checkpointelement ce
+        left join lwjh_checkpoint cp on cp.checkpoint_id = ce.checkpoint_id
+        left join sys_dict_data d on d.dict_type = cp.checkpoint_type and d.dict_value = ce.element_id
+        where ce.checkpoint_id = #{checkpointId} and ce.is_deleted = 0
+    </select>
+
+    <update id="updateCheckPointElement" parameterType="LWJHCheckPointElementEntity">
+        update lwjh_checkpointelement
+        <set>
+            law_standard = #{lawStandard, jdbcType=VARCHAR},
+            <if test="accessDate != null and accessDate != ''">access_date = to_date(#{accessDate}, 'yyyy-MM-dd'),</if>
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where cpelem_id = #{cpelemId}
+    </update>
+
+    <update id="removeCPE" parameterType="LWJHCheckPointElementEntity">
+        update lwjh_checkpointelement
+        <set>
+            is_deleted = 1,
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where cpelem_id = #{cpelemId}
+    </update>
+
+    <update id="removeCheckPointElement" parameterType="SqlInEntity">
+        UPDATE lwjh_checkpointelement
+        <set>
+            is_deleted = 1,
+            <if test="updatedBy != null and updatedBy != ''">
+                updated_by = #{updatedBy},
+            </if>
+            date_updated = SYSDATE
+        </set>
+        where checkpoint_id in
+        <foreach collection="array" item="checkpointId" open="(" separator="," close=")">
+            #{checkpointId}
+        </foreach>
+        AND is_deleted = 0
+    </update>
+</mapper>

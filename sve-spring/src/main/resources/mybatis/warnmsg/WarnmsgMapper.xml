@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.warnmsg.mapper.WarnmsgMapper">
+    <resultMap id="warnmsgResult" type="WarnmsgResult">
+        <result column="id" property="warnId"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_name" property="sourceName"/>
+        <result column="town_code" property="townCode"/>
+        <result column="town_name" property="townName"/>
+        <result column="acquisition_brand" property="acquisitionBrand"/>
+        <result column="construction_unit" property="constructionUnit"/>
+        <result column="construction_status" property="constructionStatus"/>
+        <result column="warn_type" property="warnType"/>
+        <result column="warn_type_name" property="warnTypeName"/>
+        <result column="warn_level" property="warnLevel"/>
+        <result column="warn_level_name" property="warnLevelName"/>
+        <result column="proc_state" property="procState"/>
+        <result column="proc_state_name" property="procStateName"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="warn_desc" property="warnDesc"/>
+    </resultMap>
+    <select id="getWarnmsgList" parameterType="WarnmsgParam" resultMap="warnmsgResult">
+        select distinct w.id, s.source_id, s.full_name source_name, s.town_code, s.town_name, cp.acquisition_brand,
+        c.construction_unit, c.construction_unit,
+        w.warn_type, t.dict_label warn_type_name, w.warn_level, l.dict_label warn_level_name,
+        w.proc_state, p.dict_label proc_state_name, w.start_date, w.end_date, w.warn_desc
+        from dat_warnmsgheads w
+        left join dat_warnmsgdetails d on d.head_id = w.id and d.is_deleted = 0
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        left join bas_checkpoint cp on cp.collect_id = ce.collect_id and cp.is_deleted = 0
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        inner join basecenter.pf_bas_constructioninfo c on c.pf_source_id = s.source_id and c.is_deleted = 0
+        left join basecenter.sys_dict_data t on t.dict_value = w.warn_type and t.dict_type = ${warnTypeValue}
+        left join basecenter.sys_dict_data l on l.dict_value = w.warn_level and l.dict_type = 'ty_warn_level'
+        left join basecenter.sys_dict_data p on p.dict_value = w.proc_state and p.dict_type = 'ty_proc_state'
+        where w.is_deleted = 0 and c.tag_head_id = #{tagHeadId}
+        <if test="sourceId != null">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="sourceName != null">
+            and s.full_name like '%' || #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="acquisitionBrand != null">
+            and cp.acquisition_brand like '%' || #{acquisitionBrand} || '%'
+        </if>
+        <if test="constructionUnit != null">
+            and c.construction_unit like '%' || #{constructionUnit} || '%'
+        </if>
+        <if test="constructionStatus != null">
+            and c.construction_status = #{constructionStatus}
+        </if>
+        <if test="warnType != null">
+            and w.warn_type = #{warnType}
+        </if>
+        <if test="warnLevel != null">
+            and w.warn_level = #{warnLevel}
+        </if>
+        <if test="procState != null">
+            and w.proc_state = #{procState}
+        </if>
+        <if test="procStates != null and procStates.size() > 0">
+            and w.proc_state in
+            <foreach collection="procStates" item="procState" open="(" separator="," close=")">
+                #{procState}
+            </foreach>
+        </if>
+        <if test="startDate != null and endDate != null">
+            and w.start_date >= #{startDate} and w.start_date &lt; #{endDate}
+        </if>
+        ${dataScope}
+        order by w.proc_state, w.start_date desc
+    </select>
+
+    <select id="getDutyWarnmsgList" parameterType="WarnmsgParam" resultMap="warnmsgResult">
+        select distinct w.id, s.source_id, s.full_name source_name, s.town_code, s.town_name, cp.acquisition_brand,
+        c.construction_unit, c.construction_status,
+        w.warn_type, t.dict_label warn_type_name, w.warn_level, l.dict_label warn_level_name,
+        w.proc_state, p.dict_label proc_state_name, w.start_date, w.end_date, w.warn_desc
+        from dat_warnmsgheads w
+        left join dat_warnmsgdetails d on d.head_id = w.id and d.is_deleted = 0
+        left join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        left join bas_checkpoint cp on cp.collect_id = ce.collect_id and cp.is_deleted = 0
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        inner join basecenter.pf_bas_constructioninfo c on c.pf_source_id = s.source_id and c.is_deleted = 0
+        inner join basecenter.sys_user_task ut on ut.source_id = c.pf_source_id and ut.tag_id = c.tag_head_id and ut.is_deleted = 0
+        left join basecenter.sys_dict_data t on t.dict_value = w.warn_type and t.dict_type = ${warnTypeValue}
+        left join basecenter.sys_dict_data l on l.dict_value = w.warn_level and l.dict_type = 'ty_warn_level'
+        left join basecenter.sys_dict_data p on p.dict_value = w.proc_state and p.dict_type = 'ty_proc_state'
+        where w.is_deleted = 0 and c.tag_head_id = #{tagHeadId} and ut.user_id = #{currentUserId}
+        <if test="sourceId != null">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="sourceName != null">
+            and s.full_name like '%' || #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="acquisitionBrand != null">
+            and cp.acquisition_brand like '%' || #{acquisitionBrand} || '%'
+        </if>
+        <if test="constructionUnit != null">
+            and c.construction_unit like '%' || #{constructionUnit} || '%'
+        </if>
+        <if test="constructionStatus != null">
+            and c.construction_status = #{constructionStatus}
+        </if>
+        <if test="warnType != null">
+            and w.warn_type = #{warnType}
+        </if>
+        <if test="warnLevel != null">
+            and w.warn_level = #{warnLevel}
+        </if>
+        <if test="procState != null">
+            and w.proc_state = #{procState}
+        </if>
+        <if test="procStates != null and procStates.size() > 0">
+            and w.proc_state in
+            <foreach collection="procStates" item="procState" open="(" separator="," close=")">
+                #{procState}
+            </foreach>
+        </if>
+        <if test="startDate != null and endDate != null">
+            and w.start_date >= #{startDate} and w.start_date &lt; #{endDate}
+        </if>
+        ${dataScope}
+    </select>
+
+    <resultMap id="processResult" type="WarnProcessResult">
+        <result column="procid" property="procId"/>
+        <result column="procstate" property="procState"/>
+        <result column="procdate" property="procDate"/>
+        <result column="procusername" property="procUserName"/>
+        <result column="exceptiondesc" property="exceptionDesc"/>
+        <result column="procmemo" property="procMemo"/>
+    </resultMap>
+
+    <select id="getProcessList" parameterType="string" resultMap="processResult">
+        select procid, procstate, procdate, procusername, exceptiondesc, procmemo
+        from dat_warnprocesses
+        where warnid = #{warnId} and is_deleted = 0
+        order by date_updated
+    </select>
+
+    <select id="getWarnLevelById" parameterType="string" resultType="int">
+        select warn_level from dat_warnmsgheads where id = #{warnId}
+    </select>
+
+    <update id="updateProcState">
+        update dat_warnmsgheads
+        set proc_state = #{procState}, updated_by = #{updatedBy}, date_updated = sysdate
+        where id = #{warnId}
+    </update>
+
+    <insert id="addWarnProcess" parameterType="WarnProcessEntity">
+        insert into dat_warnprocesses (procid, warnid, procstate, procdate, procusername, exceptiondesc, procmemo, created_by, updated_by)
+        values (#{procId}, #{warnId}, #{procState}, sysdate, #{procUserName}, #{exceptionDesc}, #{procMemo, jdbcType=VARCHAR}, #{createdBy}, #{updatedBy})
+    </insert>
+</mapper>

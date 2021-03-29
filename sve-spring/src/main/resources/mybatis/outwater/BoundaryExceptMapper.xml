@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.outwater.mapper.BoundaryExceptMapper">
+
+    <resultMap id="entity" type="ExceptformulaEntity">
+        <result property="formulaId" column="formula_id"/>
+        <result property="warnType" column="warn_type"/>
+        <result property="warnLevel" column="warn_level"/>
+        <result property="warnDesc" column="warn_desc"/>
+        <result property="elemTypeId" column="elem_tpye_id"/>
+        <result property="termsGroup" column="terms_group"/>
+        <result property="termsDesc" column="terms_desc"/>
+        <result property="maxValue" column="max_value"/>
+        <result property="minValue" column="min_value"/>
+        <result property="termsType" column="terms_type"/>
+        <result property="termsTemp" column="terms_temp"/>
+    </resultMap>
+
+    <select id="selectBoundaryExceptList" parameterType="ExceptformulaEntity" resultMap="entity">
+        select f.formula_id,f.elem_tpye_id,f.terms_group,f.terms_desc,f.max_value,f.min_value,f.terms_type,
+        t.warn_type,t.warn_desc,terms_temp,
+        (case t.warn_level when 1 then 'one' when 2 then 'two' when 3 then 'three' end) warn_level
+        from bas_exceptformula f
+        inner join bas_exceptsetting t on t.warn_type=f.warn_type and t.is_deleted=0
+        where f.is_deleted=0
+        <if test="warnDesc != null and warnDesc!= ''">
+            and f.terms_desc like '%'||#{warnDesc}||'%'
+        </if>
+        order by t.warn_type
+    </select>
+
+    <select id="selectBoundarySingle" resultMap="entity">
+        select formula_id,elem_tpye_id,terms_group,terms_desc,max_value,min_value,terms_type,
+        t.warn_type,warn_level,warn_desc,terms_temp
+        from bas_exceptformula f
+        inner join bas_exceptsetting t on t.warn_type = f.warn_type and t.is_deleted=0
+        where f.is_deleted=0 and terms_group = 0
+        <choose>
+            <when test="warnLevel == 'one' ">
+                and warn_level = 1
+            </when>
+            <when test="warnLevel == 'two'">
+                and warn_level = 2
+            </when>
+            <when test="warnLevel == 'three'">
+                and warn_level = 3
+            </when>
+        </choose>
+        order by warn_level
+    </select>
+
+    <select id="selectBoundarygGroup" resultMap="entity">
+        select formula_id,elem_tpye_id,terms_group,terms_desc,max_value,min_value,terms_type,
+        t.warn_type,warn_desc,warn_level,terms_temp
+        from bas_exceptformula f
+        inner join bas_exceptsetting t on t.warn_type = f.warn_type and t.is_deleted=0
+        where f.is_deleted=0 and terms_group > 0
+        <choose>
+            <when test="warnLevel == 'one'">
+                and warn_level = 1
+            </when>
+            <when test="warnLevel == 'two'">
+                and warn_level = 2
+            </when>
+            <when test="warnLevel == 'three'">
+                and warn_level = 3
+            </when>
+        </choose>
+        order by warn_level
+    </select>
+
+    <update id="editBoundaryExcept" parameterType="ExceptformulaEntity">
+        update bas_exceptformula set max_value=#{maxValue,jdbcType=VARCHAR} ,min_value=#{minValue,jdbcType=VARCHAR}
+        where is_deleted=0 and formula_id=#{formulaId,jdbcType=VARCHAR}
+    </update>
+
+    <resultMap id="spec" type="SpecwarnmsgEntity">
+        <result property="detailId" column="detail_id"/>
+        <result property="headId" column="head_id"/>
+        <result property="cpElemId" column="cp_elem_id"/>
+        <result property="dataType" column="data_type"/>
+        <result property="dataDate" column="datadate"/>
+        <result property="amount" column="amount"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="warnLevel" column="warn_level"/>
+        <result property="warnType" column="warn_type"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="sendDate" column="send_date"/>
+        <result property="warnState" column="warn_state"/>
+        <result property="procState" column="proc_state"/>
+        <result property="warnDesc" column="warn_desc"/>
+        <result property="warnDesc" column="warn_desc"/>
+        <result property="constructionUnit" column="construction_unit"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+        <result property="brand" column="acquisition_brand"/>
+    </resultMap>
+
+    <select id="selectSpecwarnmsgList" parameterType="SpecwarnmsgEntity" resultMap="spec">
+        select detail_id,head_id,cp_elem_id,data_type,datadate,amount,h.source_id,s.full_name,warn_level,
+        warn_type,start_date,end_date, send_date,warn_state,proc_state,warn_desc,
+        s.town_code,s.town_name,dc.construction_unit,bc.acquisition_brand
+        from DAT_SPECWARNMSGDETAILS d
+        left join DAT_SPECWARNMSGHEADS h on d.head_id=h.id and h.is_deleted=0
+        inner join bas_source s on h.source_id = s.source_id and s.is_deleted = 0
+        inner join basecenter.PF_BAS_CONSTRUCTIONINFO dc on s.source_id = dc.pf_source_id
+        and dc.is_deleted=0 and dc.TAG_HEAD_ID = 1012
+        left join (
+        select source_id, listagg(to_char(acquisition_brand), ',') within group(order by acquisition_brand)
+        acquisition_brand
+        from (
+        select distinct source_id, acquisition_brand from bas_checkpoint
+        where is_deleted=0 ) group by source_id
+        ) bc
+        on dc.pf_source_id=bc.source_id
+        where d.is_deleted=0
+        <if test="sourceId != null and sourceId != ''">
+            and h.source_id = #{sourceId}
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="brand != null and brand != ''">
+            and bc.acquisition_brand like '%'|| #{brand}||'%'
+        </if>
+        <if test="constructionUnit != null and constructionUnit != ''">
+            and dc.construction_unit like '%'|| #{constructionUnit}||'%'
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="warnDesc != null and warnDesc!= ''">
+            and warn_desc like '%'||#{warnDesc}||'%'
+        </if>
+        <if test="startDate != null and endDate != null ">
+            and trunc(h.end_date) >= to_date(#{startDate}, 'yyyy-MM-dd')
+            and trunc(h.start_date) &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        </if>
+        ${dataScope}
+        order by h.start_date desc
+    </select>
+
+    <select id="selectSpecwarnmsgExport" parameterType="SpecwarnmsgEntity" resultType="SpecwarnmsgExport">
+        select detail_id,head_id,cp_elem_id,data_type,datadate,amount,h.source_id,s.full_name fullName,warn_level,
+        warn_type warnType,to_char(start_date,'yyyy-mm-dd') startDate,to_char(end_date,'yyyy-mm-dd') endDate,
+        send_date,warn_state,proc_state,warn_desc warnDesc,s.town_code,s.town_name townName,
+        dc.construction_unit constructionUnit,bc.acquisition_brand brand
+        from DAT_SPECWARNMSGDETAILS d
+        left join DAT_SPECWARNMSGHEADS h on d.head_id=h.id and h.is_deleted=0
+        inner join bas_source s on h.source_id = s.source_id and s.is_deleted = 0
+        inner join basecenter.PF_BAS_CONSTRUCTIONINFO dc on s.source_id = dc.pf_source_id
+        and dc.is_deleted=0 and dc.TAG_HEAD_ID = 1012
+        left join (
+        select source_id, listagg(to_char(acquisition_brand), ',') within group(order by acquisition_brand)
+        acquisition_brand
+        from (
+        select distinct source_id, acquisition_brand from bas_checkpoint
+        where is_deleted=0 ) group by source_id
+        ) bc
+        on dc.pf_source_id=bc.source_id
+        where d.is_deleted=0
+        <if test="sourceId != null and sourceId != ''">
+            and h.source_id = #{sourceId}
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="brand != null and brand != ''">
+            and bc.acquisition_brand like '%'|| #{brand}||'%'
+        </if>
+        <if test="constructionUnit != null and constructionUnit != ''">
+            and dc.construction_unit like '%'|| #{constructionUnit}||'%'
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="warnDesc != null and warnDesc!= ''">
+            and warn_desc like '%'||#{warnDesc}||'%'
+        </if>
+        <if test="startDate != null and endDate != null ">
+            and trunc(h.end_date) >= to_date(#{startDate}, 'yyyy-MM-dd')
+            and trunc(h.start_date) &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        </if>
+        ${dataScope}
+        order by h.start_date desc
+    </select>
+
+</mapper>

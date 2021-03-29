@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.lingxing.mapper.LXStorageinfoMapper">
+
+    <resultMap type="LXStorageinfo" id="storageinfoResult">
+        <result property="storageId" column="storage_id"/>
+        <result property="storageName" column="storage_name"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="storageType" column="storage_type"/>
+        <result property="warnRate" column="warn_rate"/>
+        <result property="fullVolume" column="full_volume"/>
+        <result property="maxHeight" column="max_height"/>
+        <result property="sectionArea" column="section_area"/>
+        <result property="density" column="density"/>
+        <result property="memo" column="memo"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="dateCreated" column="date_created"/>
+        <result property="dateUpdated" column="date_updated"/>
+    </resultMap>
+
+    <sql id="selectLXStorageinfoVo">
+        select storage_id,storage_name,source_id,storage_type,warn_rate,full_volume,max_height,section_area,memo from bas_storageinfo
+    </sql>
+
+    <!--查询废水收集池-->
+    <select id="selectStorageinfoList" parameterType="LXStorageinfo" resultMap="storageinfoResult">
+        select distinct b.*,s.full_name fullName,e.collect_id collectId from bas_storageinfo b
+        left join BAS_SOURCE s on b.source_id=s.source_id and s.is_deleted=0
+        left join basecenter.PF_BAS_CONSTRUCTIONINFO dc on s.source_id = dc.pf_source_id and dc.is_deleted=0
+        and dc.tag_head_id = 1003
+        inner join bas_checkpoint_element e on e.facility_id = b.storage_id and e.is_deleted=0
+        where b.is_deleted=0
+        <if test="sourceId != null and sourceId != ''">and b.source_id = #{sourceId}</if>
+        <if test="storageName != null and storageName != ''">and b.storage_name like '%'||#{storageName}||'%'</if>
+        <if test="storageType != null and storageType != ''">and b.storage_type like '%'||#{storageType}||'%'</if>
+        <if test="memo != null  and memo != ''">and b.MEMO like '%'||#{memo}||'%'</if>
+        <if test="createdBy != null  and createdBy != ''">and b.created_by = #{createdBy}</if>
+        <if test="dateCreated != null ">and b.DATE_CREATED = #{dateCreated}</if>
+        <if test="updatedBy != null  and updatedBy != ''">and b.updated_by = #{updatedBy}</if>
+        <if test="dateUpdated != null ">and b.DATE_UPDATED = #{dateUpdated}</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+    </select>
+
+    <!--新增废水收集池-->
+    <insert id="insertStorageinfo" parameterType="LXStorageinfo">
+        insert into bas_storageinfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="storageId != null and storageId != ''">storage_id,</if>
+            <if test="storageName != null and storageName != ''">storage_name,</if>
+            <if test="sourceId != null and sourceId != ''">source_id,</if>
+            <if test="storageType != null and storageType != ''">storage_type,</if>
+            <if test="warnRate != null ">warn_rate,</if>
+            <if test="fullVolume != null ">full_volume,</if>
+            <if test="maxHeight != null ">max_height,</if>
+            <if test="sectionArea != null ">section_area,</if>
+            <if test="density != null ">density,</if>
+            <if test="memo != null  and memo != ''">memo,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+            is_deleted,date_updated,date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="storageId != null and storageId != ''">#{storageId},</if>
+            <if test="storageName != null and storageName != ''">#{storageName},</if>
+            <if test="sourceId != null and sourceId != ''">#{sourceId},</if>
+            <if test="storageType != null and storageType != ''">#{storageType},</if>
+            <if test="warnRate != null ">#{warnRate},</if>
+            <if test="fullVolume != null ">#{fullVolume},</if>
+            <if test="maxHeight != null ">#{maxHeight},</if>
+            <if test="sectionArea != null ">#{sectionArea},</if>
+            <if test="density != null ">#{density},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--编辑废水收集池-->
+    <update id="updateStorageinfo" parameterType="LXStorageinfo">
+        update bas_storageinfo
+        <trim prefix="SET" suffixOverrides=",">
+            storage_name = #{storageName,jdbcType=VARCHAR},
+            storage_type = #{storageType,jdbcType=BIGINT},
+            warn_rate = #{warnRate,jdbcType=BIGINT},
+            full_volume = #{fullVolume,jdbcType=BIGINT},
+            max_height = #{maxHeight,jdbcType=BIGINT},
+            section_area = #{sectionArea,jdbcType=DATE},
+            density = #{density,jdbcType=VARCHAR},
+            memo = #{memo,jdbcType=VARCHAR},
+            updated_by = #{updatedBy,jdbcType=VARCHAR},
+            date_updated=SYSDATE
+        </trim>
+        where is_deleted=0 and storage_id = #{storageId}
+        <if test="sourceId != null and sourceId != ''">
+            and SOURCE_ID=#{sourceId}
+        </if>
+    </update>
+
+    <!--删除废水收集池-->
+    <update id="deleteStorageinfo" parameterType="LXStorageinfo">
+        update bas_storageinfo SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE,is_deleted=1 where storage_id in
+        <foreach collection="storageIds" item="storageId" open="(" separator="," close=")" index="index">
+            #{storageId}
+        </foreach>
+        <if test="sourceId != null and sourceId != ''">and source_id = #{sourceId}</if>
+    </update>
+
+    <resultMap type="LXMeterinfo" id="meterinfoResult">
+        <result property="meterid" column="meterid"/>
+        <result property="meterName" column="meter_name"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="meterType" column="meter_type"/>
+        <result property="memo" column="memo"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="dateCreated" column="date_created"/>
+        <result property="dateUpdated" column="date_updated"/>
+    </resultMap>
+
+    <!--查询废水表数据-->
+    <select id="selectMeterinfoById" parameterType="LXMeterinfo" resultMap="meterinfoResult">
+        select DISTINCT b.*,s.full_name fullName,e.collect_id collectId from bas_meterinfo b
+        left join BAS_SOURCE s on b.source_id=s.source_id and s.is_deleted=0
+        inner join bas_checkpoint_element e on e.facility_id = b.meterid and e.is_deleted=0
+        where b.is_deleted=0 and b.meterid= #{meterid}
+        <if test="sourceId != null and sourceId != ''">and b.source_id = #{sourceId}</if>
+    </select>
+
+    <!--查询废水表列表-->
+    <select id="selectMeterinfoList" parameterType="LXMeterinfo" resultType="LXMeterinfo">
+        select DISTINCT m.meterid,m.meter_name meterName, m.meter_type meterType,l.amount,l.datadate dataDate,m.date_created dateCreated,
+        s.full_name fullName from bas_meterinfo m
+        inner join bas_checkpoint_element e on e.facility_id = m.meterid and e.is_deleted=0
+        left join dat_latest l on l.cp_elem_id = e.cp_elem_id and datatype = 0
+        left join BAS_SOURCE s on m.source_id=s.source_id and s.is_deleted=0
+        where m.is_deleted = 0 and e.is_deleted = 0
+        <if test="sourceId != null and sourceId != ''">and m.source_id = #{sourceId}</if>
+        <if test="meterName != null and meterName != ''">and m.meter_name like '%'||#{meterName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="meterType != null"> and m.meter_type = #{meterType}</if>
+    </select>
+
+    <!--新增废水表-->
+    <insert id="insertMeterinfo" parameterType="LXMeterinfo">
+        insert into bas_meterinfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="meterid != null and meterid != ''">meterid,</if>
+            <if test="meterName != null and meterName != ''">meter_name,</if>
+            <if test="sourceId != null and sourceId != ''">source_id,</if>
+            <if test="memo != null  and memo != ''">memo,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+            meter_type,is_deleted,date_updated,date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="meterid != null and meterid != ''">#{meterid},</if>
+            <if test="meterName != null and meterName != ''">#{meterName},</if>
+            <if test="sourceId != null and sourceId != ''">#{sourceId},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            #{meterType},0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--编辑废水表-->
+    <update id="updateMeterinfo" parameterType="LXMeterinfo">
+        update bas_meterinfo
+        <set>
+            meter_name = #{meterName,jdbcType=VARCHAR},
+            MEMO = #{memo,jdbcType=VARCHAR},
+            <if test="meterType != null and meterType != ''">
+                meter_type = #{meterType,jdbcType=VARCHAR},
+            </if>
+            UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+            date_updated = sysdate,
+        </set>
+        where is_deleted=0 and meterid = #{meterid}
+        <if test="sourceId != null and sourceId != ''">
+            and SOURCE_ID=#{sourceId}
+        </if>
+    </update>
+
+    <!--删除废水表-->
+    <update id="deleteMeterinfo" parameterType="LXMeterinfo">
+        update bas_meterinfo SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE,is_deleted=1 where meterid in
+        <foreach collection="meterids" item="meterid" open="(" separator="," close=")" index="index">
+            #{meterid}
+        </foreach>
+        <if test="sourceId != null and sourceId != ''">and source_id = #{sourceId}</if>
+    </update>
+
+    <!--查询数采-->
+    <select id="selectGetinfo" parameterType="String" resultType="String">
+       select lpad(max(to_number(substr(element_code, 5)) + 1), 2, '0') new_code
+       from bas_checkpoint_element
+       where is_deleted = 0 and collect_id = #{collectId,jdbcType=VARCHAR} and ele_type_id = #{eleTypeId,jdbcType=VARCHAR}
+    </select>
+
+    <!--水表统计-->
+    <select id="selectMeterinfoDay" parameterType="String" resultType="LXDataSearch">
+        select to_char(t.datadate, 'yyyy-mm-dd') dataDate,t.meterid,t.meter_name meterName,ce.element_code,ce.element_desc elementDesc,
+        d.cou_amt couAmt from (
+        select * from ( select trunc(to_date(#{beginTime},'yyyy-MM-dd')) + rownum - 1 datadate from dual connect by rownum &lt;=
+         ROUND(TO_NUMBER(TO_DATE(#{endTime},'yyyy-mm-dd')-TO_DATE(#{beginTime},'yyyy-mm-dd'))+1)     )
+        cross join ( select meterid, meter_name from bas_meterinfo where source_id = #{sourceId} and is_deleted = 0 )
+        )t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.meterid and ce.ele_type_id ='w100' and
+        ce.is_deleted = 0
+        left join dat_day d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.meterid, t.datadate, ce.element_code
+    </select>
+
+    <!--水池统计小时数-->
+    <select id="selectStoragefoHour" parameterType="String" resultType="LXDataSearch">
+        select t.datadate dataDate,t.STORAGE_ID,t.STORAGE_NAME storageName,ce.element_code,ce.element_desc elementDesc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end couAmt from (
+        select * from ( select trunc(TO_DATE(#{beginTime},'yyyy-mm-dd')) + ((rownum - 1) / 24) datadate from dual
+        connect by rownum &lt;=
+        ROUND(TO_NUMBER(TO_DATE(#{endTime},'yyyy-mm-dd')-TO_DATE(#{beginTime},'yyyy-mm-dd'))+1)*24
+        	)  cross join (select STORAGE_ID, STORAGE_NAME from bas_storageinfo
+        where source_id = #{sourceId} and is_deleted = 0	) ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.STORAGE_ID
+         and ce.ele_type_id in ('we00','we11') and ce.is_deleted = 0
+        inner join bas_element e on ce.ele_type_id = e.ele_type_id
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.STORAGE_ID, t.datadate, ce.element_code
+    </select>
+
+    <!--水池统计小时总数-->
+    <select id="selectStoragefoToalHour" parameterType="String" resultType="LXDataSearch">
+        select t.datadate dataDate,t.STORAGE_ID,t.STORAGE_NAME storageName,ce.element_code,ce.element_desc elementDesc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end couAmt from (
+        select * from ( select trunc(TO_DATE(#{beginTime},'yyyy-mm-dd')) + ((rownum - 1) / 24) datadate
+        from dual connect by rownum &lt;= 1 * 24	)
+        cross join (
+        		select STORAGE_ID, STORAGE_NAME		from bas_storageinfo
+        		where source_id = #{sourceId} and is_deleted = 0	) ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.STORAGE_ID and ce.ele_type_id ='we00' and ce.is_deleted = 0
+        inner join bas_element e on ce.ele_type_id = e.ele_type_id
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.STORAGE_ID,t.datadate, ce.element_code
+    </select>
+
+    <!--水池统计分钟数-->
+    <select id="selectStoragefoMinute" parameterType="String" resultType="LXDataSearch">
+        select t.datadate dataDate,t.STORAGE_ID,t.STORAGE_NAME storageName,ce.element_code,ce.element_desc elementDesc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end couAmt from (
+        select * from ( select trunc(TO_DATE(#{beginTime},'yyyy-mm-dd')) + ((rownum - 1) / (24 * 6)) datadate from dual
+        connect by rownum &lt;=
+        ROUND(TO_NUMBER(TO_DATE(#{endTime},'yyyy-mm-dd')-TO_DATE(#{beginTime},'yyyy-mm-dd'))+1)*24*6
+         ) cross join (select STORAGE_ID, STORAGE_NAME	from bas_storageinfo
+         where source_id = #{sourceId} and is_deleted = 0	) ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.STORAGE_ID
+         and ce.ele_type_id in ('we00','we11') and ce.is_deleted = 0
+        inner join bas_element e on ce.ele_type_id = e.ele_type_id
+        left join DAT_MINUTE d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.STORAGE_ID,t.datadate,ce.element_code
+    </select>
+
+    <!--水池统计分钟总数-->
+    <select id="selectStoragefoToalMinute" parameterType="String" resultType="LXDataSearch">
+        select t.datadate dataDate,t.STORAGE_ID,t.STORAGE_NAME storageName,ce.element_code,ce.element_desc elementDesc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end couAmt from (
+        select * from ( select trunc(TO_DATE(#{beginTime},'yyyy-mm-dd')) + ((rownum - 1) / (24 * 6)) datadate from dual
+        connect by rownum &lt;= 1 * 24 * 6	)
+        cross join (		select STORAGE_ID, STORAGE_NAME		from bas_storageinfo
+        		where source_id = #{sourceId} and is_deleted = 0	) ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.STORAGE_ID and ce.ele_type_id ='we00' and ce.is_deleted = 0
+        inner join bas_element e on ce.ele_type_id = e.ele_type_id
+        left join DAT_MINUTE d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.STORAGE_ID, t.datadate, ce.element_code
+    </select>
+
+</mapper>

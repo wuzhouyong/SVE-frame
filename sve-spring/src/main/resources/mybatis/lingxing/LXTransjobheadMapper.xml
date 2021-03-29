@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.lingxing.mapper.LXTransjobheadMapper">
+
+    <resultMap type="LXTransjobhead" id="TransjobheadResult">
+        <result property="jobHeadid" column="JOB_HEADID"/>
+        <result property="procSourceid" column="PROC_SOURCEID"/>
+        <result property="jobStatus" column="JOB_STATUS"/>
+        <result property="carId" column="CAR_ID"/>
+        <result property="driverId" column="DRIVER_ID"/>
+        <result property="jobDate" column="JOB_DATE"/>
+        <result property="leaveTime" column="LEAVE_TIME"/>
+        <result property="returnTime" column="RETURN_TIME"/>
+        <result property="startflowouttime" column="STARTFLOWOUTTIME"/>
+        <result property="endflowouttime" column="ENDFLOWOUTTIME"/>
+        <result property="flowoutamt" column="FLOWOUTAMT"/>
+        <result property="factoutamt" column="FACTOUTAMT"/>
+        <result property="memo" column="MEMO"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateCreated" column="DATE_CREATED"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+    </resultMap>
+
+    <sql id="selectTransjobheadVo">
+        select JOB_HEADID, PROC_SOURCEID, JOB_STATUS, CAR_ID, DRIVER_ID, JOB_DATE, LEAVE_TIME, RETURN_TIME,
+         STARTFLOWOUTTIME, ENDFLOWOUTTIME, FLOWOUTAMT, FACTOUTAMT, MEMO, IS_DELETED, CREATED_BY, UPDATED_BY,
+         DATE_CREATED, DATE_UPDATED from job_transjobhead
+    </sql>
+
+    <!--查找工作单-->
+    <select id="selectTransHeadList" resultType="string">
+        <include refid="selectTransjobheadVo"/>
+        where is_deleted=0 and car_id = #{carId} and trunc(job_date) = to_date(#{receiveDate},'yyyy-MM-dd')
+    </select>
+
+    <!--查询工作单列表-->
+    <select id="selectTransjobheadList" parameterType="LXTransjobhead" resultMap="TransjobheadResult">
+        select jh.*,ps.full_name fullName,t.car_tag carTag,dr.DRIVER_NAME driverName,d.dict_label status from
+        job_transjobhead jh
+        left join BAS_PROCSOURCE ps on jh.PROC_SOURCEID=ps.source_id and ps.is_deleted=0
+        left join bas_tankcar t on jh.car_id=t.car_id and t.is_deleted=0
+        left join BAS_DRIVERINFO dr on jh.DRIVER_ID = dr.DRIVER_ID and dr.is_deleted=0
+        left join BASECENTER.SYS_DICT_DATA D ON D.DICT_VALUE = jh.JOB_STATUS and D.DICT_TYPE = 'joint_list_type'
+        <where>
+            jh.is_deleted=0
+            <if test="procSourceid != null  and procSourceid != ''">and jh.PROC_SOURCEID = #{procSourceid}</if>
+            <if test="jobHeadid != null  and jobHeadid != ''">and jh.JOB_HEADID like '%'||#{jobHeadid}||'%'</if>
+            <if test="jobStatus != null ">and jh.JOB_STATUS = #{jobStatus}</if>
+            <if test="carId != null ">and jh.CAR_ID = #{carId}</if>
+            <if test="driverId != null  and driverId != ''">and jh.DRIVER_ID = #{driverId}</if>
+            <if test="beginTime != null and endTime !=null ">
+                and trunc(jh.job_date) between to_date(#{beginTime},'yyyy-MM-dd') and to_date(#{endTime},'yyyy-MM-dd')
+            </if>
+        </where>
+        order by ps.full_name,t.car_tag,dr.DRIVER_NAME
+    </select>
+
+    <!--查询产污企业运水联单详情-->
+    <select id="selectTransBillinfo" parameterType="string" resultType="map">
+        select DISTINCT tr.*,jd.FLOWINAMT,jd.FACTINAMT from JOB_TRANSBILLINFO tr
+        left join job_transjobdetail jd on jd.TRANSBILLID=tr.BILL_ID and tr.is_deleted=0
+        where tr.is_deleted=0 and jd.transbillid = #{transbillid}
+    </select>
+
+    <resultMap type="LXTransjobdetail" id="transjobdetailResult">
+        <result property="jobDetailid" column="JOB_DETAILID"/>
+        <result property="jobHeadid" column="JOB_HEADID"/>
+        <result property="transbillid" column="TRANSBILLID"/>
+        <result property="sourceId" column="SOURCE_ID"/>
+        <result property="startflowintime" column="STARTFLOWINTIME"/>
+        <result property="endflowintime" column="ENDFLOWINTIME"/>
+        <result property="flowinamt" column="FLOWINAMT"/>
+        <result property="factinamt" column="FACTINAMT"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateCreated" column="DATE_CREATED"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+    </resultMap>
+
+    <!--查询司机联单列表-->
+    <select id="selectTransjobdetailList" parameterType="string" resultMap="transjobdetailResult">
+        select jd.*,s.full_name fullName,tr.BILL_NO billNo from job_transjobdetail jd
+        left join bas_source s on jd.source_id=s.source_id and s.is_deleted=0
+        left join JOB_TRANSBILLINFO tr on jd.TRANSBILLID=tr.BILL_ID and tr.is_deleted=0
+        where jd.is_deleted=0 and jd.job_headid=#{jobHeadid}
+        order by s.full_name,jd.job_headid
+    </select>
+
+    <!--查询产污企业联单列表-->
+    <select id="selectJobDetailListBySourceId" parameterType="LXTransjobdetail" resultMap="transjobdetailResult">
+        select jh.job_date jobDate,jd.* from job_transjobdetail jd
+        inner join bas_source s on jd.source_id=s.source_id and s.is_deleted=0
+        left join JOB_TRANSJOBHEAD jh on jd.JOB_HEADID=jh.JOB_HEADID and jh.is_deleted=0
+        where jd.is_deleted=0 and s.source_id=#{sourceId,jdbcType=VARCHAR}
+        <if test="beginTime != null and endTime !=null ">
+            and trunc(jh.job_date) between to_date(#{beginTime},'yyyy-MM-dd') and to_date(#{endTime},'yyyy-MM-dd')
+        </if>
+        order by jh.job_date,jd.JOB_DETAILID
+    </select>
+
+    <!--查询因子编码-->
+    <select id="selectElementDescById" parameterType="string" resultType="map">
+        select ELEMENT_DESC,unit from bas_checkpoint_elem_proc where cp_elem_id = #{cpElemId}
+    </select>
+
+    <!--零星废水工况图-->
+    <select id="selectWorkingConditionInfo" parameterType="string" resultType="map">
+        select ce.cp_elem_id,ce.range_max,d.datadate,d.amount from bas_checkpoint_elem_proc ce
+        inner join bas_checkpoint_proc c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        left join dat_latest_proc d on d.cp_elem_id = ce.cp_elem_id and d.datatype=0
+        where c.source_id = #{sourceId} and ce.is_deleted=0
+    </select>
+
+    <!--零星废水工况分钟数-->
+    <select id="selectWorkingMinuteInfo" parameterType="string" resultType="map">
+        SELECT datadate,avg_amt,COU_AMT from(
+		select d.*,
+		row_number() over(partition by (trunc(DATADATE,'hh24')+trunc(to_char(DATADATE,'mi'),-1)/60/24) order by datadate) rn
+		From dat_minute_proc d
+		WHERE datadate between SYSDATE-6/24 and SYSDATE and cp_elem_id = #{cpElemId}
+        ) where rn =1
+    </select>
+
+    <resultMap type="LXDriverinfo" id="DriverinfoResult">
+        <result property="driverId" column="DRIVER_ID"/>
+        <result property="sourceId" column="SOURCE_ID"/>
+        <result property="driverName" column="DRIVER_NAME"/>
+        <result property="loginAccount" column="LOGIN_ACCOUNT"/>
+        <result property="loginPassword" column="LOGIN_PASSWORD"/>
+        <result property="memo" column="MEMO"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateCreated" column="DATE_CREATED"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+    </resultMap>
+
+    <sql id="selectDriverinfoVo">
+        select DRIVER_ID, SOURCE_ID, DRIVER_NAME, LOGIN_ACCOUNT, LOGIN_PASSWORD, MEMO, IS_DELETED, CREATED_BY,
+         UPDATED_BY, DATE_CREATED, DATE_UPDATED from bas_driverinfo
+    </sql>
+
+    <select id="selectDriverinfoList" parameterType="LXDriverinfo" resultMap="DriverinfoResult">
+        select dv.*,ps.full_name fullName from bas_driverinfo dv
+        inner join BAS_PROCSOURCE ps on dv.source_id=ps.biz_source_id and ps.IS_DELETED=0
+        <where>
+            dv.is_deleted=0
+            <if test="driverId != null  and driverId != ''">and dv.DRIVER_ID = #{driverId}</if>
+            <if test="sourceId != null  and sourceId != ''">and ps.biz_source_id = #{sourceId}</if>
+            <if test="driverName != null  and driverName != ''">and dv.DRIVER_NAME like '%'||#{driverName}||'%'</if>
+            <if test="driverName != null  and driverName != ''">and ps.full_name like '%'||#{fullName}||'%'
+            </if>
+            <if test="loginAccount != null  and loginAccount != ''">and dv.LOGIN_ACCOUNT = #{loginAccount}</if>
+            <if test="loginPassword != null  and loginPassword != ''">and dv.LOGIN_PASSWORD = #{loginPassword}</if>
+            <if test="memo != null  and memo != ''">and dv.MEMO = #{memo}</if>
+        </where>
+    </select>
+
+    <select id="selectDriverinfoById" parameterType="String" resultMap="DriverinfoResult">
+        <include refid="selectDriverinfoVo"/>
+        where DRIVER_ID = #{driverId}
+    </select>
+
+    <insert id="insertDriverinfo" parameterType="LXDriverinfo">
+        insert into bas_driverinfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="driverId != null  and driverId != ''">DRIVER_ID,</if>
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="driverName != null  and driverName != ''">DRIVER_NAME,</if>
+            <if test="loginAccount != null  and loginAccount != ''">LOGIN_ACCOUNT,</if>
+            <if test="loginPassword != null  and loginPassword != ''">LOGIN_PASSWORD,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            <if test="createdBy != null  and createdBy != ''">CREATED_BY,</if>
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY,</if>
+            IS_DELETED,DATE_CREATED,DATE_UPDATED
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="driverId != null  and driverId != ''">#{driverId},</if>
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="driverName != null  and driverName != ''">#{driverName},</if>
+            <if test="loginAccount != null  and loginAccount != ''">#{loginAccount},</if>
+            <if test="loginPassword != null  and loginPassword != ''">#{loginPassword},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <update id="updateDriverinfo" parameterType="LXDriverinfo">
+        update bas_driverinfo
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID = #{sourceId, jdbcType=VARCHAR},</if>
+            <if test="driverName != null  and driverName != ''">DRIVER_NAME = #{driverName, jdbcType=VARCHAR},</if>
+            <if test="loginAccount != null  and loginAccount != ''">LOGIN_ACCOUNT = #{loginAccount, jdbcType=VARCHAR},
+            </if>
+            <if test="loginPassword != null  and loginPassword != ''">LOGIN_PASSWORD =
+                #{loginPassword, jdbcType=VARCHAR},
+            </if>
+            <if test="memo != null  and memo != ''">MEMO = #{memo, jdbcType=VARCHAR},</if>
+            UPDATED_BY = #{updatedBy, jdbcType=VARCHAR},IS_DELETED=0,DATE_UPDATED=SYSDATE
+        </trim>
+        where DRIVER_ID = #{driverId}
+    </update>
+
+    <delete id="deleteDriverinfoById" parameterType="String">
+        delete from bas_driverinfo where DRIVER_ID = #{driverId}
+    </delete>
+
+    <delete id="deleteDriverinfoByIds">
+        UPDATE bas_driverinfo
+        set IS_DELETED = 1,DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        where DRIVER_ID in
+        <foreach collection="driverIds" item="driverId" open="(" separator="," close=")">
+            #{driverId}
+        </foreach>
+    </delete>
+
+    <!--查询运输车司机不能重复-->
+    <select id="repeatCheck" parameterType="LXDriverinfo" resultType="int">
+        select count(1) from bas_driverinfo where is_deleted=0 and DRIVER_ID=#{driverId} and DRIVER_NAME=#{driverName}
+    </select>
+
+</mapper>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.AttachMapper">
+    <select id="getAttachList" parameterType="string" resultType="map">
+        select zattachfileid attach_id, zfilename file_name, zsavepath save_path, ztype attach_type
+        from zonlineattachfile
+        where zmasterrecordid in
+        <foreach collection="refIds" item="refId" open="(" separator="," close=")">
+            #{refId}
+        </foreach>
+        and zmastertype = #{refType} and zisdeleted = 0
+    </select>
+
+    <select id="getAttachListByIds" parameterType="string" resultType="map">
+        select zattachfileid attach_id, zfilename file_name, zsavepath save_path, ztype attach_type
+        from zonlineattachfile
+        where zisdeleted = 0 and zattachfileid in
+        <foreach collection="attachIds" item="attachId" open="(" separator="," close=")">
+            #{attachId}
+        </foreach>
+    </select>
+
+    <insert id="insertAttach" parameterType="InsertAttachModel">
+        insert into zonlineattachfile (zattachfileid, zmastertype, zmasterrecordid, zfilename, ztype, zsavepath, zcreatedby, zupdatedby)
+        values (#{attachFileId}, #{refType}, #{refId}, #{fileName}, #{attachType, jdbcType=VARCHAR}, #{savePath}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="removeAttach" parameterType="string">
+        update zonlineattachfile set zisdeleted = 1, zupdatedby = #{updatedBy}, zdateupdated = sysdate where zattachfileid = #{attachFileId}
+    </update>
+</mapper>

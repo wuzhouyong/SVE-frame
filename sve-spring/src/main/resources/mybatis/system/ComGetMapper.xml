@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.system.mapper.ComGetMapper">
+
+     <resultMap type="PfBasIndustry" id="PfBasIndustryResult">
+        <result property="industryId"    column="industry_id"    />
+        <result property="industryCode"    column="industry_code"    />
+        <result property="industryName"    column="industry_name"    />
+        <result property="parentCode"    column="parent_code"    />
+        <result property="isDeleted"    column="is_deleted"    />
+        <result property="createdBy"    column="created_by"    />
+        <result property="updatedBy"    column="updated_by"    />
+        <result property="dateCreated"    column="date_created"    />
+        <result property="dateUpdated"    column="date_updated"    />
+    </resultMap>
+
+
+    <select id="selectRegionByCode" parameterType="String" resultType="java.util.HashMap">
+        select * from PF_BAS_REGION where PARENT_ID = (select REGION_ID from PF_BAS_REGION where REGION_CODE = #{code}) order by SORT_ID
+    </select>
+
+    <select id="selectRegionsByIds" parameterType="String" resultType="java.util.HashMap">
+        select * from PF_BAS_REGION where REGION_CODE in (${_parameter}) order by SORT_ID
+    </select>
+
+    <select id="selectAllIndustry" parameterType="String" resultMap="PfBasIndustryResult">
+        select * from PF_BAS_INDUSTRY where IS_DELETED = 0
+-- select * from PF_BAS_INDUSTRY_TEM where INDUSTRY_CODE = 'C' or PARENT_CODE = 'C' order by PARENT_CODE desc
+    </select>
+
+    <!--附件 -->
+     <resultMap type="PfFileAttachment" id="PfFileAttachmentResult">
+        <result property="attachmentId"    column="attachment_id"    />
+        <result property="bizSystemId"    column="biz_system_id"    />
+        <result property="bizTableName"    column="biz_table_name"    />
+        <result property="bizRecordId"    column="biz_record_id"    />
+        <result property="attachmentType"    column="attachment_type"    />
+        <result property="showName"    column="show_name"    />
+        <result property="saveName"    column="save_name"    />
+        <result property="isDeleted"    column="is_deleted"    />
+        <result property="createdBy"    column="created_by"    />
+        <result property="updatedBy"    column="updated_by"    />
+        <result property="dateCreated"    column="date_created"    />
+        <result property="dateUpdated"    column="date_updated"    />
+        <result property="attachmentTypeName"    column="attachment_Type_name"    />
+    </resultMap>
+    <sql id="selectPfFileAttachmentVo">
+        select attachment_id, biz_system_id, biz_table_name, biz_record_id,
+            attachment_type, show_name, save_name, is_deleted, created_by, updated_by, date_created, date_updated,d.DICT_LABEL as attachment_Type_name
+        from pf_file_attachment a
+        left join SYS_DICT_DATA d on d.DICT_VALUE = a.ATTACHMENT_TYPE and d.dict_type = a.biz_table_name
+
+    </sql>
+
+    <select id="selectPfFileAttachmentList" parameterType="PfFileAttachment" resultMap="PfFileAttachmentResult">
+        <include refid="selectPfFileAttachmentVo"/>
+        <where>
+            <if test="bizTableName != null  and bizTableName != ''"> and biz_table_name = #{bizTableName}</if>
+            <if test="bizRecordId != null  and bizRecordId != ''"> and biz_record_id  = #{bizRecordId}</if>
+            and is_deleted = 0
+        </where>
+        ORDER BY DATE_UPDATED desc
+    </select>
+
+    <select id="selectPfFileAttachmentsByRef" parameterType="String" resultMap="PfFileAttachmentResult">
+        <include refid="selectPfFileAttachmentVo"/>
+        <where>
+            and biz_table_name = #{refType}
+            and biz_record_id in
+            <foreach collection="refIds" item="refId" open="(" separator="," close=")" index="index">
+                #{refId}
+            </foreach>
+            and is_deleted = 0
+        </where>
+        ORDER BY DATE_UPDATED desc
+    </select>
+    <select id="selectPfFileAttachmentById" parameterType="String" resultMap="PfFileAttachmentResult">
+        <include refid="selectPfFileAttachmentVo"/>
+        where attachment_id = #{attachmentId}
+    </select>
+    <select id="selectPfFileAttachmentByIds" parameterType="String" resultMap="PfFileAttachmentResult">
+        <include refid="selectPfFileAttachmentVo"/>
+        <where>
+            attachment_id in
+            <foreach collection="array" item="attachmentId" open="(" separator="," close=")" index="index">
+                #{attachmentId}
+            </foreach>
+        </where>
+    </select>
+    <insert id="insertPfFileAttachment" parameterType="PfFileAttachment" useGeneratedKeys="true" keyProperty="attachmentId">
+        insert into pf_file_attachment
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="attachmentId != null  and attachmentId != ''">attachment_id,</if>
+            <if test="bizSystemId != null  and bizSystemId != ''">biz_system_id,</if>
+            <if test="bizTableName != null  and bizTableName != ''">biz_table_name,</if>
+            <if test="bizRecordId != null  and bizRecordId != ''">biz_record_id,</if>
+            <if test="attachmentType != null  and attachmentType != ''">attachment_type,</if>
+            <if test="showName != null  and showName != ''">show_name,</if>
+            <if test="saveName != null  and saveName != ''">save_name,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            is_deleted,date_created,date_updated
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="attachmentId != null  and attachmentId != ''">#{attachmentId},</if>
+            <if test="bizSystemId != null  and bizSystemId != ''">#{bizSystemId},</if>
+            <if test="bizTableName != null  and bizTableName != ''">#{bizTableName},</if>
+            <if test="bizRecordId != null  and bizRecordId != ''">#{bizRecordId},</if>
+            <if test="attachmentType != null  and attachmentType != ''">#{attachmentType},</if>
+            <if test="showName != null  and showName != ''">#{showName},</if>
+            <if test="saveName != null  and saveName != ''">#{saveName},</if>
+            <if test="isDeleted != null ">#{isDeleted},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            <if test="dateCreated != null ">#{dateCreated},</if>
+            <if test="dateUpdated != null ">#{dateUpdated},</if>
+            0,sysdate,sysdate
+         </trim>
+    </insert>
+
+      <update id="updatePfFileAttachment" parameterType="PfFileAttachment">
+        update pf_file_attachment
+        <trim prefix="SET" suffixOverrides=",">
+            is_deleted = 1,
+            updated_by = #{updatedBy},
+            date_updated = sysdate
+        </trim>
+        where attachment_id = #{attachmentId}
+    </update>
+</mapper>

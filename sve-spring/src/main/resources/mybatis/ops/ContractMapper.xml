@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.ops.mapper.ContractMapper">
+
+       <resultMap type="OpProjectEntity" id="opProject">
+        <result property="opProjectId" column="op_project_id"/>
+        <result property="pfSourceId" column="pf_source_id"/>
+        <result property="opSourceId" column="op_source_id"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="collectId" column="collect_id"/>
+        <result property="projectTitle" column="project_title"/>
+        <result property="tagHeadName" column="tag_head_name"/>
+        <result property="fullName" column="full_name"/>
+        <result property="sourceName" column="source_name"/>
+        <result property="collectName" column="collect_name"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="memo" column="memo"/>
+    </resultMap>
+
+    <!--运维单位合同表列表-->
+    <select id="selectContractList" parameterType="OpProjectEntity" resultMap="opProject">
+        select dc.op_project_id, dc.pf_source_id, dc.tag_head_id, dc.op_source_id, dc.collect_id, dc.start_date,
+        dc.end_date,d.full_name,h.tag_head_name,dc.project_title,dc.memo,s.full_name source_name
+        from pf_op_project dc
+        inner join pf_op_source d on dc.op_source_id=d.op_source_id and d.is_deleted=0
+        inner join pf_bas_tag_head h on dc.tag_head_id=h.tag_head_id and h.is_deleted=0
+        inner join pf_bas_source s on dc.pf_source_id=s.source_id and s.is_deleted=0
+        where dc.is_deleted=0 and dc.parent_op_proj_id is null
+        <if test="opProjectId != null">and dc.op_project_id = #{opProjectId}</if>
+        <if test="tagHeadId != null">and dc.tag_head_id = #{tagHeadId}</if>
+        <if test="opSourceId != null">and dc.op_source_id = #{opSourceId}</if>
+        <if test="pfSourceId != null and pfSourceId != ''">and dc.pf_source_id = #{pfSourceId}</if>
+        <if test="collectId != null and collectId != ''">and dc.collect_id = #{collectId}</if>
+        <if test="startDate != null and endDate != ''">
+            and trunc(dc.start_date) between to_date(#{startDate},'yyyy-mm-dd') and to_date(#{endDate},'yyyy-mm-dd')
+        </if>
+        <if test="projectTitle != null and projectTitle != ''">and dc.project_title like '%'||
+            #{projectTitle}||'%'
+        </if>
+        <if test="sourceName != null and sourceName != ''">and s.full_name like '%'||#{sourceName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and d.full_name like '%'||#{fullName}||'%'</if>
+        order by dc.date_created desc
+    </select>
+
+    <!--通过合同id查询平台简写-->
+    <select id="selectdbUserByProjectId" parameterType="int" resultType="string">
+       select distinct db_user dbUser from pf_op_project dc
+       inner join pf_bas_tag_head h on dc.tag_head_id=h.tag_head_id and h.is_deleted=0
+       where dc.is_deleted=0 and dc.op_project_id = #{opProjectId}
+    </select>
+
+    <!--查找因子id-->
+    <select id="selectElementId" parameterType="int" resultType="int">
+         select element_id from pf_op_project_element
+         where is_deleted=0 and op_project_id=#{opProjectId}
+    </select>
+
+    <!--查询因子编码和名称-->
+    <select id="selectElementList" resultType="map">
+        select c.collect_id, c.full_name collect_name,ce.cp_elem_id,ce.element_code,ce.element_desc
+		from ${dbUser}.bas_checkpoint c
+		inner join ${dbUser}.bas_checkpoint_element ce on c.collect_id=ce.collect_id and ce.is_deleted=0
+		where c.is_deleted=0 and ce.cp_elem_id in (
+        select distinct element_id from pf_op_project_element
+        where is_deleted=0 and op_project_id=#{opProjectId}
+        )
+    </select>
+
+    <!--新增运维单位合同表-->
+    <insert id="insertContract" parameterType="OpProjectEntity">
+        <selectKey keyProperty="opProjectId" resultType="int" order="BEFORE">
+            select seq_pf_op_project.nextval from dual
+        </selectKey>
+        insert into pf_op_project
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            op_project_id,tag_head_id,op_source_id,pf_source_id,
+            <if test="collectId != null and collectId != ''">collect_id,</if>
+            <if test="projectTitle != null and projectTitle != ''">project_title,</if>
+            <if test="startDate != null and startDate != ''">start_date,</if>
+            <if test="endDate != null and endDate != ''">end_date,</if>
+            <if test="memo != null and memo != ''">memo,</if>
+            created_by,updated_by
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{opProjectId},#{tagHeadId},#{opSourceId},#{pfSourceId},
+            <if test="collectId != null  and collectId != ''">#{collectId},</if>
+            <if test="projectTitle != null  and projectTitle != ''">#{projectTitle},</if>
+            <if test="startDate != null and startDate != ''">to_date(#{startDate},'yyyy-mm-dd'),</if>
+            <if test="endDate != null and endDate != ''">to_date(#{endDate},'yyyy-mm-dd'),</if>
+            <if test="memo != null and memo != ''">#{memo,jdbcType=VARCHAR},</if>
+            #{createdBy,jdbcType=VARCHAR},#{updatedBy,jdbcType=VARCHAR}
+        </trim>
+    </insert>
+
+    <!--新增运维单位合同因子-->
+    <insert id="insertContractElement" parameterType="ContractElement">
+        <selectKey keyProperty="opElementId" resultType="int" order="BEFORE">
+            select seq_pf_op_project_element.nextval from dual
+        </selectKey>
+        insert into pf_op_project_element (op_element_id,op_project_id,element_id,created_by)
+        values (#{opElementId},#{opProjectId},#{elementId},#{createdBy,jdbcType=VARCHAR})
+    </insert>
+
+
+    <!--编辑运维单位合同表-->
+    <!--    <update id="updateContract" parameterType="OpProjectEntity">-->
+    <!--        update pf_bas_devops_contract-->
+    <!--        <trim prefix="SET" suffixOverrides=",">-->
+    <!--            <if test="contractId != null">contract_id = #{contractId,jdbcType=INTEGER},</if>-->
+    <!--            <if test="tagHeadId != null">tag_head_id = #{tagHeadId,jdbcType=INTEGER},</if>-->
+    <!--            <if test="opSourceId != null">devops_id = #{opSourceId,jdbcType=INTEGER},</if>-->
+    <!--            <if test="pfSourceId != null and pfSourceId != ''">source_id = #{pfSourceId,jdbcType=VARCHAR},</if>-->
+    <!--            <if test="collectId != null and collectId != ''">collect_id = #{collectId,jdbcType=VARCHAR},</if>-->
+    <!--            <if test="contractName != null and contractName != ''">contract_Name = #{contractName,jdbcType=VARCHAR},-->
+    <!--            </if>-->
+    <!--            <if test="memo != null and memo != ''">memo = #{memo,jdbcType=VARCHAR},</if>-->
+    <!--            <if test="signDate != null and signDate != ''">-->
+    <!--                sign_Date = to_date(#{signDate,jdbcType=VARCHAR},'yyyy-mm-dd'),-->
+    <!--            </if>-->
+    <!--            <if test="startDate != null and startDate != ''">-->
+    <!--                start_date = to_date(#{startDate,jdbcType=VARCHAR},'yyyy-mm-dd'),-->
+    <!--            </if>-->
+    <!--            <if test="endDate != null and endDate != ''">-->
+    <!--                end_date = to_date(#{endDate,jdbcType=VARCHAR},'yyyy-mm-dd'),-->
+    <!--            </if>-->
+    <!--            <if test="updatedBy != null  and updatedBy != ''">updated_by = #{updatedBy,jdbcType=VARCHAR},</if>-->
+    <!--            date_updated = SYSDATE-->
+    <!--        </trim>-->
+    <!--        where contract_id = #{contractId} and is_deleted=0-->
+    <!--    </update>-->
+
+    <!--删除运维单位合同表-->
+    <update id="deleteContractByIds">
+        UPDATE pf_op_project
+        set is_deleted = 1,date_updated = SYSDATE,updated_by = #{updatedBy}
+        where is_deleted=0 and op_project_id in
+        <foreach collection="opProjectIds" item="opProjectId" open="(" separator="," close=")">
+            #{opProjectId}
+        </foreach>
+    </update>
+
+    <update id="deleteContractEleByIds">
+        UPDATE pf_op_project_element set is_deleted = 1
+        where is_deleted=0 and op_project_id in
+        <foreach collection="opProjectIds" item="opProjectId" open="(" separator="," close=")">
+            #{opProjectId}
+        </foreach>
+    </update>
+
+    <!--查询运维单位-->
+    <select id="selectDevopsBysourceId" resultType="map">
+        select op_source_id,full_name from pf_op_source
+        where is_deleted=0 and op_source_type>=1
+        order by order_by desc
+    </select>
+
+    <!--查询检测任务数据库前缀-->
+    <select id="selectDbUserById" parameterType="int" resultType="string">
+        select db_user from pf_bas_tag_head
+        where tag_Head_Id=#{tagHeadId,jdbcType=INTEGER} and is_deleted=0
+    </select>
+
+    <!--查询数采名称-->
+    <select id="selectCollectName" parameterType="map" resultType="string">
+        select full_name collectName from ${dbUser}.bas_checkpoint
+        where is_deleted=0 and collect_id=#{collectId} and source_id = #{pfSourceId}
+    </select>
+
+    <!--查询数采id和名称-->
+    <select id="selectCollectNameById" parameterType="map" resultType="map">
+        select c.collect_id, c.full_name collect_name from ${dbUser}.bas_checkpoint c
+        left join pf_op_project p on p.collect_id = c.collect_id and p.is_deleted = 0
+        and p.op_source_id = #{opSourceId}
+        where p.op_project_id is null and c.source_id = #{pfSourceId}
+    </select>
+
+    <!--查询因子id和名称-->
+    <select id="selectElementDescById" parameterType="map" resultType="map">
+        select ce.cp_elem_id, ce.element_code, ce.element_desc,cp.collect_id, cp.full_name collect_name
+        from ${dbUser}.bas_checkpoint_element ce
+        inner join ${dbUser}.bas_checkpoint cp on  ce.collect_id=cp.collect_id and ce.is_deleted=0
+        where cp.is_deleted=0 and cp.source_id=#{pfSourceId} and not exists (
+                select 1 from pf_op_project_element dce
+                inner join pf_op_project p on p.op_project_id = dce.op_project_id and p.is_deleted = 0
+                where element_id=ce.cp_elem_id and dce.is_deleted = 0 and p.pf_source_id=#{pfSourceId}
+            )
+    </select>
+
+
+</mapper>

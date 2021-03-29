@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.youyan.mapper.YYVideoMapper">
+
+    <resultMap id="entity" type="YYVideoEntity">
+        <result property="videoId"       column="video_id"      />
+        <result property="sourceId"       column="source_id"      />
+        <result property="videoDesc"       column="video_desc"      />
+        <result property="videoAddress"       column="video_address"      />
+        <result property="videoType"       column="video_type"      />
+        <result property="fullName"       column="full_name"      />
+        <result property="dictLabel"       column="dict_label"      />
+        <result property="settings"       column="settings"      />
+        <result property="accessToken"       column="access_token"      />
+        <result property="appkey"       column="appkey"      />
+        <result property="appsecret"       column="appsecret"      />
+        <result property="expireTime"       column="expire_time"      />
+    </resultMap>
+
+    <resultMap id="vtList" type="YYNameIdEntity">
+        <result property="id"       column="dict_value"      />
+        <result property="name"       column="dict_label"      />
+    </resultMap>
+
+    <select id="videoModel" resultMap="entity" parameterType="String">
+        SELECT * FROM BAS_VIDEO where IS_DELETED = 0 and VIDEO_ID = #{id}
+    </select>
+    
+    <select id="selectVideoType" resultMap="vtList">
+        SELECT dict_label,dict_value FROM basecenter.sys_dict_data where DICT_TYPE = 'yy_video_type' and status = 0
+    </select>
+
+    <select id="selectVideo" parameterType="YYVideoEntity" resultMap="entity">
+        SELECT V.*,S.full_name,D.dict_label FROM bas_video V
+        LEFT JOIN BAS_SOURCE S ON V.SOURCE_ID = S.SOURCE_ID
+        LEFT JOIN BASECENTER.SYS_DICT_DATA D ON D.DICT_VALUE = V.VIDEO_TYPE and d.dict_type = 'ty_video_type'
+        WHERE V.IS_DELETED = 0
+        <if test="videoDesc != null and videoDesc != ''">
+            and V.VIDEO_DESC like '%'|| #{videoDesc}||'%'
+        </if>
+        <if test="videoAddress != null and videoAddress != ''">
+            and V.VIDEO_ADDRESS like '%'|| #{videoAddress}||'%'
+        </if>
+        <if test="fullName != null and fullName != ''">
+            and S.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and S.source_id = #{sourceId}
+        </if>
+        ${dataScope}
+        order by s.source_id
+    </select>
+
+    <delete id="deleteVideo" parameterType="YYDeleteEntity">
+        UPDATE bas_video
+        <set>
+            IS_DELETED = 1,
+            <if test="userName != null and userName != ''">
+                UPDATED_BY = #{userName},
+            </if>
+            DATE_UPDATED = SYSDATE
+        </set>
+        where VIDEO_ID in
+        <foreach collection="array" item="videoId" open="(" separator="," close=")">
+            #{videoId}
+        </foreach>
+    </delete>
+
+    <update id="updateVideo" parameterType="YYVideoEntity">
+        UPDATE bas_video SET
+        SOURCE_ID = #{sourceId, jdbcType=VARCHAR},
+        VIDEO_DESC = #{videoDesc, jdbcType=VARCHAR},
+        VIDEO_ADDRESS = #{videoAddress, jdbcType=VARCHAR},
+        VIDEO_TYPE = #{videoType, jdbcType=VARCHAR},
+        APPKEY = #{appkey, jdbcType=VARCHAR},
+        APPSECRET = #{appsecret, jdbcType=VARCHAR},
+        ACCESS_TOKEN = #{accessToken, jdbcType=VARCHAR},
+        <if test="expireTime != null  and expireTime != ''">EXPIRE_TIME = to_date(#{expireTime}, 'yyyy-mm-dd hh24:mi:ss'),</if>
+        UPDATED_BY = #{updatedBy},DATE_UPDATED = SYSDATE
+        WHERE VIDEO_ID =  #{videoId}
+    </update>
+
+    <insert id="insertVideo" parameterType="YYVideoEntity">
+        INSERT INTO bas_video
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            VIDEO_ID,
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="videoDesc != null  and videoDesc != ''">VIDEO_DESC,</if>
+            <if test="videoAddress != null  and videoAddress != ''">VIDEO_ADDRESS,</if>
+            <if test="videoType != null  and videoType != ''">VIDEO_TYPE,</if>
+            <if test="appkey != null  and appkey != ''">APPKEY,</if>
+            <if test="appsecret != null  and appsecret != ''">APPSECRET,</if>
+            IS_DELETED,CREATED_BY,UPDATED_BY,DATE_CREATED,DATE_UPDATED
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{videoId},
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="videoDesc != null  and videoDesc != ''">#{videoDesc},</if>
+            <if test="videoAddress != null  and videoAddress != ''">#{videoAddress},</if>
+            <if test="videoType != null  and videoType != ''">#{videoType},</if>
+            <if test="appkey != null  and appkey != ''">#{appkey},</if>
+            <if test="appsecret != null  and appsecret != ''">#{appsecret},</if>
+            0,#{createdBy},#{updatedBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+</mapper>

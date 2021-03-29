@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.system.mapper.SysNoticeMapper">
+
+    <resultMap type="SysNotice" id="SysNoticeResult">
+        <result property="noticeId" column="notice_id"/>
+        <result property="noticeTitle" column="notice_title"/>
+        <result property="noticeType" column="notice_type"/>
+        <result property="noticeContent" column="notice_content"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectNoticeVo">
+        select notice_id, notice_title, notice_type, notice_content, status, create_by, create_time, update_by, update_time, remark 
+		from sys_notice
+    </sql>
+
+    <select id="selectNoticeById" parameterType="Long" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        where notice_id = #{noticeId}
+    </select>
+
+    <select id="selectNoticeList" parameterType="SysNotice" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        <where>
+            <if test="noticeTitle != null and noticeTitle != ''">
+                AND notice_title like '%'|| #{noticeTitle}||'%'
+            </if>
+            <if test="noticeType != null and noticeType != ''">
+                AND notice_type = #{noticeType}
+            </if>
+            <if test="createBy != null and createBy != ''">
+                AND create_by like '%'|| #{createBy}||'%'
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertNotice" parameterType="SysNotice">
+        <selectKey keyProperty="noticeId" order="BEFORE" resultType="Long">
+            select seq_sys_notice.nextval as noticeId from DUAL
+        </selectKey>
+        insert into sys_notice (
+        <if test="noticeTitle != null and noticeTitle != '' ">notice_title,</if>
+        <if test="noticeType != null and noticeType != '' ">notice_type,</if>
+        <if test="noticeContent != null and noticeContent != '' ">notice_content,</if>
+        <if test="status != null and status != '' ">status,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        create_time
+        )values(
+        <if test="noticeId != null and noticeId != '' ">#{noticeId},</if>
+        <if test="noticeTitle != null and noticeTitle != ''">#{noticeTitle},</if>
+        <if test="noticeType != null and noticeType != ''">#{noticeType},</if>
+        <if test="noticeContent != null and noticeContent != ''">#{noticeContent},</if>
+        <if test="status != null and status != ''">#{status},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        sysdate
+        )
+    </insert>
+
+    <update id="updateNotice" parameterType="SysNotice">
+        update sys_notice
+        <set>
+            notice_title = #{noticeTitle,jdbcType=VARCHAR},
+            notice_type = #{noticeType,jdbcType=CHAR},
+            notice_content = #{noticeContent,jdbcType=LONGVARCHAR},
+            status = #{status,jdbcType=CHAR},
+            update_by = #{updateBy,jdbcType=VARCHAR},
+            update_time = sysdate
+        </set>
+        where notice_id = #{noticeId}
+    </update>
+
+    <delete id="deleteNoticeById" parameterType="Long">
+        delete from sys_notice where notice_id = #{noticeId}
+    </delete>
+
+    <delete id="deleteNoticeByIds" parameterType="Long">
+        delete from sys_notice where notice_id in
+        <foreach item="noticeId" collection="array" open="(" separator="," close=")">
+            #{noticeId}
+        </foreach>
+    </delete>
+
+    <select id="selectOperaList" parameterType="LogOpera" resultType="LogOpera">
+        select log_id logId,url,module,action,request,opera_result operaResult,lf.created_by createdBy,
+        created_at createdAt,u.nick_name nickName
+        from pf_log_front_opera lf
+        left join sys_user u on to_char(lf.CREATED_BY) = to_char(u.USER_NAME)
+        <where>
+            <if test="url != null and url != ''">
+                AND url like '%'|| #{url}||'%'
+            </if>
+            <if test="module != null and module != ''">
+                AND module like '%'|| #{module}||'%'
+            </if>
+            <if test="action != null and action != ''">
+                AND action like '%'|| #{action}||'%'
+            </if>
+            <if test="request != null and request != ''">
+                AND request like '%'|| #{request}||'%'
+            </if>
+            <if test="operaResult != null and operaResult != ''">
+                AND opera_result like '%'|| #{operaResult}||'%'
+            </if>
+            <if test="createdBy != null and createdBy != ''">
+                AND lf.created_by like '%'|| #{createdBy}||'%'
+            </if>
+            <if test="nickName != null and nickName != ''">
+                AND u.nick_name like '%'|| #{nickName}||'%'
+            </if>
+        </where>
+        order by log_id desc
+    </select>
+
+    <insert id="insertOpera" parameterType="LogOpera">
+        insert into pf_log_front_opera
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            log_id,
+            <if test="url != null and url != '' ">url,</if>
+            <if test="module != null and module != ''">module,</if>
+            <if test="action != null and action != ''">action,</if>
+            <if test="request != null and request != ''">request,</if>
+            <if test="operaResult != null and operaResult != ''">opera_result,</if>
+            <if test="createdBy != null and createdBy != ''">created_by,</if>
+            created_at
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_log_front_opera.nextval,
+            <if test="url != null and url != '' ">#{url,jdbcType=VARCHAR},</if>
+            <if test="module != null and module != ''">#{module,jdbcType=VARCHAR},</if>
+            <if test="action != null and action != ''">#{action,jdbcType=VARCHAR},</if>
+            <if test="request != null and request != ''">#{request,jdbcType=VARCHAR},</if>
+            <if test="operaResult != null and operaResult != ''">#{operaResult,jdbcType=VARCHAR},</if>
+            <if test="createdBy != null and createdBy != ''">#{createdBy,jdbcType=VARCHAR},</if>
+            sysdate
+        </trim>
+    </insert>
+
+</mapper>

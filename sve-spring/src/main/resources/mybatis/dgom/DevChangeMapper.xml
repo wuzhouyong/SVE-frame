@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.DevChangeMapper">
+
+    <!--查询信息备案列表-->
+    <select id="selectDevChangeApplyList" parameterType="DevApplyHead" resultType="DevApplyHead">
+        select zapplyid applyid, s.zdatasourname sourcename, l.zlabelname townName,l.zlabelheadid townid,
+        zstatus status,zapplytype applytype, zsourceid sourceid, zcontactman contactman, zcontacttel contacttel,
+        zchangereason changereason,zapplydate applydate, zapprovedby muApprovedBy, zapproveddate muApprovedDate,
+        zapprovaldesc approvaldesc,zoperatedby operatedby, zoperateddate operateddate, zoperateddesc operateddesc,
+        zacceptdate acceptdate
+        from ent_devchangeapplyhead h
+        inner join zdatasoursetting s on s.zdatasourid = h.zsourceid and s.zisdeleted = 0
+        left join zlabelhead l on l.zlabelheadid = s.zsuperiorid and zparentid = 100 and l.zisdeleted=0
+        where h.zisdeleted = 0
+        <if test="beginTime != null and endTime != null">
+            and h.zapplydate between to_date(#{beginTime},'yyyy-MM-dd') and to_date(#{endTime},'yyyy-MM-dd')
+        </if>
+        <if test="isAcc == 1">
+            and h.zstatus > 1
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.zdatasourid = #{sourceId,jdbcType=VARCHAR}
+        </if>
+        <if test="sourceName != null and sourceName != ''">
+            and s.zdatasourname like '%'||#{sourceName}||'%'
+        </if>
+        <if test="status != null">
+            and h.zstatus = #{status}
+        </if>
+        <if test="townName != null and townName != ''">
+            and l.zlabelName like '%'||#{townName}||'%'
+        </if>
+        <if test="townId != null and townId != ''">
+            and l.zlabelheadid = #{townId}
+        </if>
+        order by zapplydate desc
+    </select>
+
+    <update id="insertDevApplyHead" parameterType="DevApplyHead">
+        merge into Ent_DevChangeApplyHead a using (select
+        #{applyId,jdbcType=VARCHAR} applyid,
+        #{status,jdbcType=INTEGER} status,
+        #{applyType,jdbcType=INTEGER} applytype,
+        #{sourceId,jdbcType=VARCHAR} sourceid,
+        #{contactMan,jdbcType=VARCHAR} contactman,
+        #{contactTel,jdbcType=VARCHAR} contacttel,
+        #{changeReason,jdbcType=VARCHAR} changereason,
+        #{applyDate,jdbcType=VARCHAR} applydate,
+        #{approvedBy,jdbcType=VARCHAR} approvedBy,
+        #{approvedDate,jdbcType=VARCHAR} approvedDate,
+        #{approvalDesc,jdbcType=VARCHAR} approvaldesc,
+        #{operatedDate,jdbcType=VARCHAR} operateddate,
+        #{operatedBy,jdbcType=VARCHAR} operatedby,
+        #{operatedDesc,jdbcType=VARCHAR} operateddesc,
+        #{acceptDate,jdbcType=VARCHAR} acceptdate,
+        #{createdBy,jdbcType=VARCHAR} createdby,
+        #{updatedBy,jdbcType=VARCHAR} updatedby from dual) b on (a.zapplyid=b.applyid)
+        when matched then update SET
+        zstatus=b.status,zapplytype=b.applytype,zsourceid=b.sourceid,
+        zcontactman=b.contactman,zcontacttel=b.contacttel,zchangereason=b.changereason,
+        zapprovedby=b.approvedBy,zapproveddate=to_date(b.approvedDate,'yyyy-MM-dd hh24:mi:ss'),
+        zapprovaldesc=b.approvaldesc,zoperateddate=to_date(b.operateddate,'yyyy-MM-dd hh24:mi:ss'),
+        zoperatedby=b.operatedby,zoperateddesc=b.operateddesc,
+        zacceptdate=to_date(b.acceptdate,'yyyy-MM-dd hh24:mi:ss'),
+        zcreatedby=b.createdby,zupdatedby=b.updatedby,zdateupdated=SYSDATE
+        when not matched then insert (
+        zapplyid,zstatus,zapplytype,zsourceid,zcontactman,zcontacttel,zchangereason,zapplydate,
+        zapprovedby,zapproveddate,zapprovaldesc,zoperateddate,zoperatedby,zoperateddesc,
+        zacceptdate,zcreatedby,zupdatedby,zisdeleted,zdatecreated,zdateupdated
+        ) values(
+        b.applyid,b.status,b.applytype,b.sourceid,b.contactman,b.contacttel,b.changereason,
+        sysdate,b.approvedBy,
+        to_date(b.approvedDate,'yyyy-MM-dd hh24:mi:ss'),b.approvaldesc,
+        to_date(b.operateddate,'yyyy-MM-dd hh24:mi:ss'),
+        b.operatedby,b.operateddesc,
+        to_date(b.acceptdate,'yyyy-MM-dd hh24:mi:ss'),
+        b.createdby,b.updatedby,0,SYSDATE,SYSDATE )
+    </update>
+
+    <insert id="insertDevApplyDetail" parameterType="DevApplyDetail">
+        insert into ent_devchangeapplydetail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="detailId != null and detailId !=''">zdetailid,</if>
+            <if test="applyId != null and applyId !=''">zapplyid,</if>
+            <if test="checkpointId != null and checkpointId !=''">zcheckpointid,</if>
+            <if test="dataDevId != null and dataDevId !=''">zdatadevid,</if>
+            <if test="other != null and other !=''">zother,</if>
+            zelementid,zisdeleted,zdateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="detailId != null and detailId !=''">#{detailId,jdbcType=VARCHAR},</if>
+            <if test="applyId != null and applyId !=''">#{applyId,jdbcType=VARCHAR},</if>
+            <if test="checkpointId != null and checkpointId !=''">#{checkpointId,jdbcType=VARCHAR},</if>
+            <if test="dataDevId != null and dataDevId !=''">#{dataDevId,jdbcType=VARCHAR},</if>
+            <if test="other != null and other !=''">#{other,jdbcType=VARCHAR},</if>
+            0,0,sysdate
+        </trim>
+    </insert>
+
+    <!--查找子列表-->
+    <select id="selectDevApplyDetailList" parameterType="string" resultType="DevApplyDetail">
+        select d.zdetailid detailid,d.zapplyid applyid,d.zcheckpointid checkpointid,c.zcheckpointdesc checkpointdesc,
+				d.zelementid elementid,d.zdatadevid datadevid,e.zdatadevdesc datadevdesc,d.zother other
+        from ent_devchangeapplydetail d
+		inner join zcheckpointdef c on d.zcheckpointid=c.zcheckpointid and c.zisvalid=1
+		inner join zdatadevdef e on d.zdatadevid=e.zdatadevid and e.zisdeleted=0
+        where d.zisdeleted=0 and d.zapplyid=#{applyId,jdbcType=VARCHAR}
+    </select>
+
+    <update id="deleteDevApplyDetail" parameterType="DevApplyDetail">
+        update ent_devchangeapplydetail
+        set zisdeleted=1,zdateupdated=sysdate where zdetailid=#{detailId,jdbcType=VARCHAR} and zisdeleted=0
+    </update>
+
+    <update id="deleteDevApplyDetailForIds" parameterType="string">
+        update ent_devchangeapplydetail SET zdateupdated=sysdate, zisdeleted=1
+        where zisdeleted=0 and zapplyid in
+        <foreach collection="applyIds" item="applyId" open="(" separator="," close=")" index="index">
+            #{applyId}
+        </foreach>
+    </update>
+
+    <update id="deleteDevApplyHead" parameterType="string">
+        update Ent_DevChangeApplyHead SET zupdatedby=#{updatedBy,jdbcType=VARCHAR},zdateupdated=sysdate,
+        zisdeleted=1 where zisdeleted=0 and zapplyid in
+        <foreach collection="applyIds" item="applyId" open="(" separator="," close=")" index="index">
+            #{applyId}
+        </foreach>
+    </update>
+
+    <update id="updateDevChangeApply" parameterType="DevApplyHead">
+        update ent_devchangeapplyhead
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">
+                zstatus = #{status,jdbcType=INTEGER},
+            </if>
+            <if test="applyType != null">
+                zapplytype = #{applyType,jdbcType=INTEGER},
+            </if>
+            <if test="sourceId != null and sourceId !=''">
+                zsourceid = #{sourceId,jdbcType=VARCHAR},
+            </if>
+            <if test="contactMan != null and contactMan !=''">
+                zcontactman = #{contactMan,jdbcType=VARCHAR},
+            </if>
+            <if test="contactTel != null and contactTel !=''">
+                zcontacttel = #{contactTel,jdbcType=VARCHAR},
+            </if>
+            <if test="changeReason != null and changeReason !=''">
+                zchangereason = #{changeReason,jdbcType=VARCHAR},
+            </if>
+            <if test="applyDate != null and applyDate !=''">
+                zapplydate = to_date(#{applyDate,jdbcType=VARCHAR},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+            <if test="approvedBy != null and approvedBy !=''">
+                zapprovedby = #{approvedBy,jdbcType=VARCHAR},
+            </if>
+            <if test="approvedDate != null and approvedDate !=''">
+                zapproveddate = to_date(#{approvedDate,jdbcType=VARCHAR},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+            <if test="approvalDesc != null and approvalDesc !=''">
+                zapprovaldesc = #{approvalDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="operatedDate != null and operatedDate !=''">
+                zoperateddate = to_date(#{operatedDate,jdbcType=VARCHAR},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+            <if test="operatedBy != null and operatedBy !=''">
+                zoperatedby = #{operatedBy,jdbcType=VARCHAR},
+            </if>
+            <if test="operatedDesc != null and operatedDesc !=''">
+                zoperateddesc = #{operatedDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="acceptDate != null and acceptDate !=''">
+                zacceptdate = to_date(#{acceptDate,jdbcType=VARCHAR},'yyyy-MM-dd hh24:mi:ss'),
+            </if>
+            zupdatedby=#{updatedBy,jdbcType=VARCHAR} ,zdateupdated=SYSDATE
+        </trim>
+        where zapplyid = #{applyId,jdbcType=VARCHAR} and zisdeleted=0
+    </update>
+
+    <select id="selectDevApplyHeadById" parameterType="string" resultType="DevApplyHead">
+        select zapplyid applyid,zstatus status,zapplytype applytype, zsourceid sourceid,
+         zcontactman contactman, zcontacttel contacttel,zchangereason changereason,zapplydate applydate,
+         zapprovedby muApprovedBy, zapproveddate muApprovedDate,zapprovaldesc approvaldesc,zoperatedby operatedby,
+         zoperateddate operateddate, zoperateddesc operateddesc,zacceptdate acceptdate
+        from ent_devchangeapplyhead
+        where zisdeleted=0 and zapplyid=#{applyId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectSourceNameBySourceId" parameterType="string" resultType="string">
+        select zdatasourid, zdatasourname from zdatasoursetting
+        where zisfactory = 1 and zisdeleted = 0 and zdatasourid=#{sourceId}
+    </select>
+
+    <select id="selectDevApplyStatus" parameterType="string" resultType="int">
+        select zstatus status from Ent_DevChangeApplyHead
+        where zisdeleted=0 and zapplyid in
+        <foreach collection="applyIds" item="applyId" open="(" separator="," close=")" index="index">
+            #{applyId}
+        </foreach>
+    </select>
+
+    <insert id="insertEntSmsNew" parameterType="EntSmsNewEntity">
+        insert into ent_sms_new
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="smsId != null and smsId !=''">zsmsid,</if>
+            <if test="phoneNumber != null and phoneNumber !=''">zphonenumber,</if>
+            <if test="content != null and content !=''">zcontent,</if>
+            <if test="isSended != null and isSended !=''">zissended,</if>
+            <if test="sendDate != null and sendDate !=''">zsenddate,</if>
+            <if test="returnMsg != null and returnMsg !=''">zreturnmsg,</if>
+            zdateupdated,zsmstype
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="smsId != null and smsId !=''">#{smsId,jdbcType=VARCHAR},</if>
+            <if test="phoneNumber != null and phoneNumber !=''">#{phoneNumber,jdbcType=VARCHAR},</if>
+            <if test="content != null and content !=''">#{content,jdbcType=VARCHAR},</if>
+            <if test="isSended != null and isSended !=''">#{isSended,jdbcType=VARCHAR},</if>
+            <if test="sendDate != null and sendDate !=''">to_date(#{sendDate,jdbcType=VARCHAR},'yyyy-MM-dd
+                hh24:mi:ss'),
+            </if>
+            <if test="returnMsg != null and returnMsg !=''">#{returnMsg,jdbcType=VARCHAR},</if>
+            sysdate,2
+        </trim>
+    </insert>
+
+</mapper>

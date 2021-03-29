@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.enterprise.mapper.SourceModifyMapper">
+
+    <resultMap id="entity" type="SourceModifyEntity">
+        <result property="modifyId" column="modify_id"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="auditState" column="audit_state"/>
+        <result property="fullName" column="full_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="organizationCode" column="organization_code"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+        <result property="address" column="address"/>
+        <result property="industryCode" column="industry_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="sourceScale" column="source_scale"/>
+        <result property="sourceStatus" column="source_status"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="legalPersonPhone" column="legal_person_phone"/>
+        <result property="dateUpdated" column="date_updated"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+
+    <select id="selectSourceModify" parameterType="SourceModifyEntity" resultMap="entity">
+        SELECT S.* FROM PF_BAS_SOURCE_MODIFY S WHERE S.AUDIT_STATE = 0
+        <if test="fullName != null and fullName != ''">
+            and S.FULL_NAME like '%'|| #{fullName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and S.SOURCE_ID = #{sourceId}
+        </if>
+        ${labelQuery}
+        ${dataScope}
+    </select>
+
+    <select id="getOriginSourceName" parameterType="string" resultType="string">
+        select full_name from pf_bas_source where source_id = #{sourceId}
+    </select>
+
+    <select id="getSourceEntity" parameterType="String" resultMap="entity">
+        SELECT S.* FROM PF_BAS_SOURCE_MODIFY S WHERE S.AUDIT_STATE = 0
+        <if test="sourceId != null and sourceId != ''">
+            and S.SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <update id="agree" parameterType="SourceModifyEntity">
+        UPDATE PF_BAS_SOURCE_MODIFY SET AUDIT_STATE = #{auditState},DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        WHERE MODIFY_ID = #{modifyId}
+    </update>
+
+
+    <select id="checkForPresence" resultType="int" parameterType="String">
+        SELECT COUNT (1) FROM PF_BAS_SOURCE_MODIFY WHERE SOURCE_ID = #{sourceId} AND AUDIT_STATE = 0
+    </select>
+
+    <insert id="insertSourceModify" parameterType="SourceModifyEntity">
+        INSERT INTO PF_BAS_SOURCE_MODIFY
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            MODIFY_ID,
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            AUDIT_STATE,
+            <if test="fullName != null  and fullName != ''">FULL_NAME,</if>
+            <if test="socialCreditCode != null  and socialCreditCode != ''">SOCIAL_CREDIT_CODE,</if>
+            <if test="organizationCode != null  and organizationCode != ''">ORGANIZATION_CODE,</if>
+            <if test="emissionPermitCode != null  and emissionPermitCode != ''">EMISSION_PERMIT_CODE,</if>
+            <if test="townCode != null  and townCode != ''">TOWN_CODE,TOWN_NAME,</if>
+            <if test="address != null  and address != ''">ADDRESS,</if>
+            <if test="industryCode != null  and industryCode != ''">INDUSTRY_CODE,INDUSTRY_NAME,</if>
+            <if test="sourceScale != null  and sourceScale != ''">SOURCE_SCALE,</if>
+            <if test="sourceStatus != null  and sourceStatus != ''">SOURCE_STATUS,</if>
+            <if test="legalPersonName != null  and legalPersonName != ''">LEGAL_PERSON_NAME,</if>
+            <if test="legalPersonPhone != null  and legalPersonPhone != ''">LEGAL_PERSON_PHONE,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="latitude != null">latitude,</if>
+            DATE_UPDATED,UPDATED_BY
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{modifyId},
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            0,
+            <if test="fullName != null  and fullName != ''">#{fullName},</if>
+            <if test="socialCreditCode != null  and socialCreditCode != ''">#{socialCreditCode},</if>
+            <if test="organizationCode != null  and organizationCode != ''">#{organizationCode},</if>
+            <if test="emissionPermitCode != null  and emissionPermitCode != ''">#{emissionPermitCode},</if>
+            <if test="townCode != null  and townCode != ''">#{townCode},
+                (select REGION_NAME from pf_bas_region where REGION_CODE = #{townCode}),
+            </if>
+            <!-- <if test="townName != null  and townName != ''">#{townName},</if>-->
+            <if test="address != null  and address != ''">#{address},</if>
+            <if test="industryCode != null  and industryCode != ''">#{industryCode},
+                (SELECT INDUSTRY_NAME from pf_bas_industry where industry_code = #{industryCode}),
+            </if>
+            <!--       <if test="industryName != null  and industryName != ''">#{industryName} ,</if>-->
+            <if test="sourceScale != null  and sourceScale != ''">#{sourceScale},</if>
+            <if test="sourceStatus != null  and sourceStatus != ''">#{sourceStatus},</if>
+            <if test="legalPersonName != null  and legalPersonName != ''">#{legalPersonName},</if>
+            <if test="legalPersonPhone != null  and legalPersonPhone != ''">#{legalPersonPhone},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="latitude != null">#{latitude},</if>
+            SYSDATE,#{updatedBy}
+        </trim>
+    </insert>
+
+    <update id="updateSourceModify" parameterType="SourceModifyEntity">
+        UPDATE PF_BAS_SOURCE_MODIFY SET
+        FULL_NAME = #{fullName, jdbcType=VARCHAR},
+        SOCIAL_CREDIT_CODE = #{socialCreditCode, jdbcType=VARCHAR},
+        ORGANIZATION_CODE = #{organizationCode, jdbcType=VARCHAR},
+        EMISSION_PERMIT_CODE = #{emissionPermitCode, jdbcType=VARCHAR},
+        TOWN_CODE = #{townCode, jdbcType=VARCHAR},
+        <if test="townCode != null  and townCode != ''">
+            TOWN_NAME = (select REGION_NAME from pf_bas_region where REGION_CODE = #{townCode}),
+        </if>
+        ADDRESS = #{address, jdbcType=VARCHAR},
+        INDUSTRY_CODE = #{industryCode, jdbcType=VARCHAR},
+        <if test="industryCode != null  and industryCode != ''">
+            INDUSTRY_NAME = (SELECT INDUSTRY_NAME from pf_bas_industry where industry_code = #{industryCode}),
+        </if>
+        SOURCE_SCALE = #{sourceScale, jdbcType=VARCHAR},
+        SOURCE_STATUS = #{sourceStatus, jdbcType=VARCHAR},
+        LEGAL_PERSON_NAME = #{legalPersonName, jdbcType=VARCHAR},
+        LEGAL_PERSON_PHONE = #{legalPersonPhone, jdbcType=VARCHAR},
+        <if test="longitude != null">longitude = #{longitude},</if>
+        <if test="latitude != null">latitude = #{latitude},</if>
+        DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        WHERE MODIFY_ID = #{modifyId}
+    </update>
+
+    <update id="updateSourceUser" parameterType="SourceModifyEntity">
+        update pf_bas_source_user set nick_name=#{fullName, jdbcType=VARCHAR},
+        update_by=#{updatedBy},update_time = sysdate where source_id=#{sourceId, jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateModify" parameterType="string">
+<!--        UPDATE PF_BAS_SOURCE SET-->
+<!--        FULL_NAME = #{fullName, jdbcType=VARCHAR},-->
+<!--        SOCIAL_CREDIT_CODE = #{socialCreditCode, jdbcType=VARCHAR},-->
+<!--        ORGANIZATION_CODE = #{organizationCode, jdbcType=VARCHAR},-->
+<!--        EMISSION_PERMIT_CODE = #{emissionPermitCode, jdbcType=VARCHAR},-->
+<!--        TOWN_CODE = #{townCode, jdbcType=VARCHAR},-->
+<!--        TOWN_NAME = #{townName, jdbcType=VARCHAR},-->
+<!--        ADDRESS = #{address, jdbcType=VARCHAR},-->
+<!--        INDUSTRY_CODE = #{industryCode, jdbcType=VARCHAR},-->
+<!--        INDUSTRY_NAME = #{industryName, jdbcType=VARCHAR},-->
+<!--        SOURCE_SCALE = #{sourceScale, jdbcType=VARCHAR},-->
+<!--        SOURCE_STATUS = #{sourceStatus, jdbcType=VARCHAR},-->
+<!--        LEGAL_PERSON_NAME = #{legalPersonName, jdbcType=VARCHAR},-->
+<!--        LEGAL_PERSON_PHONE = #{legalPersonPhone, jdbcType=VARCHAR},-->
+<!--        <if test="longitude != null">longitude = #{longitude},</if>-->
+<!--        <if test="latitude != null">latitude = #{latitude},</if>-->
+<!--        DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}-->
+<!--        WHERE SOURCE_ID = #{sourceId}-->
+        merge into pf_bas_source s using (
+        select source_id, full_name, social_credit_code, organization_code, emission_permit_code,
+        town_code, town_name, address, industry_code, industry_name,
+        source_scale, source_status, legal_person_name, legal_person_phone, longitude, latitude
+        from pf_bas_source_modify where modify_id = #{modifyId}
+        ) m
+        on (m.source_id = s.source_id)
+        when matched then update set
+        s.full_name = m.full_name, s.social_credit_code = m.social_credit_code, s.organization_code = m.organization_code,
+        s.emission_permit_code = m.emission_permit_code, s.town_code = m.town_code, s.town_name = m.town_name,
+        s.address = m.address, s.industry_code = m.industry_code, s.industry_name = m.industry_name,
+        s.source_scale = m.source_scale, s.source_status = m.source_status, s.legal_person_name = m.legal_person_name,
+        s.legal_person_phone = m.legal_person_phone, s.longitude = m.longitude, s.latitude = m.latitude,
+        s.updated_by = #{updatedBy}, s.date_updated = sysdate
+    </update>
+
+    <update id="updateBasSourceOld" parameterType="SourceOtherColumn">
+        UPDATE PF_BAS_SOURCE SET
+        VILLAGE_CODE = #{villageCode, jdbcType=VARCHAR},
+        VILLAGE_NAME = #{villageName, jdbcType=VARCHAR},
+        LONGITUDE = #{longitude, jdbcType=VARCHAR},
+        LATITUDE = #{latitude, jdbcType=VARCHAR},
+        ENV_CONTACT_NAME = #{envContactName, jdbcType=VARCHAR},
+        ENV_CONTACT_PHONE = #{envContactPhone, jdbcType=VARCHAR},
+        INFLOW_WATER_NAME = #{inflowWaterName, jdbcType=VARCHAR},
+        PROCESS_FLOW = #{processFlow, jdbcType=VARCHAR},
+        ENV_MONITOR_LEVEL = #{envMonitorLevel, jdbcType=VARCHAR},
+        HAS_WASTE_WATER = #{hasWasteWater, jdbcType=VARCHAR},
+        HAS_WASTE_GAS = #{hasWasteGas, jdbcType=VARCHAR},
+        HAS_GENERAL_SOLID = #{hasGeneralSolid, jdbcType=VARCHAR},
+        HAS_HAZARDOUS_WASTE = #{hasHazardousWaste, jdbcType=VARCHAR},
+        HAS_RARE_EARTH = #{hasRareEarth, jdbcType=VARCHAR}
+        MEMO = #{memo, jdbcType=VARCHAR},
+        LONGITUDE_D = #{longitudeD, jdbcType=VARCHAR},
+        LONGITUDE_F = #{longitudeF, jdbcType=VARCHAR},
+        LONGITUDE_M = #{longitudeM, jdbcType=VARCHAR},
+        LATITUDE_D = #{latitudeD, jdbcType=VARCHAR},
+        LATITUDE_F = #{latitudeF, jdbcType=VARCHAR},
+        LATITUDE_M = #{latitudeM, jdbcType=VARCHAR},
+        ZSOURCENAMENEW = #{zsourcenamenew, jdbcType=VARCHAR},
+        ZFLAG = #{zflag, jdbcType=VARCHAR},
+        ZPSOURCEID = #{zpsourceid, jdbcType=VARCHAR},
+        DATE_CREATED = SYSDATE,
+        UPDATED_BY = #{updatedBy}
+        WHERE SOURCE_ID = #{sourceId}
+    </update>
+
+    <update id="updateBasSource" parameterType="SourceOtherColumn">
+        UPDATE PF_BAS_SOURCE SET
+        ENV_CONTACT_NAME = #{envContactName, jdbcType=VARCHAR},
+        ENV_CONTACT_PHONE = #{envContactPhone, jdbcType=VARCHAR},
+        INFLOW_WATER_NAME = #{inflowWaterName, jdbcType=VARCHAR},
+        PROCESS_FLOW = #{processFlow, jdbcType=VARCHAR},
+        HAS_WASTE_WATER = #{hasWasteWater, jdbcType=VARCHAR},
+        HAS_WASTE_GAS = #{hasWasteGas, jdbcType=VARCHAR},
+        HAS_GENERAL_SOLID = #{hasGeneralSolid, jdbcType=VARCHAR},
+        HAS_HAZARDOUS_WASTE = #{hasHazardousWaste, jdbcType=VARCHAR},
+        HAS_RARE_EARTH = #{hasRareEarth, jdbcType=VARCHAR},
+        MEMO = #{memo, jdbcType=VARCHAR},
+        DATE_CREATED = SYSDATE,
+        UPDATED_BY = #{updatedBy}
+        WHERE SOURCE_ID = #{sourceId}
+    </update>
+
+    <select id="selectModifyHistory" parameterType="String" resultMap="entity">
+        SELECT * FROM PF_BAS_SOURCE_MODIFY WHERE 1 = 1
+        <if test="sourceId != null and sourceId != ''">
+            and SOURCE_ID = #{sourceId}
+        </if>
+        ORDER BY DATE_UPDATED DESC
+    </select>
+
+    <update id="updateVocs" parameterType="SourceVocsParamEntity">
+        merge into PF_BAS_SOURCE_VOCSPARAM a using (select
+        #{sourceId, jdbcType=VARCHAR} sid,
+        #{invsertTotal, jdbcType=VARCHAR} invsertTotal,
+        #{constructionUnit, jdbcType=VARCHAR} constructionUnit,
+        #{productFlow, jdbcType=VARCHAR} productFlow,
+        #{gasCollect, jdbcType=VARCHAR} gasCollect,
+        #{processFlow, jdbcType=VARCHAR} processFlow,
+        #{processFlowMemo, jdbcType=VARCHAR} processFlowMemo,
+        #{keyPump, jdbcType=VARCHAR} keyPump,
+        #{keyBlower, jdbcType=VARCHAR} keyBlower,
+        #{keySorbMaterial, jdbcType=VARCHAR} keySorbMaterial,
+        #{keySorbPeriod, jdbcType=VARCHAR} keySorbPeriod,
+        #{keyPhotoPower, jdbcType=VARCHAR} keyPhotoPower,
+        #{keyPlasmaPower, jdbcType=VARCHAR} keyPlasmaPower,
+        #{keyRecoveryRate, jdbcType=VARCHAR} keyRecoveryRate,
+        #{keyBurnTemp, jdbcType=VARCHAR} keyBurnTemp,
+        #{keyRecoveryTime, jdbcType=VARCHAR} keyRecoveryTime,
+        #{keyLossPeriod, jdbcType=VARCHAR} keyLossPeriod,
+        #{keyBurnerCount, jdbcType=VARCHAR} keyBurnerCount,
+        #{keyHeatTime, jdbcType=VARCHAR} keyHeatTime,
+        #{keyInterTemp, jdbcType=VARCHAR} keyInterTemp,
+        #{keyOutgasTemp, jdbcType=VARCHAR} keyOutgasTemp,
+        #{keyTowerTime, jdbcType=VARCHAR} keyTowerTime,
+        #{keyMudPeriod, jdbcType=VARCHAR} keyMudPeriod,
+        #{keyLiquidPeriod, jdbcType=VARCHAR} keyLiquidPeriod,
+        #{keyLiquidAmount, jdbcType=VARCHAR} keyLiquidAmount,
+        #{keyCyclePeriod, jdbcType=VARCHAR} keyCyclePeriod,
+        #{keyArea, jdbcType=VARCHAR} keyArea,
+        #{keyWorkTime, jdbcType=VARCHAR} keyWorkTime,
+        #{memo, jdbcType=VARCHAR} memo,
+        #{updatedBy, jdbcType=VARCHAR} updatedBy from dual) b on (a.source_id=b.sid)
+        when matched then update SET
+        invsert_total = b.invsertTotal,construction_unit = b.constructionUnit,
+        product_flow = b.productFlow,gas_collect = b.gasCollect,process_flow = b.processFlow,
+        process_flow_memo = b.processFlowMemo,key_pump = b.keyPump,key_blower = b.keyBlower,
+        key_sorb_material = b.keySorbMaterial,key_sorb_period = b.keySorbPeriod,key_photo_power = b.keyPhotoPower,
+        key_plasma_power = b.keyPlasmaPower,key_recovery_rate = b.keyRecoveryRate,key_burn_temp = b.keyBurnTemp,
+        key_recovery_time = b.keyRecoveryTime,key_loss_period = b.keyLossPeriod,key_burner_count = b.keyBurnerCount,
+        key_heat_time = b.keyHeatTime,key_inter_temp = b.keyInterTemp,key_outgas_temp = b.keyOutgasTemp,
+        key_tower_time = b.keyTowerTime,key_mud_period = b.keyMudPeriod,key_liquid_period = b.keyLiquidPeriod,
+        key_liquid_amount = b.keyLiquidAmount,key_cycle_period = b.keyCyclePeriod,key_area = b.keyArea,
+        key_work_time = b.keyWorkTime,memo = b.memo,DATE_CREATED = SYSDATE,UPDATED_BY = b.updatedBy
+        when not matched then insert (
+        source_id, invsert_total,construction_unit,product_flow,gas_collect,process_flow,process_flow_memo,
+        key_pump,key_blower,key_sorb_material,key_sorb_period,key_photo_power,key_plasma_power,key_recovery_rate,
+        key_burn_temp,key_recovery_time,key_loss_period,key_burner_count,key_heat_time,key_inter_temp,key_outgas_temp,
+        key_tower_time,key_mud_period,key_liquid_period,key_liquid_amount,key_cycle_period,key_area,key_work_time,
+        memo, DATE_CREATED, UPDATED_BY
+        ) values(
+        b.sid,b.invsertTotal,b.constructionUnit,b.productFlow,b.gasCollect,b.processFlow,
+        b.processFlowMemo,b.keyPump,b.keyBlower,b.keySorbMaterial,b.keySorbPeriod,b.keyPhotoPower,
+        b.keyPlasmaPower,b.keyRecoveryRate,b.keyBurnTemp,b.keyRecoveryTime,b.keyLossPeriod,b.keyBurnerCount,
+        b.keyHeatTime,b.keyInterTemp,b.keyOutgasTemp,b.keyTowerTime,b.keyMudPeriod,b.keyLiquidPeriod,
+        b.keyLiquidAmount,b.keyCyclePeriod,b.keyArea,b.keyWorkTime,b.memo,SYSDATE,b.updatedBy)
+    </update>
+
+</mapper>

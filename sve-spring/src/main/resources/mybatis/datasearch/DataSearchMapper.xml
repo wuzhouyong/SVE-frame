@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.datasearch.mapper.DataSearchMapper">
+    <resultMap id="element" type="DataElementEntity">
+        <result property="elementId" column="cp_elem_id"/>
+        <result property="elementDesc" column="element_desc"/>
+        <result property="unit" column="unit"/>
+        <result property="group" column="ele_group"/>
+    </resultMap>
+    <select id="getElementList" resultMap="element">
+        select ce.cp_elem_id,ce.element_desc, e.unit, e.ele_group
+        from bas_checkpoint_element ce
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        inner join bas_element e on e.ele_type_id = ce.ele_type_id and e.is_deleted = 0
+        where ce.is_deleted = 0 and c.source_id = #{sourceId}
+    </select>
+    <select id="getRealList" resultType="java.util.Map">
+
+    </select>
+</mapper>

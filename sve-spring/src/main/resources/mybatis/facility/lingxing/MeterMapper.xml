@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.facility.mapper.lingxing.MeterMapper">
+    <resultMap id="meterResult" type="MeterResult">
+        <result column="meterid" property="meterId"/>
+        <result column="source_name" property="sourceName"/>
+        <result column="meter_name" property="meterName"/>
+        <result column="meter_type" property="meterType"/>
+        <result column="memo" property="memo"/>
+        <result column="amount" property="amount"/>
+        <result column="datadate" property="dataDate"/>
+        <result column="date_created" property="dateCreated"/>
+    </resultMap>
+    <select id="getMeterList" parameterType="MeterParam" resultMap="meterResult">
+        select m.meterid, s.full_name source_name, m.meter_name, m.meter_type, m.memo, d.amount, d.datadate, m.date_created
+        from bas_meterinfo m
+        inner join basecenter.pf_bas_source s on s.source_id = m.source_id and s.is_deleted = 0
+        inner join bas_checkpoint_element e on e.facility_id = m.meterid and e.is_deleted = 0
+        left join dat_latest d on d.cp_elem_id = e.cp_elem_id and d.datatype = 0
+        where m.is_deleted = 0 and ele_type_id in('w100', 'w900')
+        <if test="sourceId != null">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="sourceName != null">
+            and s.full_name like '%' || #{sourceName} || '%'
+        </if>
+        <if test="meterName != null">
+            and m.meter_name like '%' || #{meterName} || '%'
+        </if>
+        <if test="meterType != null">
+            and m.meter_type = #{meterType}
+        </if>
+    </select>
+
+    <insert id="addMeter" parameterType="MeterEntity">
+        insert into bas_meterinfo (meterid, source_id, meter_name, meter_type, memo, created_by, updated_by)
+        values (#{meterId}, #{sourceId}, #{meterName}, #{meterType}, #{memo, jdbcType=VARCHAR}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="editMeter" parameterType="MeterEntity">
+        update bas_meterinfo
+        <set>
+            meter_name = #{meterName},
+            memo = #{memo, jdbcType=VARCHAR},
+            updated_by = #{updatedBy},
+            date_updated = sysdate
+        </set>
+        where meterid = #{meterId}
+    </update>
+
+    <update id="removeMeter">
+        update bas_meterinfo set is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate
+        where is_deleted = 0 and meterid in
+        <foreach collection="meterIds" item="meterId" open="(" separator="," close=")" index="index">
+            #{meterId}
+        </foreach>
+    </update>
+</mapper>

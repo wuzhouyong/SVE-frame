@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.lingxing.mapper.LXPDataSearchMapper">
+
+    <resultMap id="dataSearchEntity" type="DataSearchEntity">
+        <result property="dataDate" column="datadate"/>
+        <result property="elementCode" column="element_code"/>
+        <result property="elementDesc" column="element_desc"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <select id="getTotal" parameterType="DataSearcherParam" resultType="int">
+      select count(1) from
+       (select trunc(d.datadate, 'dd') datadate,e.ele_type_id,e.ele_type_desc,
+        sum(case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end) amount
+        from dat_day_proc d
+        inner join bas_checkpoint_elem_proc ce on ce.cp_elem_id = d.cp_elem_id
+        inner join bas_element_proc e on e.ele_type_id = ce.ele_type_id
+        inner join bas_checkpoint_proc c on ce.collect_id = ce.collect_id
+        where d.datadate >= to_date(#{startDate}, 'yyyy-mm-dd')
+        and d.datadate &lt; to_date(#{endDate},'yyyy-mm-dd') and c.source_id = #{sourceId}
+        and  c.is_deleted = 0 and ce.is_deleted = 0)
+        group by trunc(d.datadate, 'dd'), e.ele_type_id, e.ele_type_desc, e.val_type
+    </select>
+
+    <select id="getLastData" parameterType="string" resultMap="dataSearchEntity">
+       select d.datadate, e.ele_type_id element_code,e.ele_type_desc element_desc,d.amount from bas_checkpoint_proc c
+          inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+          inner join bas_element_proc e on ce.ele_type_id = e.ele_type_id
+          inner join dat_latest_proc d on d.cp_elem_id = ce.cp_elem_id and d.datatype = 1
+          where c.source_id = #{sourceId} and
+          c.is_deleted = 0 and ce.is_deleted = 0
+    </select>
+
+    <select id="getRealCount" parameterType="DataSearcherParam" resultType="int">
+     select count(1) from
+     (select d.datadate,ce.element_code,ce.element_desc,d.amount from bas_checkpoint_proc c
+        inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+        inner join dat_second_proc d on d.cp_elem_id = ce.cp_elem_id
+        where d.datadate >= to_date(#{startDate},'yyyy-mm-dd hh24:mi:ss')
+        and d.datadate &lt; to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss') and c.source_id =#{sourceId}
+        and c.is_deleted = 0 and ce.is_deleted = 0)
+    </select>
+
+    <select id="getDataCol" parameterType="string" resultType="DataSearchColEntity">
+     select * from (
+      select distinct ce.cp_elem_id dataIndex,ce.element_desc title,
+      e.ele_group groupName, e.orderby from bas_checkpoint_proc c
+      inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+      inner join bas_element_proc e on ce.ele_type_id = e.ele_type_id
+      where c.source_id =#{sourceId}
+      and ce.is_deleted = 0
+      and c.is_deleted = 0
+      )order by orderby, dataIndex
+    </select>
+
+    <select id="getDataSummaryCol" parameterType="string" resultType="DataSearchColEntity">
+	    select distinct e.ele_type_id dataIndex,e.ele_type_desc title from bas_checkpoint_proc c
+         inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+         inner join bas_element_proc e on ce.ele_type_id = e.ele_type_id
+         where c.source_id =#{sourceId}
+         and ce.is_deleted = 0
+         and c.is_deleted = 0
+    </select>
+
+    <select id="getReal" parameterType="DataSearcherParam" resultMap="dataSearchEntity">
+        select d.datadate,ce.cp_elem_id element_code,ce.element_desc,d.amount from bas_checkpoint_proc c
+        inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+        inner join dat_second_proc d on d.cp_elem_id = ce.cp_elem_id
+        where d.datadate >= to_date(#{startDate},'yyyy-mm-dd hh24:mi:ss')
+        and d.datadate &lt; to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss') and c.source_id =#{sourceId}
+        and c.is_deleted = 0 and ce.is_deleted = 0
+    </select>
+
+    <select id="getDay" parameterType="DataSearcherParam" resultMap="dataSearchEntity">
+        select d.datadate,ce.cp_elem_id element_code,ce.element_desc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end amount
+        from bas_checkpoint_proc c
+        inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+        inner join bas_element_proc e on ce.ele_type_id = e.ele_type_id
+        inner join dat_day_proc d on d.cp_elem_id = ce.cp_elem_id
+        where d.datadate >=to_date(#{startDate}, 'yyyy-mm-dd')
+        and d.datadate &lt;= to_date(#{endDate},'yyyy-mm-dd')
+        and c.source_id = #{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+    </select>
+
+    <select id="getHour" parameterType="DataSearcherParam" resultMap="dataSearchEntity">
+        select d.datadate,ce.cp_elem_id element_code,ce.element_desc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end amount
+        from bas_checkpoint_proc c
+        inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+        inner join bas_element_proc e on ce.ele_type_id = e.ele_type_id
+        inner join dat_hour_proc d on d.cp_elem_id = ce.cp_elem_id
+        where d.datadate >=to_date(#{startDate}, 'yyyy-MM-dd')
+        and  d.datadate &lt; to_date(#{endDate},'yyyy-MM-dd')
+        and c.source_id = #{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+    </select>
+
+    <select id="getMinute" parameterType="DataSearcherParam" resultMap="dataSearchEntity">
+        select d.datadate,ce.cp_elem_id element_code,ce.element_desc,
+        case when e.val_type between 10 and 19 then d.cou_amt else d.avg_amt end amount
+        from bas_checkpoint_proc c
+        inner join bas_checkpoint_elem_proc ce on ce.collect_id = c.collect_id
+        inner join bas_element_proc e on ce.ele_type_id = e.ele_type_id
+        inner join dat_minute_proc d on d.cp_elem_id = ce.cp_elem_id
+        where d.datadate >= to_date(#{startDate},'yyyy-MM-dd')
+        and d.datadate &lt; to_date(#{endDate},'yyyy-MM-dd')
+        and c.source_id =#{sourceId}
+        and c.is_deleted = 0
+        and ce.is_deleted = 0
+    </select>
+
+
+</mapper>

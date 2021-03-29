@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.youyan.mapper.YYFacilityMapper">
+
+    <resultMap id="entity" type="YYCPElementEntity">
+        <result property="collectId" column="collect_id"/>
+        <result property="eleTypeId" column="ele_type_id"/>
+        <result property="eleCode" column="element_code"/>
+        <result property="eleDesc" column="element_desc"/>
+        <result property="isOnline" column="is_online"/>
+        <result property="installLocation" column="install_location"/>
+        <result property="cpElemId" column="cp_elem_id"/>
+        <result property="checkDate" column="check_date"/>
+        <result property="judgementval" column="judgementval"/>
+        <result property="cpName" column="cpName"/>
+        <result property="sourceName" column="sourceName"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="eleTypeDesc" column="ele_type_desc"/>
+        <result property="facilityId" column="facility_id"/>
+    </resultMap>
+
+    <resultMap type="YYFacility" id="FacilityResult">
+        <result property="facilityId" column="FACILITY_ID"/>
+        <result property="facilityType" column="FACILITY_TYPE"/>
+        <result property="facilityName" column="FACILITY_NAME"/>
+        <result property="memo" column="MEMO"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="dateCreated" column="DATE_CREATED"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+        <result property="sourceId" column="SOURCE_ID"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="cpElemId" column="CP_ELEM_ID"/>
+        <result property="threshold" column="THRESHOLD"/>
+        <result property="fullName" column="full_name"/>
+        <result property="amount" column="amount"/>
+        <result property="depthLevel" column="depth_level"/>
+        <collection property="entity" column="FACILITY_ID" select="selectCPElementByFacilityId"/>
+    </resultMap>
+
+    <!--查询在当前治理设施下面的因子-->
+    <select id="selectCPElementByFacilityId" parameterType="int" resultMap="entity">
+        select * from bas_checkpoint_element where IS_DELETED=0 and facility_id =#{facilityId}
+    </select>
+
+    <!--获取排放口id-->
+    <select id="selectFacilityId" parameterType="String" resultType="String">
+        select distinct facility_id from bas_facilityrelation
+        where is_deleted = 0 and facility_pid is null
+        start with facility_id = #{facilityId}
+        connect by prior facility_pid = facility_id
+    </select>
+
+    <!--查询排放风机-->
+    <select id="selectBasFacilityPointList" parameterType="YYFacility" resultMap="FacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,w.THRESHOLD,w.depth_level,w.CP_ELEM_ID,
+        s.SOURCE_ID,s.full_name,l.amount,l.datadate,f.facility_pid facilityPid
+        from bas_facility w
+        left join dat_latest l on l.CP_ELEM_ID=w.CP_ELEM_ID and l.datatype = 0
+        left join bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        left join bas_facilityrelation f on f.facility_id = w.facility_id and f.is_deleted = 0
+        where w.is_deleted=0 and w.facility_type='yy_yc'
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        <if test="facilityName != null  and facilityName != ''">and w.FACILITY_NAME like '%'||#{facilityName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="memo != null  and memo != ''">and w.MEMO = #{memo}</if>
+        <if test="cpElemId != null ">and w.CP_ELEM_ID = #{cpElemId}</if>
+        <if test="threshold != null ">and w.THRESHOLD = #{threshold}</if>
+        order by s.full_name,w.FACILITY_NAME
+    </select>
+
+    <!--新增治理设施-->
+    <insert id="insertBasFacility" parameterType="YYFacility">
+        <selectKey keyProperty="facilityId" order="BEFORE" resultType="int">
+            select seq_bas_facility.nextval as facilityId from DUAL
+        </selectKey>
+        insert into bas_facility
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">FACILITY_ID,</if>
+            <if test="facilityType != null  and facilityType != ''">FACILITY_TYPE,</if>
+            <if test="facilityName != null  and facilityName != ''">FACILITY_NAME,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            <if test="createdBy != null and createdBy != ''">CREATED_BY,</if>
+            <if test="updatedBy != null and updatedBy != ''">UPDATED_BY,</if>
+            <if test="depthLevel != null ">depth_level,</if>
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="cpElemId != null ">CP_ELEM_ID,</if>
+            <if test="threshold != null ">THRESHOLD,</if>
+            IS_DELETED,DATE_CREATED,DATE_UPDATED
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">#{facilityId},</if>
+            <if test="facilityType != null  and facilityType != ''">#{facilityType},</if>
+            <if test="facilityName != null  and facilityName != ''">#{facilityName},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            <if test="depthLevel != null">#{depthLevel},</if>
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="cpElemId != null ">#{cpElemId},</if>
+            <if test="threshold != null ">#{threshold},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--修改治理设施-->
+    <update id="updateBasFacility" parameterType="YYFacility">
+        update bas_facility
+        <trim prefix="SET" suffixOverrides=",">
+            FACILITY_TYPE = #{facilityType},FACILITY_NAME = #{facilityName},
+            MEMO = #{memo,jdbcType=VARCHAR},UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID = #{sourceId},</if>
+            <if test="cpElemId != null ">CP_ELEM_ID = #{cpElemId},</if>
+            <if test="threshold != null ">THRESHOLD = #{threshold},</if>
+        </trim>
+        where is_deleted=0 and FACILITY_ID = #{facilityId}
+    </update>
+
+    <!--给数据库表中因子id赋值-->
+    <update id="updateBasFacilityElemId" parameterType="YYFacility">
+        update bas_facility set CP_ELEM_ID = #{cpElemId} where is_deleted=0 and FACILITY_ID = #{facilityId}
+    </update>
+
+    <!--删除治理设施-->
+    <update id="deleteBasFacilityById" parameterType="YYFacility">
+        update bas_facility SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE,is_deleted=1
+        where FACILITY_ID = #{facilityId}
+        <if test="sourceId != null and sourceId != ''">and source_id = #{sourceId}</if>
+    </update>
+
+    <!--删除关联关系-->
+    <update id="deleteBasFacilityRelation">
+        update bas_facilityrelation SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE,is_deleted=1 where FACILITY_ID =#{facilityId}
+    </update>
+
+    <!--查找pid-->
+    <select id="selectFacilityPid" parameterType="int" resultType="java.lang.Integer">
+        select facility_id facilityPid from bas_facilityrelation where is_deleted=0 and facility_pid=#{facilityId}
+    </select>
+
+    <!--根据父id和等级寻找它的下一级-->
+    <select id="selectEmissionByfacilityId" parameterType="int" resultMap="FacilityResult">
+        select f.*,fr.facility_pid facilityPid,p.facilityPids from bas_facilityrelation fr
+        inner join bas_facility f on f.facility_id = fr.facility_id and f.is_deleted = 0
+        left join (
+        select facility_id, listagg(facility_pid, ',') within group(order by facility_pid) facilityPids
+        from bas_facilityrelation where is_deleted = 0 group by facility_id
+        ) p on p.facility_id = f.facility_id
+        where fr.facility_pid = #{facilityId} and depth_level = #{depthLevel} and fr.is_deleted = 0
+    </select>
+
+    <!--根据id查找父级对象-->
+    <select id="selectBasFacilityById" parameterType="int" resultMap="FacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,w.THRESHOLD,w.depth_level,w.CP_ELEM_ID,
+        s.SOURCE_ID,s.full_name,l.amount,l.datadate,f.facility_pid facilityPid
+        from (select f.* from (
+        select distinct p.facility_pid from bas_facilityrelation fr
+        inner join bas_facilityrelation p on p.facility_id = fr.facility_pid and p.is_deleted = 0
+        where fr.facility_id = #{facilityId} and fr.is_deleted = 0
+        ) p
+        inner join bas_facilityrelation r on r.facility_pid = p.facility_pid
+        inner join bas_facility f on f.facility_id = r.facility_id and f.is_deleted = 0
+        where r.is_deleted = 0
+        ) w
+        left join dat_latest l on l.CP_ELEM_ID=w.CP_ELEM_ID
+        left join bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        left join bas_facilityrelation f on f.facility_id = w.facility_id and f.is_deleted = 0
+        where w.is_deleted=0
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        order by w.DATE_CREATED,w.FACILITY_NAME
+    </select>
+
+    <!--查询关联是否存在-->
+    <select id="selectBasFacilityRelation" resultType="int">
+        select count(1) from bas_facilityrelation where IS_DELETED=0 and FACILITY_PID = #{facilityPid} and FACILITY_ID =#{facilityId}
+    </select>
+
+    <!--查询旧关联Pids-->
+    <select id="selectFacilityPidById" resultType="int" parameterType="int">
+        select FACILITY_PID facilityPids from bas_facilityrelation where IS_DELETED=0 and FACILITY_ID =#{facilityId}
+    </select>
+
+    <!--新增关联表-->
+    <insert id="insertBasFacilityRelation" parameterType="YYFacility">
+        insert into bas_facilityrelation
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">FACILITY_ID,</if>
+            <if test="facilityPid != null ">FACILITY_PID,</if>
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY,</if>
+            IS_DELETED,DATE_UPDATED
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">#{facilityId},</if>
+            <if test="facilityPid != null ">#{facilityPid},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE
+        </trim>
+    </insert>
+
+    <!--更新关联表-->
+    <update id="updateBasFacilityRelation" parameterType="YYFacility">
+        update bas_facilityrelation set is_deleted=1,DATE_UPDATED=SYSDATE,UPDATED_BY=#{updatedBy}
+        where FACILITY_ID=#{facilityId} and FACILITY_PID=#{facilityPid} and is_deleted=0
+    </update>
+
+    <select id="selectBasFacilityBySourceId" parameterType="string" resultType="java.util.HashMap">
+        select f.facility_id id, LOWER(f.facility_type)||'_'||f.facility_id type, f.facility_name name,FACILITY_PID pid
+        FROM BAS_FACILITY f
+                 LEFT JOIN BAS_FACILITYRELATION r
+                           ON r.FACILITY_ID = f.FACILITY_ID and r.IS_DELETED = 0
+        WHERE SOURCE_ID = #{sourceID} and f.IS_DELETED = 0
+    </select>
+    <select id="selectBasFacilityByFacilityId" parameterType="string" resultType="java.util.HashMap">
+        select facility_id,LOWER(facility_type) as facility_type,facility_name From BAS_FACILITY
+        where is_deleted='0' and  facility_id in (select distinct FACILITY_pID From BAS_FACILITYRELATION
+        where is_deleted='0'
+                AND FACILITY_ID=#{facID}
+        )
+    </select>
+    <select id="selectFacilityRealElementData" parameterType="int" resultType="java.util.HashMap">
+        select e.CP_ELEM_ID as id, e.ELEMENT_DESC as name, d.AMOUNT as val, e.FACILITY_ID as pid, t.UNIT
+        from (
+            select * from bas_facilityrelation
+            start with facility_id = #{facID}
+            connect by prior facility_id = facility_pid
+             ) p
+        left join BAS_CHECKPOINT_ELEMENT e on e.FACILITY_ID = p.FACILITY_ID
+        left join DAT_LATEST d on d.CP_ELEM_ID = e.CP_ELEM_ID and DATATYPE = 0
+        left join BAS_ELEMENT t on e.ELE_TYPE_ID = t.ELE_TYPE_ID
+        where e.FACILITY_ID is not null
+    </select>
+    <select id="selectFacilityRunStatus" parameterType="int" resultType="java.util.HashMap">
+        select p.FACILITY_ID id,
+               CASE WHEN f.threshold > d.AMOUNT THEN 0 ELSE 1 END as run
+        from (
+                 SELECT *
+                 FROM bas_facilityrelation
+                 where IS_DELETED = 0
+                 start with facility_id = 1000
+                 connect by prior facility_id = facility_pid) p
+        LEFT JOIN BAS_FACILITY f ON f.FACILITY_ID = p.FACILITY_ID
+        LEFT JOIN DAT_LATEST d ON d.CP_ELEM_ID = f.CP_ELEM_ID and DATATYPE = 0
+        where f.IS_DELETED = 0
+    </select>
+</mapper>

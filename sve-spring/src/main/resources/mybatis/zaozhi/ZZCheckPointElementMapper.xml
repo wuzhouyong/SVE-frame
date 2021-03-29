@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.zaozhi.mapper.ZZCheckPointElementMapper">
+
+    <resultMap id="entity" type="ZZCPElementEntity">
+        <result property="elementId"       column="elementId"      />
+        <result property="collectId"       column="collect_id"      />
+        <result property="eleTypeId"       column="ele_type_id"      />
+        <result property="eleCode"       column="element_code"      />
+        <result property="eleDesc"       column="element_desc"      />
+        <result property="isOnline"       column="is_online"      />
+        <result property="installLocation"       column="install_location"      />
+        <result property="cpElemId"       column="cp_elem_id"      />
+        <result property="checkDate"       column="check_date"      />
+        <result property="judgementval"       column="judgementval"      />
+        <result property="cpName"       column="cpName"      />
+        <result property="sourceName"       column="sourceName"      />
+        <result property="sourceId"       column="source_id"      />
+        <result property="eleTypeDesc"       column="ele_type_desc"      />
+    </resultMap>
+
+    <resultMap id="eleList" type="ZZNameIdEntity">
+        <result property="id"       column="ele_type_id"      />
+        <result property="name"       column="ele_type_desc"      />
+    </resultMap>
+
+    <delete id="deleteCPElement" parameterType="ZZDeleteEntity">
+        UPDATE bas_checkpoint_element
+        <set>
+            IS_DELETED = 1,
+            <if test="userName != null and userName != ''">
+                UPDATED_BY = #{userName},
+            </if>
+            DATE_UPDATED = SYSDATE
+        </set>
+        where CP_ELEM_ID in
+        <foreach collection="array" item="cpElemId" open="(" separator="," close=")">
+            #{cpElemId}
+        </foreach>
+    </delete>
+
+    <update id="updateCPElement" parameterType="ZZCPElementEntity">
+        UPDATE bas_checkpoint_element SET
+        COLLECT_ID = #{collectId, jdbcType=VARCHAR},
+        ELE_TYPE_ID = #{eleTypeId, jdbcType=VARCHAR},
+        ELEMENT_CODE = #{eleCode, jdbcType=VARCHAR},
+        ELEMENT_DESC = #{eleDesc, jdbcType=VARCHAR},
+        INSTALL_LOCATION = #{installLocation, jdbcType=VARCHAR},
+        <if test="judgementval != null">JUDGEMENTVAL = #{judgementval},</if>
+        <if test="isOnline != null">IS_ONLINE = #{isOnline},</if>
+        UPDATED_BY = #{updatedBy},DATE_UPDATED = SYSDATE
+        WHERE CP_ELEM_ID =  #{cpElemId}
+    </update>
+
+    <select id="repeatCheck" resultType="int" parameterType="ZZCPElementEntity">
+        select count(1) from BAS_CHECKPOINT_ELEMENT
+        where ELEMENT_CODE = #{eleCode} and COLLECT_ID = #{collectId} and IS_DELETED = 0
+    </select>
+
+    <insert id="insertCPElement" parameterType="ZZCPElementEntity">
+        <selectKey keyProperty="cpElemId" order="BEFORE" resultType="int">
+            select SEQ_ELEMENT_ID.nextval from dual
+        </selectKey>
+        INSERT INTO bas_checkpoint_element
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            CP_ELEM_ID,
+            <if test="collectId != null  and collectId != ''">COLLECT_ID,</if>
+            <if test="eleTypeId != null  and eleTypeId != ''">ELE_TYPE_ID,</if>
+            <if test="eleCode != null  and eleCode != ''">ELEMENT_CODE,</if>
+            <if test="eleDesc != null  and eleDesc != ''">ELEMENT_DESC,</if>
+            <if test="installLocation != null  and installLocation != ''">INSTALL_LOCATION,</if>
+            JUDGEMENTVAL,
+            <if test="isOnline != null  and isOnline != ''">IS_ONLINE,</if>
+            IS_DELETED,CREATED_BY,UPDATED_BY,DATE_CREATED,DATE_UPDATED
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{cpElemId},
+            <if test="collectId != null  and collectId != ''">#{collectId},</if>
+            <if test="eleTypeId != null  and eleTypeId != ''">#{eleTypeId},</if>
+            <if test="eleCode != null  and eleCode != ''">#{eleCode},</if>
+            <if test="eleDesc != null  and eleDesc != ''">#{eleDesc},</if>
+            <if test="installLocation != null  and installLocation != ''">#{installLocation},</if>
+            0,
+            <if test="isOnline != null  and isOnline != ''">#{isOnline},</if>
+            0,#{createdBy},#{updatedBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <select id="selectElement" resultMap="eleList">
+        SELECT ele_type_id,ele_type_desc from bas_element where is_deleted = 0
+        <if test="name != null and name != ''">
+            and s.ele_type_desc like '%'|| #{name}||'%'
+        </if>
+        <if test="id != null and id != ''">
+            and s.ele_type_id like '%'|| #{id}||'%'
+        </if>
+    </select>
+
+    <select id="selectCPElement" parameterType="ZZCPElementEntity" resultMap="entity">
+        select cp.source_id,ce.collect_id,ce.ele_type_id,ce.element_code,ce.element_desc,ce.install_location,
+        ce.cp_elem_id,ce.is_online,ce.check_date,ce.judgementval,
+        s.full_name sourceName,cp.full_name cpName,be.ele_type_desc from bas_checkpoint_element ce
+        left join bas_checkpoint cp on cp.collect_id = ce.collect_id and cp.is_deleted = 0
+        left join basecenter.pf_bas_source s on cp.source_id = S.source_id and s.is_deleted = 0
+        left join bas_element be on be.ele_type_id = ce.ele_type_id and be.is_deleted = 0
+        where ce.is_deleted = 0
+        <if test="eleDesc != null and eleDesc != ''">
+            and ce.element_desc like '%'|| #{eleDesc}||'%'
+        </if>
+        <if test="cpName != null and cpName != ''">
+            and cp.full_name like '%'|| #{cpName}||'%'
+        </if>
+        <if test="sourceName != null and sourceName != ''">
+            and s.full_name like '%'|| #{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        ${dataScope}
+        order by s.source_id
+    </select>
+</mapper>

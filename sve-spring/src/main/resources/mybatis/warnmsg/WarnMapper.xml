@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.warnmsg.mapper.WarnMapper">
+    <resultMap id="warn_entity" type="WarnEntity">
+        <result column="id" property="warnId" />
+        <result column="tag_head_id" property="tagHeadId" />
+        <result column="tag_head_name" property="tagHeadName" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_name" property="sourceName" />
+        <result column="town_code" property="townCode" />
+        <result column="town_name" property="townName" />
+        <result column="acquisition_brand" property="acquisitionBrand" />
+        <result column="construction_unit" property="constructionUnit" />
+        <result column="warn_level" property="warnLevel" />
+        <result column="warn_level_name" property="warnLevelName" />
+        <result column="warn_type" property="warnType" />
+        <result column="warn_type_name" property="warnTypeName" />
+        <result column="proc_status" property="procStatus" />
+        <result column="proc_status_name" property="procStatusName" />
+        <result column="start_date" property="startDate" />
+        <result column="end_date" property="endDate" />
+        <result column="warn_desc" property="warnDesc" />
+    </resultMap>
+    <select id="getWarnList" resultMap="warn_entity">
+        select w.id, th.tag_head_id, th.tag_head_name, s.source_id, s.full_name source_name,
+               s.town_code, s.town_name, pc.acquisition_brand, c.construction_unit,
+               w.warn_level, l.warn_level_name, w.warn_type, d.warn_type_name, w.start_date, w.end_date, w.warn_desc,
+               w.proc_status, case when w.proc_status = 0 then '待处理' else '已完成' end proc_status_name
+        from dat_warnmsgheads w
+        inner join pf_bas_tag_head th on th.tag_head_id = w.tag_head_id
+        inner join pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        inner join pf_bas_constructioninfo c on c.tag_head_id = w.tag_head_id and c.pf_source_id = w.source_id
+        left join paishuihu.bas_checkpoint pc on pc.collect_id = w.collect_id and w.tag_head_id = 1012
+        <if test="userType == 'duty'">
+            inner join sys_user_task ut on ut.tag_id = c.tag_head_id and ut.source_id = c.pf_source_id and ut.user_id = #{currentUserId, jdbcType=VARCHAR} and ut.is_deleted = 0
+        </if>
+        left join (
+            select dict_value warn_level, dict_label warn_level_name
+            from sys_dict_data
+            where dict_type = 'ty_warn_level'
+        ) l on l.warn_level = w.warn_level
+        left join (
+            select dt.remark tag_head_id, dd.dict_value warn_type, dd.dict_label warn_type_name
+            from sys_dict_data dd
+            inner join sys_dict_type dt on dt.dict_type = dd.dict_type
+            where dt.dict_type like '%_warn_type'
+        ) d on d.tag_head_id = to_char(w.tag_head_id) and d.warn_type = w.warn_type
+        where w.is_deleted = 0
+        <if test="tagHeadId != null">
+            and w.tag_head_id = #{tagHeadId}
+        </if>
+        <if test="sourceId != null">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="sourceName != null">
+            and s.full_name like '%' || #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="acquisitionBrand != null">
+            and pc.acquisition_brand like '%' || #{acquisitionBrand} || '%'
+        </if>
+        <if test="constructionUnit != null">
+            and c.construction_unit like '%' || #{constructionUnit} || '%'
+        </if>
+        <if test="constructionStatus != null">
+            and c.construction_status = #{constructionStatus}
+        </if>
+        <if test="warnType != null">
+            and w.warn_type = #{warnType}
+        </if>
+        <if test="warnLevel != null">
+            and w.warn_level = #{warnLevel}
+        </if>
+        <if test="procStatus != null">
+            and w.proc_status = #{procStatus}
+        </if>
+        <if test="startDate != null and endDate != null">
+            and w.start_date >= #{startDate} and w.start_date &lt; #{endDate}
+        </if>
+        ${labelQuery}
+        ${dataScope}
+        order by w.send_date desc
+    </select>
+
+    <select id="getWarnLevelById" resultType="int">
+        select warn_level from dat_warnmsgheads where id = #{warnId}
+    </select>
+
+    <resultMap id="warn_proc_entity" type="WarnProcResult">
+        <result column="detail_id" property="detailId" />
+        <result column="warn_id" property="warnId" />
+        <result column="proc_status" property="procStatus" />
+        <result column="user_type" property="userType" />
+        <result column="is_normal" property="isNormal" />
+        <result column="warn_reason" property="warnReason" />
+        <result column="proc_desc" property="procDesc" />
+        <result column="proc_user" property="procUser" />
+        <result column="proc_date" property="procDate" />
+    </resultMap>
+    <select id="getWarnProcDetail" resultMap="warn_proc_entity">
+        select detail_id, warn_id, proc_status, user_type, is_normal, warn_reason,
+               proc_desc, proc_user, proc_date
+        from (
+            select detail_id, warn_id, proc_status, user_type, is_normal, warn_reason,
+                proc_desc, proc_user, proc_date,
+                rank() over (partition by warn_id, user_type order by proc_date desc) rk
+            from dat_warn_proc_detail
+            where warn_id = #{warnId}
+        ) where rk = 1
+        order by proc_date desc
+    </select>
+    <select id="getWarnProcHistory" resultMap="warn_proc_entity">
+        select detail_id, warn_id, proc_status, user_type, is_normal, warn_reason,
+               proc_desc, proc_user, proc_date
+        from dat_warn_proc_detail
+        where warn_id = #{warnId}
+        order by proc_date desc
+    </select>
+
+    <select id="getAttachList" resultType="map">
+        select attachment_id, attachment_type, show_name
+        from pf_file_attachment
+        where biz_table_name = #{refType} and biz_record_id = #{refId} and is_deleted = 0
+    </select>
+
+    <select id="verifySameWarnType" resultType="int">
+        select count(1) from (
+            select source_id, warn_type from dat_warnmsgheads
+            where id in
+            <foreach collection="warnIds" item="warnId" open="(" separator="," close=")">
+                #{warnId}
+            </foreach>
+            group by source_id, warn_type
+        )
+    </select>
+
+    <insert id="warnProc">
+        <selectKey keyProperty="detailId" order="BEFORE" resultType="int">
+            select seq_warn_proc_detail.nextval from dual
+        </selectKey>
+        insert into dat_warn_proc_detail(detail_id, warn_id, proc_status, user_type, is_normal, warn_reason, proc_desc, proc_user)
+        values (#{detailId}, #{warnId}, #{procStatus}, #{userType}, #{isNormal}, #{warnReason, jdbcType=VARCHAR}, #{procDesc, jdbcType=VARCHAR}, #{procUser, jdbcType=VARCHAR})
+    </insert>
+
+    <update id="updateWarnStatus">
+        update dat_warnmsgheads set proc_status = 1, updated_by = #{updatedBy}, date_updated = sysdate where id in
+        <foreach collection="warnIds" item="warnId" open="(" separator="," close=")">
+            #{warnId}
+        </foreach>
+    </update>
+</mapper>

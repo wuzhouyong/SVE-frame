@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.enterprise.mapper.PfBasElementRefMapper">
+
+    <resultMap id="entity" type="PfBasElementRef">
+        <result property="srcElemId" column="src_elemid"/>
+        <result property="srcTagHeadId" column="src_tag_head_id"/>
+        <result property="srcMN" column="src_mn"/>
+        <result property="dstElemId" column="dst_elemid"/>
+        <result property="dstTagHeadId" column="dst_tag_head_id"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+
+    <update id="updatePfBasElementRef" parameterType="PfBasElementRef">
+        update pf_bas_element_ref set
+            src_elemid = #{srcElemId, jdbcType=VARCHAR},
+            src_tag_head_id = #{srcTagHeadId, jdbcType=VARCHAR},
+            src_mn = #{srcMN, jdbcType=VARCHAR},
+            dst_elemid = #{dstElemId, jdbcType=VARCHAR},
+            dst_tag_head_id = #{dstTagHeadId, jdbcType=VARCHAR},
+            updated_by = #{updatedBy},
+            date_updated = SYSDATE
+        where dst_elemid = #{dstElemId} and dst_tag_head_id = #{dstTagHeadId}
+    </update>
+
+    <select id="selectPfBasElementRef" parameterType="PfBasElementRef" resultMap="entity">
+        select * from pf_bas_element_ref where is_deleted = 0
+        <if test="srcElemId != null">and src_elemid = #{srcElemId} and src_tag_head_id = #{srcTagHeadId}</if>
+        <if test="dstElemId != null">and dst_elemid = #{dstElemId} and dst_tag_head_id = #{dstTagHeadId}</if>
+    </select>
+
+    <insert id="insertPfBasElementRef" parameterType="PfBasElementRef">
+        insert into pf_bas_element_ref
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="srcElemId != null">src_elemid,</if>
+            <if test="srcTagHeadId != null">src_tag_head_id,</if>
+            <if test="srcMN != null  and srcMN != ''">src_mn,</if>
+            <if test="dstElemId != null">dst_elemid,</if>
+            <if test="dstTagHeadId != null">dst_tag_head_id,</if>
+            is_deleted,
+            date_created,
+            date_updated,
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="srcElemId != null">#{srcElemId},</if>
+            <if test="srcTagHeadId != null">#{srcTagHeadId},</if>
+            <if test="srcMN != null  and srcMN != ''">#{srcMN},</if>
+            <if test="dstElemId != null">#{dstElemId},</if>
+            <if test="dstTagHeadId != null">#{dstTagHeadId},</if>
+            0,
+            sysdate,
+            sysdate,
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+        </trim>
+    </insert>
+
+    <update id="deletePfBasElementRef" parameterType="String">
+        update pf_bas_element_ref set
+            is_deleted = 1,
+            date_updated = SYSDATE
+        where dst_elemid = #{cpElemId} and dst_tag_head_id = #{tagHeadId}
+    </update>
+
+</mapper>

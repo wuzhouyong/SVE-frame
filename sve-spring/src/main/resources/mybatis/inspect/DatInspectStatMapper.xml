@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.inspect.mapper.DatInspectStatMapper">
+
+    <!--查找中心平台街镇id和名字-->
+    <select id="selectTownIdByTownName" parameterType="string" resultType="map">
+       select DISTINCT r.region_code town_code,r.region_name town_name from pf_bas_region r
+       inner join pf_bas_region_ref ref on r.region_code=ref.un_region_code and ref.is_deleted=0
+       where r.is_deleted=0 and r.region_name like '%'||#{townName}||'%'
+    </select>
+
+    <!--查找中心平台街镇名字-->
+    <select id="selectTownNameByTownCode" parameterType="string" resultType="string">
+       select DISTINCT r.region_name town_name from pf_bas_region r
+       inner join pf_bas_region_ref ref on r.region_code=ref.un_region_code and ref.is_deleted=0
+       where r.is_deleted=0 and r.region_code =#{townCode}
+    </select>
+
+    <insert id="insertInspectStatTask" parameterType="DatInspectStat">
+        insert into dat_inspect_stat
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            stat_id,
+            <if test="sourceName != null  and sourceName != ''">source_name,</if>
+            <if test="townCode != null and townCode != ''">town_code,</if>
+            <if test="townName != null and townName != ''">town_name,</if>
+            <if test="inspectDate != null ">inspect_date,</if>
+            <if test="abnormalCause != null and abnormalCause !=''">abnormal_cause,</if>
+            <if test="warnLevel != null and warnLevel !=''">warn_level,</if>
+            <if test="keyPoint != null and keyPoint !=''">key_Point,</if>
+            <if test="rectification != null and rectification !=''">rectification,</if>
+            <if test="expectFinishDate != null">expect_finish_date,</if>
+            is_deleted,created_by,updated_by,date_created,date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_inspect_stat.nextval,
+            <if test="sourceName != null  and sourceName != ''">#{sourceName,jdbcType=VARCHAR},</if>
+            <if test="townCode != null and townCode != ''">#{townCode,jdbcType=VARCHAR},</if>
+            <if test="townName != null and townName != ''">#{townName,jdbcType=VARCHAR},</if>
+            <if test="inspectDate != null ">
+                to_date(to_char(#{inspectDate},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            <if test="abnormalCause != null and abnormalCause !=''">#{abnormalCause,jdbcType=VARCHAR},</if>
+            <if test="warnLevel != null and warnLevel !=''">#{warnLevel,jdbcType=VARCHAR},</if>
+            <if test="keyPoint != null and keyPoint !=''">#{keyPoint,jdbcType=VARCHAR},</if>
+            <if test="rectification != null and rectification !=''">#{rectification,jdbcType=VARCHAR},</if>
+            <if test="expectFinishDate != null ">
+                to_date(to_char(#{expectFinishDate},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            0,#{createdBy},#{createdBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <select id="selectInspectStatTaskList" parameterType="DatInspectParm" resultType="DatInspectStat">
+        select stat_id statId,source_name sourceName,town_code townCode,town_name townName,inspect_date inspectDate,
+        abnormal_cause abnormalCause,warn_level warnLevel,key_Point keyPoint,rectification,expect_finish_date
+        expectFinishDate
+        from dat_inspect_stat s
+        where is_deleted=0
+        <if test="sourceName != null and sourceName != ''">
+            and source_name like '%'||#{sourceName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and town_code = #{townCode}
+        </if>
+        <if test="startDate != null and endDate != null">
+            and inspect_date >= #{startDate} and inspect_date &lt; #{endDate} + 1
+        </if>
+        <if test="warnLevel != null and warnLevel != ''">
+            and warn_level like '%'||#{warnLevel}||'%'
+        </if>
+        <if test="keyPoint != null and keyPoint != ''">
+            and key_Point like '%'||#{keyPoint}||'%'
+        </if>
+        ${dataScope}
+        order by DATE_CREATED desc
+    </select>
+
+    <update id="editInspectStatRecordTask" parameterType="DatInspectStat">
+        update dat_inspect_stat
+        set rectification = #{rectification,jdbcType=INTEGER},
+        expect_finish_date = to_date(to_char(#{expectFinishDate,jdbcType=TIMESTAMP},'yyyy-MM-dd'),'yyyy-MM-dd'),
+        updated_by = #{createdBy,jdbcType=VARCHAR}, date_updated= sysdate
+        where stat_id = #{statId} and is_deleted = 0
+    </update>
+
+    <update id="editInspectStatTask" parameterType="DatInspectStat">
+        update dat_inspect_stat
+        set source_name = #{sourceName,jdbcType=VARCHAR},
+        town_code = #{townCode,jdbcType=VARCHAR},
+        town_name = #{townName,jdbcType=VARCHAR},
+        <if test="inspectDate != null">inspect_date = to_date(to_char(#{inspectDate},'yyyy-MM-dd'),'yyyy-MM-dd'),</if>
+        abnormal_cause=#{abnormalCause,jdbcType=VARCHAR},
+        warn_level = #{warnLevel,jdbcType=VARCHAR},
+        key_Point = #{keyPoint,jdbcType=VARCHAR},
+        updated_by = #{createdBy,jdbcType=VARCHAR}, date_updated = sysdate
+        where stat_id = #{statId} and is_deleted = 0
+    </update>
+
+    <insert id="addInspectStatRecord" parameterType="DatInspectStat">
+        insert into dat_inspect_stat_record
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            record_id,
+            <if test="statId != null  and statId != ''">stat_id,</if>
+            <if test="rectification != null and rectification !=''">rectification,</if>
+            <if test="expectFinishDate != null">expect_finish_date,</if>
+            is_deleted,created_by,updated_by,date_created,date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_inspect_stat_record.nextval,
+            <if test="statId != null  and statId != ''">#{statId,jdbcType=INTEGER},</if>
+            <if test="rectification != null and rectification !=''">#{rectification,jdbcType=VARCHAR},</if>
+            <if test="expectFinishDate != null ">
+                to_date(to_char(#{expectFinishDate},'yyyy-MM-dd'),'yyyy-MM-dd'),
+            </if>
+            0,#{createdBy},#{createdBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <select id="selectInspectStatTaskById" parameterType="int" resultType="DatInspectStat">
+        select rectification,expect_finish_date expectFinishDate
+        from dat_inspect_stat_record where is_deleted=0 and stat_id = #{statId}
+    </select>
+
+    <update id="deleteInspectStatById" parameterType="DatInspectStat">
+        update dat_inspect_stat
+        set is_deleted = 1,updated_by = #{createdBy,jdbcType=VARCHAR}, date_updated= sysdate
+        where stat_id = #{statId} and is_deleted = 0
+    </update>
+
+    <select id="selectStatrRecordTaskListById" parameterType="int" resultType="map">
+        select record_id,stat_id,rectification,expect_finish_date,date_created
+        from dat_inspect_stat_record
+        where is_deleted=0 and stat_id = #{statId}
+    </select>
+
+</mapper>

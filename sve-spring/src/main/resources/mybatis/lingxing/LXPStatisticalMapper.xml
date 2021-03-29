@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.lingxing.mapper.LXPStatisticalMapper">
+
+    <resultMap id="dcEntity" type="LXConstructionEntity">
+        <result property="sourceId" column="pf_source_id"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="constructionStatus" column="construction_status"/>
+        <result property="constructionUnit" column="construction_unit"/>
+        <result property="constructionPerson" column="construction_person"/>
+        <result property="constructionPhone" column="construction_phone"/>
+        <result property="auditDate" column="audit_date"/>
+        <result property="completeDate" column="complete_date"/>
+        <result property="completeMemo" column="complete_memo"/>
+        <result property="acceptanceDate" column="acceptance_date"/>
+        <result property="acceptanceMemo" column="acceptance_memo"/>
+        <result property="acceptDate" column="accept_date"/>
+        <result property="acceptBy" column="accept_by"/>
+        <result property="acceptResult" column="accept_result"/>
+        <result property="shortName" column="short_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+    </resultMap>
+
+    <select id="getDatConstructionList" resultMap="dcEntity">
+      select pf_source_id, construction_status,tag_head_id,
+      construction_unit, construction_person, short_name,social_credit_code,
+      construction_phone, to_char(complete_date,'yyyy-MM-dd') complete_date,
+      complete_memo, to_char(acceptance_date,'yyyy-MM-dd') acceptance_date,
+      acceptance_memo, audit_date, accept_date, accept_by, accept_result
+      from basecenter.pf_bas_constructioninfo
+     where tag_head_id=1018 and pf_source_id = #{sourceId} and is_deleted = 0
+    </select>
+
+    <resultMap id="disallowance" type="DisallowanceEntity">
+        <result property="returnId" column="return_id"/>
+        <result property="sourceId" column="pf_source_id"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="status" column="construction_status"/>
+        <result property="returnResult" column="return_result"/>
+        <result property="returnReason" column="return_reason"/>
+        <result property="contactName" column="contact_name"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="memo" column="memo"/>
+    </resultMap>
+
+    <select id="getDisallowanceList" parameterType="DisallowanceEntity" resultMap="disallowance">
+        select * from pf_bas_construction_return
+        where pf_source_id=#{sourceId} and tag_head_id = 1018
+    </select>
+
+    <select id="getTransBillReceiveAmt" parameterType="map" resultType="map">
+        select to_char(nvl(a.datadate,b.datadate), 'yyyy-mm-dd') datadate,inamt,caramt from (
+            select datadate,sum(cou_amt) inamt from dat_day_proc a
+            inner join bas_checkpoint_elem_proc b on a.cp_elem_id =b.cp_elem_id and b.is_deleted=0 and b.ele_type_id='ea03'
+            inner join bas_checkpoint_proc c on b.collect_id=c.collect_id and c.is_deleted=0
+            where c.source_id=#{sourceId} and trunc(datadate, 'mm') = to_date(#{dataDate}, 'yyyy-mm')
+            group by datadate
+        ) a full join (
+            select sum(flowinamt) caramt,trunc(job_date, 'dd') datadate
+            from job_transjobdetail a
+            inner join job_transjobhead b on a.job_headid=b.job_headid and a.is_deleted=0 and b.is_deleted=0
+            where proc_sourceid=#{sourceId} and trunc(job_date, 'mm') = to_date(#{dataDate}, 'yyyy-mm')
+            group by trunc(job_date, 'dd')
+        ) b on a.datadate=b.datadate
+        order by nvl(a.datadate,b.datadate)
+    </select>
+
+    <select id="getInflowAmt" parameterType="map" resultType="map">
+        select ce.element_code, ce.element_desc, d.datadate, d.cou_amt from dat_hour_proc d
+        inner join bas_checkpoint_elem_proc ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint_proc c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id = 'ea03' and c.source_id = #{sourceId}
+        and trunc(d.datadate, 'dd') = to_date(#{dataDate},'yyyy-mm-dd')
+    </select>
+
+    <select id="getEmissionsAmt" parameterType="map" resultType="map">
+        select ce.element_code, ce.element_desc, d.datadate, d.cou_amt from dat_hour_proc d
+        inner join bas_checkpoint_elem_proc ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint_proc c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id = 'ea05' and c.source_id = #{sourceId}
+        and trunc(d.datadate, 'dd') = to_date(#{dataDate},'yyyy-mm-dd')
+    </select>
+
+    <select id="getElectricityAmt" parameterType="map" resultType="map">
+        select ce.element_code, ce.element_desc, d.datadate, d.cou_amt from dat_hour_proc d
+        inner join bas_checkpoint_elem_proc ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint_proc c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id = 'ea20' and c.source_id = #{sourceId}
+        and trunc(d.datadate, 'dd') = to_date(#{dataDate},'yyyy-mm-dd')
+    </select>
+
+    <select id="getCarWaterAmt" parameterType="map" resultType="map">
+        select tc.car_tag,car_type, dt.datadate, sum(dt.water_amt) amt from dat_trucktank dt
+        inner join bas_trucktank bt on bt.tank_id = dt.tank_id and bt.is_deleted = 0
+        inner join bas_tankcar tc on tc.car_id = bt.car_id and tc.is_deleted = 0
+        where tc.source_id = #{sourceId} and tc.car_id = #{carId}
+        and dt.datadate >= to_date(#{dataDate},'yyyy-mm-dd hh24:mi:ss')
+        and dt.datadate &lt; to_date(#{dataDate},'yyyy-mm-dd hh24:mi:ss') + 2/24
+        group by tc.car_tag, dt.datadate,car_type
+        order by dt.datadate
+    </select>
+
+    <select id="getWaterQualityAmt" parameterType="map" resultType="map">
+        select ce.element_code, ce.element_desc, d.datadate, d.avg_amt from dat_hour_proc d
+        inner join bas_checkpoint_elem_proc ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint_proc c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id in ('ea36') and c.source_id = #{sourceId}
+        and trunc(d.datadate, 'dd') = to_date(#{dataDate},'yyyy-mm-dd')
+    </select>
+</mapper>

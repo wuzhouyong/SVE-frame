@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.lingxing.mapper.LXBasTankcarMapper">
+
+    <resultMap type="LXBasTankcar" id="BasTankcarResult">
+        <result property="carId" column="car_id"/>
+        <result property="sourceId" column="source_id"/>
+        <result property="carTag" column="car_tag"/>
+        <result property="carType" column="car_type"/>
+        <result property="transcert" column="transcert"/>
+        <result property="carSize" column="car_size"/>
+        <result property="maxLoadamt" column="max_loadamt"/>
+        <result property="isSetup" column="is_setup"/>
+        <result property="fullVolume" column="full_volume"/>
+        <result property="memo" column="memo"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="dateCreated" column="date_created"/>
+        <result property="dateUpdated" column="date_updated"/>
+        <result property="dtuIP" column="DTU_IP"/>
+    </resultMap>
+
+    <sql id="selectBasTankcarVo">
+        select car_id, source_id, car_tag, car_type, transcert, car_size, max_loadamt, is_setup, full_volume, memo, is_deleted, created_by, updated_by, date_created, date_updated from bas_tankcar
+    </sql>
+    <!--查询处置企业-->
+    <select id="selectEnterpriseList" resultType="map">
+         select source_id,full_name,town_code,town_name from bas_procsource
+    </select>
+
+    <select id="selectBasTankcarList" parameterType="LXBasTankcar" resultMap="BasTankcarResult">
+        select t.car_id,t.source_id,p.full_name
+        fullName,t.car_tag,t.car_type,t.transcert,t.car_size,t.max_loadamt,t.is_setup,t.full_volume,t.memo,
+        t.mn,t.is_deleted,t.created_by,t.updated_by,t.date_created,t.date_updated,t.DTU_IP from bas_tankcar t
+        left join bas_procsource p on t.source_id = p.source_id and p.is_deleted=0
+        <where>
+            t.is_deleted=0
+            <if test="carTag != null  and carTag != ''">and t.car_tag like '%'||#{carTag}||'%'</if>
+            <if test="sourceId != null  and sourceId != ''">and t.source_id = #{sourceId}</if>
+            <if test="carType != null  and carType != ''">and t.car_type = #{carType}</if>
+            <if test="transcert != null  and transcert != ''">and t.transcert = #{transcert}</if>
+            <if test="carSize != null  and carSize != ''">and t.car_size = #{carSize}</if>
+            <if test="maxLoadamt != null ">and t.max_loadamt = #{maxLoadamt}</if>
+            <if test="isSetup != null ">and t.is_setup = #{isSetup}</if>
+            <if test="fullVolume != null ">and t.full_volume = #{fullVolume}</if>
+            <if test="memo != null  and memo != ''">and t.memo like '%'||#{memo}||'%'</if>
+            <if test="mn != null  and mn != ''">and t.mn like '%'||#{mn}||'%'</if>
+        </where>
+        order by t.car_tag,p.full_name
+    </select>
+
+    <select id="selectBasTankcarById" parameterType="Integer" resultMap="BasTankcarResult">
+        <include refid="selectBasTankcarVo"/>
+        where car_id = #{carId}
+    </select>
+    <!--新增运输车辆-->
+    <insert id="insertBasTankcar" parameterType="LXBasTankcar">
+        insert into bas_tankcar
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            car_id,
+            <if test="sourceId != null  and sourceId != ''">source_id,</if>
+            <if test="carTag != null  and carTag != ''">car_tag,</if>
+            <if test="carType != null  and carType != ''">car_type,</if>
+            <if test="transcert != null  and transcert != ''">transcert,</if>
+            <if test="carSize != null  and carSize != ''">car_size,</if>
+            <if test="maxLoadamt != null ">max_loadamt,</if>
+            <if test="isSetup != null ">is_setup,</if>
+            <if test="fullVolume != null ">full_volume,</if>
+            <if test="memo != null  and memo != ''">memo,</if>
+            <if test="mn != null  and mn != ''">mn,</if>
+            <if test="dtuIP != null and dtuIP != ''">DTU_IP,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+            is_deleted,date_created,date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            SEQ_CARID.nextval,
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="carTag != null  and carTag != ''">#{carTag},</if>
+            <if test="carType != null  and carType != ''">#{carType},</if>
+            <if test="transcert != null  and transcert != ''">#{transcert},</if>
+            <if test="carSize != null  and carSize != ''">#{carSize},</if>
+            <if test="maxLoadamt != null ">#{maxLoadamt},</if>
+            <if test="isSetup != null ">#{isSetup},</if>
+            <if test="fullVolume != null ">#{fullVolume},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="mn != null  and mn != ''">#{mn},</if>
+            <if test="dtuIP != null  and dtuIP != ''">#{dtuIP},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--编辑运输车辆-->
+    <update id="updateBasTankcar" parameterType="LXBasTankcar">
+        update bas_tankcar
+        <trim prefix="SET" suffixOverrides=",">
+            car_size = #{carSize,jdbcType=VARCHAR},
+            max_loadamt = #{maxLoadamt,jdbcType=DECIMAL},
+            full_volume = #{fullVolume,jdbcType=DECIMAL},
+            memo = #{memo,jdbcType=VARCHAR},
+            mn = #{mn,jdbcType=VARCHAR},
+            <if test="carTag != null  and carTag != ''">car_tag = #{carTag},</if>
+            <if test="carType != null  and carType != ''">car_type = #{carType},</if>
+            <if test="sourceId != null  and sourceId != ''">source_id = #{sourceId},</if>
+            <if test="transcert != null  and transcert != ''">transcert = #{transcert},</if>
+            <if test="dtuIP != null and dtuIP != ''">DTU_IP = #{dtuIP,jdbcType=VARCHAR},</if>
+            <if test="isSetup != null ">is_setup = #{isSetup},</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by = #{updatedBy},</if>
+            date_updated = SYSDATE
+        </trim>
+        where car_id = #{carId} and is_deleted=0
+    </update>
+
+    <delete id="deleteBasTankcarById" parameterType="Integer">
+        delete from bas_tankcar where car_id = #{carId}
+    </delete>
+
+    <!--删除运输车辆-->
+    <delete id="deleteBasTankcarByIds">
+        UPDATE bas_tankcar
+        set IS_DELETED = 1,DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        where car_id in
+        <foreach collection="carIds" item="carId" open="(" separator="," close=")">
+            #{carId}
+        </foreach>
+    </delete>
+
+    <resultMap type="LXBasTrucktank" id="BasTrucktankResult">
+        <result property="tankId" column="tank_id"/>
+        <result property="tankName" column="tank_name"/>
+        <result property="carId" column="car_id"/>
+        <result property="mn" column="mn"/>
+        <result property="warnRate" column="warn_rate"/>
+        <result property="fullVolume" column="full_volume"/>
+        <result property="sectionArea" column="section_area"/>
+        <result property="memo" column="memo"/>
+        <result property="tankSn" column="tank_sn"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="dateCreated" column="date_created"/>
+        <result property="dateUpdated" column="date_updated"/>
+    </resultMap>
+
+    <!--查询车辆水箱-->
+    <select id="selectTrucktankList" parameterType="LXBasTrucktank" resultMap="BasTrucktankResult">
+        select tank_id,tank_name,car_id,mn,warn_rate,full_volume,section_area,memo,tank_sn
+        is_deleted,created_by,updated_by,date_created,date_updated from bas_trucktank
+        <where>
+            is_deleted=0
+            <if test="carId != null ">and car_id = #{carId}</if>
+            <if test="tankName != null and tankName !='' ">and tank_name like '%'||#{tankName}||'%'</if>
+            <if test="mn != null  and mn != ''">and mn like '%'||#{mn}||'%'</if>
+            <if test="warnRate != null ">and warn_rate = #{warnRate}</if>
+            <if test="fullVolume != null ">and full_volume = #{fullVolume}</if>
+            <if test="sectionArea != null ">and section_area = #{sectionArea}</if>
+            <if test="memo != null  and memo != ''">and memo like '%'||#{memo}||'%'</if>
+        </where>
+        order by tank_name
+    </select>
+
+    <!--新增车辆水箱-->
+    <insert id="insertTrucktank" parameterType="LXBasTrucktank">
+        insert into bas_trucktank
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            tank_id,
+            <if test="carId != null ">car_id,</if>
+            <if test="mn != null  and mn != ''">mn,</if>
+            <if test="tankName != null  and tankName != ''">tank_name,</if>
+            <if test="warnRate != null ">warn_rate,</if>
+            <if test="fullVolume != null ">full_volume,</if>
+            <if test="sectionArea != null ">section_area,</if>
+            <if test="memo != null  and memo != ''">memo,</if>
+            <if test="tankSn != null  and tankSn != 0">tank_sn,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+            is_deleted,date_created,date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            SEQ_CARTANKID.nextval,
+            <if test="carId != null ">#{carId},</if>
+            <if test="mn != null  and mn != ''">#{mn},</if>
+            <if test="tankName != null  and tankName != ''">#{tankName},</if>
+            <if test="warnRate != null ">#{warnRate},</if>
+            <if test="fullVolume != null ">#{fullVolume},</if>
+            <if test="sectionArea != null ">#{sectionArea},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="tankSn != null  and tankSn != 0">#{tankSn},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--编辑车辆水箱-->
+    <update id="updateTrucktank" parameterType="LXBasTrucktank">
+        update bas_trucktank
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="carId != null ">car_id = #{carId},</if>
+            <if test="mn != null  and mn != ''">mn = #{mn},</if>
+            <if test="tankSn != null  and tankSn != ''">tankSn = #{tankSn},</if>
+            tank_name=#{tankName,jdbcType=VARCHAR},
+            warn_rate = #{warnRate,jdbcType=DECIMAL},
+            full_volume = #{fullVolume,jdbcType=DECIMAL},
+            section_area = #{sectionArea,jdbcType=DECIMAL},
+            memo = #{memo,jdbcType=VARCHAR},
+            <if test="updatedBy != null  and updatedBy != ''">updated_by = #{updatedBy},</if>
+            date_updated = sysdate
+        </trim>
+        where tank_id = #{tankId} and is_deleted=0
+    </update>
+
+    <!--删除车辆水箱-->
+    <delete id="deleteBasTrucktankByIds">
+        UPDATE bas_trucktank
+        set IS_DELETED = 1,DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        where tank_id in
+        <foreach collection="tankIds" item="tankId" open="(" separator="," close=")">
+            #{tankId}
+        </foreach>
+    </delete>
+
+    <!--查找车牌-->
+    <select id="selectTankcarList" parameterType="string" resultMap="BasTankcarResult">
+        <include refid="selectBasTankcarVo"/>
+        where is_deleted=0 and source_id = #{sourceId}
+    </select>
+
+    <!--查询企业轨迹列表-->
+    <select id="selectTruckTrackList" parameterType="string" resultType="LXDatCargps">
+        select jd.transbillid,s.full_name fullName,jd.flowinamt,jd.factinamt,s.longitude,s.latitude,
+        jd.STARTFLOWINTIME beginTime,jd.ENDFLOWINTIME endTime
+        from job_transjobdetail jd
+        left join bas_source s on s.source_id = jd.source_id and s.is_deleted=0
+        where jd.is_deleted=0 and jd.job_headid = #{jobHeadid}
+        ORDER BY jd.transbillid,s.full_name
+    </select>
+
+    <!--查询车辆路径轨迹-->
+    <select id="selectDatCargpsList" parameterType="string" resultType="LXDatCargps">
+      select g.* from dat_cargps g left join job_transjobhead jh on jh.car_id = g.car_id
+      where jh.is_deleted=0 and jh.job_headid = #{jobHeadid}
+      order by g.gis_time,g.car_id
+    </select>
+
+</mapper>

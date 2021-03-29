@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.lwjh.mapper.LWJHCheckPointMapper">
+
+    <resultMap id="basEntity" type="LWJHCheckPointEntity">
+        <result property="checkpointId"       column="checkpoint_id"        />
+        <result property="sourceId"     column="source_id"      />
+        <result property="checkpointDesc"      column="checkpoint_desc"       />
+        <result property="checkpointType"     column="checkpoint_type"      />
+        <result property="processFlow"     column="process_flow"    />
+        <result property="emissionCode"       column="emission_code"    />
+    </resultMap>
+
+    <resultMap id="entity" type="CheckPointData">
+        <result property="checkpointDesc"      column="checkpoint_desc"       />
+        <result property="processFlow"     column="process_flow"    />
+        <result property="emissionCode"       column="emission_code"    />
+        <result property="checkpointId"       column="checkpoint_id"    />
+    </resultMap>
+
+    <insert id="insertCheckPoint" parameterType="LWJHCheckPointEntity">
+        insert into lwjh_checkpoint(checkpoint_id, source_id, checkpoint_desc, checkpoint_type, process_flow, emission_code,
+        is_deleted, created_by, updated_by, date_created, date_updated)
+        values(#{checkpointId}, #{sourceId}, #{checkpointDesc}, #{checkpointType}, #{processFlow}, #{emissionCode},
+        0, #{createdBy}, #{updatedBy}, sysdate, sysdate)
+    </insert>
+
+    <select id="selectCheckPointData" resultMap="entity" parameterType="String">
+        select DISTINCT c.* from lwjh_checkpoint c
+        <if test="accessDate != null and accessDate != ''">
+            left join LWJH_CHECKPOINTELEMENT e on e.CHECKPOINT_ID = c.CHECKPOINT_ID
+        </if>
+        where c.source_id = #{sourceId}
+        and c.is_deleted = 0
+        <if test="accessDate != null and accessDate != ''">
+            and e.ACCESS_DATE = TO_DATE(#{accessDate}, 'yyyy-MM-dd')
+            and e.IS_DELETED = 0
+        </if>
+    </select>
+
+    <select id="selectCheckPoint" resultMap="basEntity">
+        select checkpoint_id, source_id, checkpoint_desc, checkpoint_type, process_flow, emission_code from lwjh_checkpoint where source_id in
+        <foreach collection="array" item="sourceId" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+        and is_deleted = 0
+    </select>
+
+    <update id="updateCheckPoint" parameterType="LWJHCheckPointEntity">
+        update lwjh_checkpoint
+        <set>
+            checkpoint_desc = #{checkpointDesc, jdbcType=VARCHAR},
+            checkpoint_type = #{checkpointType, jdbcType=VARCHAR},
+            process_flow = #{processFlow, jdbcType=VARCHAR},
+            emission_code = #{emissionCode, jdbcType=VARCHAR},
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where checkpoint_id = #{checkpointId}
+    </update>
+
+    <select id="selectCheckPointType" parameterType="String" resultMap="basEntity">
+        select checkpoint_type from lwjh_checkpoint where checkpoint_id = #{checkpointId} and is_deleted = 0
+    </select>
+
+    <update id="removeCheckPointBySourceId" parameterType="SqlInEntity">
+        UPDATE lwjh_checkpoint
+        <set>
+            is_deleted = 1,
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where source_id in
+        <foreach collection="array" item="sourceId" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+        and is_deleted = 0
+    </update>
+
+    <update id="removeCheckPoint" parameterType="LWJHCheckPointEntity">
+        UPDATE lwjh_checkpoint
+        <set>
+            is_deleted = 1,
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where checkpoint_id = #{checkpointId}
+    </update>
+
+</mapper>

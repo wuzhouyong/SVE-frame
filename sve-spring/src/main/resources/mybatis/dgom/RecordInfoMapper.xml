@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.RecordInfoMapper">
+
+    <!--查询信息备案列表-->
+    <select id="selectOpdeviceinfoList" parameterType="OpdeviceEntity" resultType="OpdeviceEntity">
+        select c.zcheckpointdesc checkpointdesc,
+        d.checkpointid, d.checkpointtype, d.sourcename,d.oplicensenum, d.opnolicreason,
+        d.sourceenvhead, d.sourceenvheadinfo, d.opcompanyname,d.oppersonname, d.oppersontel,
+        d.opcompanytype, d.opcompanyhead, d.opcompanyheadinfo, d.oplicissueunit,
+        d.checkpointname,to_char(d.oplicissuedate,'yyyy-MM-dd') oplicissuedate,
+        to_char(d.opstartdate,'yyyy-MM-dd')opstartdate, to_char(d.openddate,'yyyy-MM-dd') openddate
+        from opdeviceinfo d
+        inner join zCheckPointDef c on d.checkpointid=c.zcheckpointid and zisvalid = 1
+        where d.isdeleted = 0
+        <if test="bizSourceId != null and bizSourceId != ''">
+            and c.zdatasourid = #{bizSourceId}
+        </if>
+        <if test="checkpointtype != null and checkpointtype != ''">
+            and checkpointtype = #{checkpointtype}
+        </if>
+        <if test="sourcename != null  and sourcename != ''">
+            and d.sourcename like '%'||#{sourcename}||'%'
+        </if>
+        order by d.sourcename
+    </select>
+
+    <!--查找当前企业中的设施没有的监测点列表-->
+    <select id="selectCheckPointList" parameterType="string" resultType="map">
+        select DISTINCT c.zcheckpointid checkpointid,c.zcheckpointdesc checkpointname
+        from zcheckpointdef c
+        left join opdeviceinfo d on d.checkpointid = c.zcheckpointid and d.isdeleted=0
+        where d.checkpointid is null and zisvalid = 1
+        and c.zdatasourid = #{bizSourceId} and c.zcheckpointtype = #{checkpointtype}
+        order by c.zcheckpointdesc
+    </select>
+
+    <select id="getDeviceListByCpId" parameterType="string" resultType="map">
+        select zdatadevid datadevid, zdatadevdesc datadevdesc from zdatadevdef
+        where zisdeleted = 0 and zcheckpointid = #{checkPointId}
+    </select>
+
+    <!--气重点设备-->
+    <select id="selectOpgopdeviceList" parameterType="string" resultType="OpGDeviceEntity">
+        select d.*,dev.zdatadevdesc from OpGDeviceDetail d
+        inner join zdatadevdef dev on d.datadevid= dev.zdatadevid and d.checkpointid=dev.zcheckpointid and dev.zisdeleted = 0
+        where d.isdeleted=0 and d.checkpointid=#{checkpointid}
+        order by datecreated desc
+    </select>
+
+    <!--水重点设备-->
+    <select id="selectOpwdeviceList" parameterType="string" resultType="OpWDeviceEntity">
+        select d.*,dev.zdatadevdesc from OpWDeviceDetail d
+        inner join zdatadevdef dev on d.datadevid= dev.zdatadevid and d.checkpointid=dev.zcheckpointid and dev.zisdeleted = 0
+        where d.isdeleted=0 and d.checkpointid=#{checkpointid}
+        order by datecreated desc
+    </select>
+
+    <!--查找因子id-->
+    <select id="selectElementIdByDevId" parameterType="int" resultType="int">
+        select distinct mod(zElementId,1000) ElementId from zDataSourElement
+        where zDataDevId = #{datadevid} and zisdeleted=0
+    </select>
+
+    <insert id="insertDevice" parameterType="OpdeviceEntity">
+        insert into opdeviceinfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="checkpointid != null">checkpointid,</if>
+            <if test="checkpointtype != null">checkpointtype,</if>
+            <if test="sourcename != null and sourcename !='' ">sourcename,</if>
+            <if test="sourceenvhead != null and sourceenvhead !='' ">sourceenvhead,</if>
+            <if test="sourceenvheadinfo != null and sourceenvheadinfo !=''">sourceenvheadinfo,</if>
+            <if test="opcompanyname != null and opcompanyname !='' ">opcompanyname,</if>
+            <if test="opcompanytype != null and opcompanytype !=''">opcompanytype,</if>
+            <if test="opcompanyhead != null and opcompanyhead !='' ">opcompanyhead,</if>
+            <if test="opcompanyheadinfo != null and opcompanyheadinfo !='' ">opcompanyheadinfo,</if>
+            <if test="checkpointname != null and checkpointname !='' ">checkpointname,</if>
+            <if test="oppersonname != null and oppersonname !='' ">oppersonname,</if>
+            <if test="oppersontel != null and oppersontel !='' ">oppersontel,</if>
+            <if test="opstartdate != null and opstartdate !=''">opstartdate,</if>
+            <if test="openddate != null and openddate !='' ">openddate,</if>
+            <if test="oplicensenum != null and oplicensenum !='' ">oplicensenum,</if>
+            <if test="oplicissueunit != null and oplicissueunit !='' ">oplicissueunit,</if>
+            <if test="oplicissuedate != null and oplicissuedate !=''">oplicissuedate,</if>
+            <if test="opnolicreason != null and opnolicreason !='' ">opnolicreason,</if>
+            createdby,updatedby,isdeleted,datecreated,dateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="checkpointid != null ">#{checkpointid,jdbcType=INTEGER},</if>
+            <if test="checkpointtype != null ">#{checkpointtype,jdbcType=INTEGER},</if>
+            <if test="sourcename != null and sourcename !='' ">#{sourcename,jdbcType=VARCHAR},</if>
+            <if test="sourceenvhead != null and sourceenvhead !='' ">#{sourceenvhead,jdbcType=VARCHAR},</if>
+            <if test="sourceenvheadinfo != null and sourceenvheadinfo !=''">#{sourceenvheadinfo,jdbcType=VARCHAR},</if>
+            <if test="opcompanyname != null and opcompanyname !='' ">#{opcompanyname,jdbcType=VARCHAR},</if>
+            <if test="opcompanytype != null and opcompanytype !=''">#{opcompanytype,jdbcType=VARCHAR},</if>
+            <if test="opcompanyhead != null and opcompanyhead !='' ">#{opcompanyhead,jdbcType=VARCHAR},</if>
+            <if test="opcompanyheadinfo != null and opcompanyheadinfo !='' ">#{opcompanyheadinfo,jdbcType=VARCHAR},</if>
+            <if test="checkpointname != null and checkpointname !='' ">#{checkpointname,jdbcType=VARCHAR},</if>
+            <if test="oppersonname != null and oppersonname !='' ">#{oppersonname,jdbcType=VARCHAR},</if>
+            <if test="oppersontel != null and oppersontel !='' ">#{oppersontel,jdbcType=VARCHAR},</if>
+            <if test="opstartdate != null and opstartdate !=''">to_date(#{opstartdate},'yyyy-MM-dd'),</if>
+            <if test="openddate != null and openddate !='' ">to_date(#{openddate},'yyyy-MM-dd'),</if>
+            <if test="oplicensenum != null and oplicensenum !='' ">#{oplicensenum,jdbcType=VARCHAR},</if>
+            <if test="oplicissueunit != null and oplicissueunit !='' ">#{oplicissueunit,jdbcType=VARCHAR},</if>
+            <if test="oplicissuedate != null and oplicissuedate !=''">to_date(#{oplicissuedate},'yyyy-MM-dd'),</if>
+            <if test="opnolicreason != null and opnolicreason !='' ">#{opnolicreason,jdbcType=VARCHAR},</if>
+            #{createdby,jdbcType=VARCHAR},#{updatedby,jdbcType=VARCHAR} , 0,sysdate,sysdate
+        </trim>
+    </insert>
+
+    <insert id="insertOpwDevice" parameterType="OpWDeviceEntity">
+        insert into OpWDeviceDetail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="datadevid != null">datadevid,</if>
+            <if test="checkpointid != null">checkpointid,</if>
+            <if test="devicebrand != null and devicebrand !='' ">devicebrand,</if>
+            <if test="devicenumber != null and devicenumber !='' ">devicenumber,</if>
+            <if test="measuringmethod != null and measuringmethod !='' ">measuringmethod,</if>
+            <if test="heatingtemp != null and heatingtemp !=''">heatingtemp,</if>
+            <if test="heatingtime != null and heatingtime !='' ">heatingtime,</if>
+            <if test="workrange != null and workrange !=''">workrange,</if>
+            <if test="refcoefficient != null and refcoefficient !='' ">refcoefficient,</if>
+            <if test="verificationtime != null and verificationtime !='' ">verificationtime,</if>
+            <if test="acceptancetime != null and acceptancetime !='' ">acceptancetime,</if>
+            <if test="emissionstandard != null and emissionstandard !='' ">emissionstandard,</if>
+            createdby,updatedby,isdeleted,datecreated,dateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="datadevid != null">#{datadevid,jdbcType=INTEGER},</if>
+            <if test="checkpointid != null">#{checkpointid,jdbcType=INTEGER},</if>
+            <if test="devicebrand != null and devicebrand !='' ">#{devicebrand,jdbcType=VARCHAR},</if>
+            <if test="devicenumber != null and devicenumber !='' ">#{devicenumber,jdbcType=VARCHAR},</if>
+            <if test="measuringmethod != null and measuringmethod !='' ">#{measuringmethod,jdbcType=VARCHAR},</if>
+            <if test="heatingtemp != null and heatingtemp !=''">#{heatingtemp,jdbcType=VARCHAR},</if>
+            <if test="heatingtime != null and heatingtime !='' ">#{heatingtime},</if>
+            <if test="workrange != null and workrange !=''">#{workrange,jdbcType=VARCHAR},</if>
+            <if test="refcoefficient != null and refcoefficient !='' ">#{refcoefficient,jdbcType=VARCHAR},</if>
+            <if test="verificationtime != null and verificationtime !='' ">to_date(#{verificationtime},'yyyy-MM-dd'),
+            </if>
+            <if test="acceptancetime != null and acceptancetime !='' ">to_date(#{acceptancetime},'yyyy-MM-dd'),</if>
+            <if test="emissionstandard != null and emissionstandard !='' ">#{emissionstandard,jdbcType=VARCHAR},</if>
+            #{createdby,jdbcType=VARCHAR},#{updatedby,jdbcType=VARCHAR} , 0,sysdate,sysdate
+        </trim>
+    </insert>
+
+    <insert id="insertOpgdevice" parameterType="OpGDeviceEntity">
+        insert into OpGDeviceDetail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="datadevid != null">datadevid,</if>
+            <if test="checkpointid != null">checkpointid,</if>
+            <if test="monitorposition != null and monitorposition !='' ">monitorposition,</if>
+            <if test="devicebrand != null and devicebrand !='' ">devicebrand,</if>
+            <if test="devicedesc != null and devicedesc !='' ">devicedesc,</if>
+            <if test="devicenumber != null and devicenumber !='' ">devicenumber,</if>
+            <if test="workingprinciple != null and workingprinciple !='' ">workingprinciple,</if>
+            <if test="workrange != null and workrange !='' ">workrange,</if>
+            <if test="emissionstandard != null and emissionstandard !='' ">emissionstandard,</if>
+            <if test="tubecoefficient != null and tubecoefficient !='' ">tubecoefficient,</if>
+            <if test="velocitycoefficient != null and velocitycoefficient !='' ">velocitycoefficient,</if>
+            <if test="aircoefficient != null and aircoefficient !='' ">aircoefficient,</if>
+            <if test="chimneysectionarea != null and chimneysectionarea !='' ">chimneysectionarea,</if>
+            <if test="verificationtime != null and verificationtime !='' ">verificationtime,</if>
+            <if test="acceptancetime != null and acceptancetime !='' ">acceptancetime,</if>
+            createdby,updatedby,isdeleted,datecreated,dateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="datadevid != null ">#{datadevid,jdbcType=INTEGER},</if>
+            <if test="checkpointid != null">#{checkpointid,jdbcType=INTEGER},</if>
+            <if test="monitorposition != null and monitorposition !='' ">#{monitorposition,jdbcType=VARCHAR},</if>
+            <if test="devicebrand != null and devicebrand !='' ">#{devicebrand,jdbcType=VARCHAR},</if>
+            <if test="devicedesc != null and devicedesc !='' ">#{devicedesc,jdbcType=VARCHAR},</if>
+            <if test="devicenumber != null and devicenumber !='' ">#{devicenumber,jdbcType=VARCHAR},</if>
+            <if test="workingprinciple != null and workingprinciple !='' ">#{workingprinciple,jdbcType=VARCHAR},</if>
+            <if test="workrange != null and workrange !='' ">#{workrange,jdbcType=VARCHAR},</if>
+            <if test="emissionstandard != null and emissionstandard !='' ">#{emissionstandard,jdbcType=VARCHAR},</if>
+            <if test="tubecoefficient != null and tubecoefficient !='' ">#{tubecoefficient,jdbcType=VARCHAR},</if>
+            <if test="velocitycoefficient != null and velocitycoefficient !='' ">
+                #{velocitycoefficient,jdbcType=VARCHAR},
+            </if>
+            <if test="aircoefficient != null and aircoefficient !='' ">#{aircoefficient,jdbcType=VARCHAR},</if>
+            <if test="chimneysectionarea != null and chimneysectionarea !='' ">#{chimneysectionarea,jdbcType=VARCHAR},
+            </if>
+            <if test="verificationtime != null and verificationtime !='' ">to_date(#{verificationtime},'yyyy-MM-dd'),
+            </if>
+            <if test="acceptancetime != null and acceptancetime !='' ">to_date(#{acceptancetime},'yyyy-MM-dd'),</if>
+            #{createdby,jdbcType=VARCHAR},#{updatedby,jdbcType=VARCHAR} , 0,sysdate,sysdate
+        </trim>
+    </insert>
+
+    <update id="modifyDevice" parameterType="OpdeviceEntity">
+        update opdeviceinfo
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="sourcename != null and sourcename !='' ">
+                sourcename=#{sourcename,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceenvhead != null and sourceenvhead !='' ">
+                sourceenvhead=#{sourceenvhead,jdbcType=VARCHAR},
+            </if>
+            <if test="sourceenvheadinfo != null and sourceenvheadinfo !=''">
+                sourceenvheadinfo=#{sourceenvheadinfo,jdbcType=VARCHAR},
+            </if>
+            <if test="opcompanyname != null and opcompanyname !='' ">
+                opcompanyname=#{opcompanyname,jdbcType=VARCHAR},
+            </if>
+            <if test="opcompanytype != null and opcompanytype !=''">
+                opcompanytype=#{opcompanytype,jdbcType=VARCHAR},
+            </if>
+            <if test="opcompanyhead != null and opcompanyhead !='' ">
+                opcompanyhead=#{opcompanyhead,jdbcType=VARCHAR},
+            </if>
+            <if test="opcompanyheadinfo != null and opcompanyheadinfo !='' ">
+                opcompanyheadinfo=#{opcompanyheadinfo,jdbcType=VARCHAR},
+            </if>
+            <if test="checkpointname != null and checkpointname !='' ">
+                checkpointname=#{checkpointname,jdbcType=VARCHAR},
+            </if>
+            <if test="oppersonname != null and oppersonname !='' ">
+                oppersonname=#{oppersonname,jdbcType=VARCHAR},
+            </if>
+            <if test="oppersontel != null and oppersontel !='' ">
+                oppersontel=#{oppersontel,jdbcType=VARCHAR},
+            </if>
+            <if test="opstartdate != null and opstartdate !=''">
+                opstartdate=to_date(#{opstartdate},'yyyy-MM-dd'),
+            </if>
+            <if test="openddate != null and openddate !='' ">
+                openddate=to_date(#{openddate},'yyyy-MM-dd'),
+            </if>
+            <if test="oplicensenum != null and oplicensenum !='' ">
+                oplicensenum=#{oplicensenum,jdbcType=VARCHAR},
+            </if>
+            <if test="oplicissueunit != null and oplicissueunit !='' ">
+                oplicissueunit=#{oplicissueunit,jdbcType=VARCHAR},
+            </if>
+            <if test="oplicissuedate != null and oplicissuedate !=''">
+                oplicissuedate=to_date(#{oplicissuedate},'yyyy-MM-dd'),
+            </if>
+            <if test="opnolicreason != null and opnolicreason !='' ">
+                opnolicreason=#{opnolicreason,jdbcType=VARCHAR},
+            </if>
+            updatedby=#{updatedby,jdbcType=VARCHAR},dateupdated=sysdate
+        </trim>
+        where checkpointid = #{checkpointid,jdbcType=INTEGER} and isdeleted = 0
+    </update>
+
+    <update id="modifyOpwDevice" parameterType="OpWDeviceEntity">
+        update OpWDeviceDetail
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="devicebrand != null and devicebrand !='' ">
+                devicebrand=#{devicebrand,jdbcType=VARCHAR},
+            </if>
+            <if test="devicenumber != null and devicenumber !='' ">
+                devicenumber=#{devicenumber,jdbcType=VARCHAR},
+            </if>
+            <if test="measuringmethod != null and measuringmethod !='' ">
+                measuringmethod=#{measuringmethod,jdbcType=VARCHAR},
+            </if>
+            <if test="heatingtemp != null and heatingtemp !=''">
+                heatingtemp=#{heatingtemp,jdbcType=VARCHAR},
+            </if>
+            <if test="heatingtime != null and heatingtime !='' ">
+                heatingtime=#{heatingtime},
+            </if>
+            <if test="workrange != null and workrange !=''">
+                workrange=#{workrange,jdbcType=VARCHAR},
+            </if>
+            <if test="refcoefficient != null and refcoefficient !='' ">
+                refcoefficient=#{refcoefficient,jdbcType=VARCHAR},
+            </if>
+            <if test="verificationtime != null and verificationtime !='' ">
+                verificationtime=to_date(#{verificationtime},'yyyy-MM-dd'),
+            </if>
+            <if test="acceptancetime != null and acceptancetime !='' ">
+                acceptancetime=to_date(#{acceptancetime},'yyyy-MM-dd'),
+            </if>
+            <if test="emissionstandard != null and emissionstandard !='' ">
+                emissionstandard=#{emissionstandard,jdbcType=VARCHAR},
+            </if>
+            updatedby=#{updatedby,jdbcType=VARCHAR},dateupdated=sysdate
+        </trim>
+        where isdeleted = 0
+        and checkpointid = #{checkpointid,jdbcType=INTEGER}
+        and datadevid=#{datadevid,jdbcType=INTEGER}
+    </update>
+
+    <update id="modifyOpgdevice" parameterType="OpGDeviceEntity">
+        update OpGDeviceDetail
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="monitorposition != null and monitorposition !='' ">
+                monitorposition=#{monitorposition,jdbcType=VARCHAR},
+            </if>
+            <if test="devicebrand != null and devicebrand !='' ">
+                devicebrand=#{devicebrand,jdbcType=VARCHAR},
+            </if>
+            <if test="devicedesc != null and devicedesc !='' ">
+                devicedesc=#{devicedesc,jdbcType=VARCHAR},
+            </if>
+            <if test="devicenumber != null and devicenumber !='' ">
+                devicenumber=#{devicenumber,jdbcType=VARCHAR},
+            </if>
+            <if test="workingprinciple != null and workingprinciple !='' ">
+                workingprinciple=#{workingprinciple,jdbcType=VARCHAR},
+            </if>
+            <if test="workrange != null and workrange !='' ">
+                workrange=#{workrange,jdbcType=VARCHAR},
+            </if>
+            <if test="emissionstandard != null and emissionstandard !='' ">
+                emissionstandard=#{emissionstandard,jdbcType=VARCHAR},
+            </if>
+            <if test="tubecoefficient != null and tubecoefficient !='' ">
+                tubecoefficient=#{tubecoefficient,jdbcType=VARCHAR},
+            </if>
+            <if test="velocitycoefficient != null and velocitycoefficient !='' ">
+                velocitycoefficient=#{velocitycoefficient,jdbcType=VARCHAR},
+            </if>
+            <if test="aircoefficient != null and aircoefficient !='' ">
+                aircoefficient=#{aircoefficient,jdbcType=VARCHAR},
+            </if>
+            <if test="chimneysectionarea != null and chimneysectionarea !='' ">
+                chimneysectionarea = #{chimneysectionarea,jdbcType=VARCHAR},
+            </if>
+            <if test="verificationtime != null and verificationtime !='' ">
+                verificationtime = to_date(#{verificationtime},'yyyy-MM-dd'),
+            </if>
+            <if test="acceptancetime != null and acceptancetime !='' ">
+                acceptancetime = to_date(#{acceptancetime},'yyyy-MM-dd'),
+            </if>
+            updatedby=#{updatedby,jdbcType=VARCHAR},dateupdated=sysdate
+        </trim>
+        where isdeleted = 0
+        and checkpointid = #{checkpointid,jdbcType=INTEGER}
+        and datadevid=#{datadevid,jdbcType=INTEGER}
+    </update>
+
+    <!--查询单条信息备案-->
+    <select id="selectOpdeviceinfo" parameterType="string" resultType="OpdeviceEntity">
+        select * from opdeviceinfo where isdeleted=0 and checkpointid = #{checkpointid}
+    </select>
+
+    <!--删除信息备案-->
+    <update id="deleteDevice" parameterType="OpdeviceEntity">
+        update opdeviceinfo set updatedby=#{updatedby,jdbcType=VARCHAR},dateupdated=sysdate,isdeleted=1
+        where checkpointid = #{checkpointid}
+    </update>
+
+    <!--删除水重点设备信息-->
+    <update id="deletedOpwDevice" parameterType="OpdeviceEntity">
+        update OpWDeviceDetail
+        set updatedby=#{updatedby,jdbcType=VARCHAR},dateupdated=sysdate,isdeleted=1
+        where checkpointid = #{checkpointid}
+    </update>
+
+    <!--删除气重点设备信息-->
+    <update id="deletedOpgdevice" parameterType="OpdeviceEntity">
+        update OpGDeviceDetail
+        set updatedby=#{updatedby,jdbcType=VARCHAR},dateupdated=sysdate,isdeleted=1
+        where checkpointid = #{checkpointid}
+    </update>
+
+    <!--查询运维管理列表-->
+    <select id="selectOperationRecordList" parameterType="OpeRecordEntity" resultType="OpeRecordEntity">
+        select r.zOperationId,s.zDataSourName,to_char(r.zOperationDate,'yyyy-MM-dd')
+        zOperationDate,r.zOperationType,d.zDataDevDesc,d.zdatadevid,
+        e.zEquipmentDesc,d.zDevNo,r.zMaintenanceCorp,d.zInstallPlace,r.zMaintenanceStaff
+        from zOperationRecord r
+        left join zDataDevDef d on d.zDataDevId = r.zDataDevId and d.zisdeleted=0
+        left join zEquipmentDef e on e.zEquipmentId = d.zEquipmentId and e.zisdeleted=0
+        left join zCheckPointDef c on c.zCheckPointId = d.zCheckPointId and c.zisvalid=1
+        left join zDataSourSetting s on s.zDataSourId = c.zDataSourId and s.zisdeleted=0
+        where r.zIsDeleted = 0
+        <if test="zdatasourname != null  and zdatasourname != ''">
+            and s.zdatasourname like '%'||#{zdatasourname}||'%'
+        </if>
+        <if test="zoperationtype != null  and zoperationtype != ''">
+            and r.zOperationType = #{zoperationtype}
+        </if>
+        <if test="bizSourceId != null  and bizSourceId != ''">
+            and c.zDataSourId=#{bizSourceId}
+        </if>
+        <if test="beginTime != null  and endTime != null ">
+            and trunc(r.zOperationDate) between to_date(#{beginTime},'yyyy-mm-dd') and to_date(#{endTime},'yyyy-mm-dd')
+        </if>
+        order by zOperationDate desc
+    </select>
+
+    <!--查找设备列表-->
+    <select id="selectEquipmentList" parameterType="string" resultType="map">
+        select distinct d.zdatadevid,d.zdatadevdesc
+        from zdatadevdef d
+        inner join zCheckPointDef c on c.zcheckpointid=d.zcheckpointid and c.zisvalid=1
+        where d.zisdeleted = 0 and c.zDataSourId=#{bizSourceId}
+        <if test="checkpointtype != null  and checkpointtype != ''">
+            and c.zcheckpointtype = #{checkpointtype}
+        </if>
+        order by zdatadevdesc desc
+    </select>
+
+    <insert id="insertOperationRecord" parameterType="OpeRecordEntity">
+        insert into zOperationRecord
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="zoperationid != null and zoperationid !='' ">zoperationid,</if>
+            <if test="zoperationtype != null">zoperationtype,</if>
+            <if test="zoperationdate != null and zoperationdate !='' ">zoperationdate,</if>
+            <if test="zmaintenancestaff != null and zmaintenancestaff !='' ">zmaintenancestaff,</if>
+            <if test="zdatadevid != null">zdatadevid,</if>
+            <if test="zmaintenancecorp != null and zmaintenancecorp !='' ">zmaintenancecorp,</if>
+            <if test="expireddate != null and expireddate !=''">expireddate,</if>
+            zisdeleted,zcreatedby,zupdatedby,zdatecreated,zdateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="zoperationid != null and zoperationid !='' ">#{zoperationid,jdbcType=VARCHAR},</if>
+            <if test="zoperationtype != null">#{zoperationtype,jdbcType=INTEGER},</if>
+            <if test="zoperationdate != null and zoperationdate !=''">
+                to_date(#{zoperationdate},'yyyy-MM-dd'),
+            </if>
+            <if test="zmaintenancestaff != null and zmaintenancestaff !='' ">
+                #{zmaintenancestaff,jdbcType=VARCHAR},
+            </if>
+            <if test="zdatadevid != null">#{zdatadevid,jdbcType=INTEGER},</if>
+            <if test="zmaintenancecorp != null and zmaintenancecorp !='' ">
+                #{zmaintenancecorp,jdbcType=VARCHAR},
+            </if>
+            <if test="expireddate != null and expireddate !=''">
+                to_date(#{expireddate},'yyyy-MM-dd'),
+            </if>
+            0,#{zcreatedby,jdbcType=VARCHAR},#{zupdatedby,jdbcType=VARCHAR},sysdate,sysdate
+        </trim>
+    </insert>
+
+    <update id="modifyOperationRecord" parameterType="OpeRecordEntity">
+        update zOperationRecord
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="zoperationtype != null">
+                zoperationtype = #{zoperationtype,jdbcType=INTEGER},
+            </if>
+            <if test="zoperationdate != null and zoperationdate !=''">
+                zoperationdate = to_date(#{zoperationdate},'yyyy-MM-dd'),
+            </if>
+            <if test="zmaintenancestaff != null and zmaintenancestaff !=''">
+                zmaintenancestaff = #{zmaintenancestaff,jdbcType=VARCHAR},
+            </if>
+            <if test="zdatadevid != null">
+                zdatadevid = #{zdatadevid,jdbcType=INTEGER},
+            </if>
+            <if test="zmaintenancecorp != null and zmaintenancecorp !=''">
+                zmaintenancecorp = #{zmaintenancecorp,jdbcType=VARCHAR},
+            </if>
+            <if test="expireddate != null and expireddate !=''">
+                expireddate = to_date(#{expireddate},'yyyy-MM-dd'),
+            </if>
+            zupdatedby=#{zupdatedby,jdbcType=VARCHAR},zdateupdated=sysdate
+        </trim>
+        where zisdeleted = 0 and zoperationid = #{zoperationid,jdbcType=VARCHAR}
+    </update>
+
+    <!--运维管理删除-->
+    <update id="deleteOperationRecord" parameterType="string">
+        update zOperationRecord SET zupdatedby=#{updatedBy,jdbcType=VARCHAR},zdateupdated=sysdate,
+        zisdeleted=1 where zoperationid in
+        <foreach collection="zoperationids" item="zoperationid" open="(" separator="," close=")" index="index">
+            #{zoperationid}
+        </foreach>
+    </update>
+
+
+</mapper>

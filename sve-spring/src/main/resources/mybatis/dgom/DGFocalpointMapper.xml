@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.DGFocalPointMapper">
+
+    <!--水重点施工单位信息-->
+    <select id="getDatConstruction" resultType="map">
+      select pf_source_id, construction_status,
+      construction_unit, construction_person, short_name,
+      construction_phone, to_char(complete_date,'yyyy-MM-dd') complete_date,
+      complete_memo, to_char(acceptance_date,'yyyy-MM-dd') acceptance_date,
+      acceptance_memo, audit_date, accept_date, accept_by, accept_result
+       from pf_bas_constructioninfo
+       where tag_head_id=#{tagHeadId} and IS_DELETED=0 and PF_SOURCE_ID = #{sourceId}
+    </select>
+
+    <!--查找bizSourceId-->
+    <select id="checkSourceId" resultType="string">
+        select biz_source_id from pf_bas_tag_detail
+         where is_deleted=0 and tag_head_id=#{tagHeadId} and pf_source_id=#{sourceId,jdbcType=VARCHAR}
+    </select>
+
+    <!--获取水气重点 待处理业务总条数-->
+    <select id="getProcStateCount" resultType="int">
+        select count(1) from zabnortaskhead a
+        inner join zcheckpointdef c on c.zcheckpointid = a.zcheckpointid
+        and c.zcheckpointtype = #{zcheckpointtype} and c.zisvalid = 1
+        where a.zisdeleted = 0 and zisreported = 0 and zisreturnnormal = 0
+        and c.zdatasourid = #{bizSourceId,jdbcType=VARCHAR}
+    </select>
+
+    <resultMap id="dataSearchEntity" type="DataSearchEntity">
+        <result property="dataDate" column="datadate"/>
+        <result property="elementCode" column="element_code"/>
+        <result property="elementDesc" column="element_desc"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <!--水气重点近30天传输率图小时数据-->
+    <select id="getTransferCharts" resultMap="dataSearchEntity">
+        select t.datadate, 'hour' element_code, round(sum(d.zactualcount) / sum(d.zsupposedcount), 2) amount from (
+        select trunc(sysdate, 'dd') - 31 + rownum datadate from dual
+        connect by rownum &lt;= 30
+        ) t
+        inner join zcompleterate d on d.zdatadate = t.datadate
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and zcheckpointtype = #{zcheckpointtype} and c.zisvalid = 1
+        where c.zdatasourid = #{bizSourceId,jdbcType=VARCHAR}
+        group by t.datadate
+    </select>
+
+    <!--统计传输率统计头-->
+    <select id="getTransfer" resultType="DataSearchColEntity">
+        select 'real' dataIndex,'实时传输率' title from dual
+        union all
+        select 'day' dataIndex,'日传输率' title from dual
+        union all
+        select 'hour' dataIndex,'小时传输率' title from dual
+        union all
+        select 'minute' dataIndex,'分钟传输率' title from dual
+     </select>
+
+    <resultMap id="entity" type="ReturnParam">
+        <result property="checkpointid" column="zcheckpointid"/>
+        <result property="datasourname" column="zdatasourname"/>
+        <result property="checkpointdesc" column="zcheckpointdesc"/>
+        <result property="checkpointtype" column="zcheckpointtype"/>
+        <result property="mn" column="zmn"/>
+        <result property="datadevid" column="zdatadevid"/>
+        <result property="datadevdesc" column="zdatadevdesc"/>
+        <result property="equipmentdesc" column="zequipmentdesc"/>
+        <result property="serialnum" column="zserialnum"/>
+        <result property="devstatus" column="zdevstatus"/>
+        <result property="serialbaudrate" column="zserialbaudrate"/>
+        <result property="elementid" column="zelementid"/>
+        <result property="elementdesc" column="zelementdesc"/>
+        <result property="minvalue" column="zminvalue"/>
+        <result property="maxvalue" column="zmaxvalue"/>
+        <result property="unit" column="zunit"/>
+        <result property="pause" column="zpause"/>
+        <result property="rangemin" column="zrangemin"/>
+        <result property="rangemax" column="zrangemax"/>
+        <result property="cdevdigits" column="zcdevdigits"/>
+    </resultMap>
+
+    <!--排放口查询 水气一体-->
+    <select id="selectEmissionPointList" parameterType="ReturnParam" resultMap="entity">
+        select c.zcheckpointid, s.zdatasourname, c.zcheckpointdesc,c.zcheckpointtype,c.zmn
+        from zcheckpointdef c
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid
+        and s.zisfactory = 1 and s.zisdeleted = 0 and s.zisclosed = 0
+        where c.zisvalid = 1
+        <if test="sourceId != null and sourceId !=''">
+            and c.zdatasourid = #{sourceId,jdbcType=VARCHAR}
+        </if>
+        <if test="checkpointtype != null ">
+            and c.zcheckpointtype = #{checkpointtype,jdbcType=INTEGER}
+        </if>
+        <if test="mn != null and mn !=''">
+            and c.zmn like '%'|| #{mn,jdbcType=VARCHAR} ||'%'
+        </if>
+        <if test="checkpointid != null ">
+            and c.zcheckpointid = #{checkpointid,jdbcType=INTEGER}
+        </if>
+        order by c.zcheckpointid,c.zcheckpointdesc
+    </select>
+
+    <!--设备查询-->
+    <select id="selectEquipmentList" parameterType="ReturnParam" resultMap="entity">
+        select d.zdatadevid, s.zdatasourname, c.zcheckpointdesc, d.zdatadevdesc, e.zequipmentdesc, d.zserialnum,
+        d.zdevstatus, d.zserialbaudrate,c.zcheckpointtype
+        from zdatadevdef d
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and c.zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisfactory = 1 and s.zisdeleted = 0 and
+        s.zisclosed = 0
+        left join zequipmentdef e on e.zequipmentid = d.zequipmentid
+        where d.zisdeleted = 0
+        <if test="checkpointid != null and checkpointid !=''">
+            and d.zcheckpointid = #{checkpointid,jdbcType=INTEGER}
+        </if>
+        <if test="sourceId != null and sourceId !=''">
+            and s.zdatasourid = #{sourceId,jdbcType=VARCHAR}
+        </if>
+        <if test="checkpointtype != null ">
+            and c.zcheckpointtype = #{checkpointtype,jdbcType=INTEGER}
+        </if>
+        <if test="devstatus != null ">
+            and d.zdevstatus = #{devstatus,jdbcType=INTEGER}
+        </if>
+        <if test="datadevdesc != null and datadevdesc !='' ">
+            and d.zdatadevdesc like '%'|| #{datadevdesc,jdbcType=VARCHAR} ||'%'
+        </if>
+        <if test="equipmentdesc != null and equipmentdesc !='' ">
+            and e.zequipmentdesc like '%'|| #{equipmentdesc,jdbcType=VARCHAR} ||'%'
+        </if>
+        order by d.zdatadevid
+    </select>
+
+    <!--因子查询-->
+    <select id="selectElementList" parameterType="ReturnParam" resultMap="entity">
+        select se.zelementid, s.zdatasourname, c.zcheckpointdesc, d.zdatadevdesc, e.zelementdesc, se.zminvalue,
+        se.zmaxvalue,e.zunit, se.zpause, se.zrangemin, se.zrangemax, se.zcdevdigits,c.zcheckpointtype
+        from zdatasourelement se
+        inner join zdatadevdef d on d.zdatadevid = se.zdatadevid and d.zisdeleted = 0
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and c.zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisfactory = 1 and s.zisdeleted = 0 and
+        s.zisclosed = 0
+        inner join zelementdef e on e.zelementid = se.zelementid and e.zisdeleted = 0
+        where se.zisdeleted = 0 and se.zelementid &lt; 101000
+        <if test="datadevid != null and datadevid !=''">
+            and se.zdatadevid = #{datadevid,jdbcType=INTEGER}
+        </if>
+        <if test="checkpointid != null and checkpointid !=''">
+            and d.zcheckpointid = #{checkpointid,jdbcType=INTEGER}
+        </if>
+        <if test="sourceId != null and sourceId !=''">
+            and s.zdatasourid = #{sourceId,jdbcType=VARCHAR}
+        </if>
+        <if test="checkpointtype != null ">
+            and c.zcheckpointtype = #{checkpointtype,jdbcType=INTEGER}
+        </if>
+        <if test="elementdesc != null and elementdesc !='' ">
+            and se.zelementdesc like '%'|| #{elementdesc,jdbcType=VARCHAR} ||'%'
+        </if>
+        <if test="datadevdesc != null and datadevdesc !='' ">
+            and d.zdatadevdesc like '%'|| #{datadevdesc,jdbcType=VARCHAR} ||'%'
+        </if>
+        order by s.zdatasourname,e.zshowindex
+    </select>
+
+</mapper>

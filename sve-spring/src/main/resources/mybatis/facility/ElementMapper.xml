@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.facility.mapper.ElementMapper">
+    <resultMap id="elementResult" type="ElementResult">
+        <result column="cp_elem_id" property="cpElemId"/>
+        <result column="collect_id" property="collectId"/>
+        <result column="collect_name" property="collectName"/>
+        <result column="source_name" property="sourceName"/>
+        <result column="ele_type_id" property="eleTypeId"/>
+        <result column="element_code" property="elementCode"/>
+        <result column="element_desc" property="elementDesc"/>
+        <result column="install_location" property="installLocation"/>
+        <result column="judgementval" property="judgementVal"/>
+        <result column="is_online" property="isOnline"/>
+        <result column="check_date" property="checkDate"/>
+        <result column="facility_id" property="facilityId"/>
+        <result column="tech_id" property="techId"/>
+        <result column="outlet_id" property="outletId"/>
+        <result column="is_other" property="isOther"/>
+        <result column="src_elemid" property="srcElemId"/>
+        <result column="src_tag_head_id" property="srcTagHeadId"/>
+        <result column="src_mn" property="srcCollectId"/>
+    </resultMap>
+    <select id="getElementList" parameterType="ElementParam" resultMap="elementResult">
+        select ce.cp_elem_id, ce.collect_id, c.full_name collect_name, s.full_name source_name,
+               ce.ele_type_id, ce.element_code, ce.element_desc, ce.install_location, ce.judgementval,
+               ce.is_online, ce.check_date, cast(case when er.src_elemid is null then 0 else 1 end as number(1)) is_other,
+               er.src_elemid, er.src_tag_head_id, er.src_mn
+        from bas_checkpoint_element ce
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        inner join basecenter.pf_bas_source s on s.source_id = c.source_id and s.is_deleted = 0
+        left join basecenter.pf_bas_element_ref er on er.dst_elemid = ce.cp_elem_id and er.dst_tag_head_id = 1003 and er.is_deleted = 0
+        where ce.is_deleted = 0
+        <if test="cpElemId != null">
+            and ce.cp_elem_id = #{cpElemId}
+        </if>
+        <if test="sourceId != null">
+            and s.source_id = #{sourceId}
+        </if>
+        <if test="collectId != null">
+            and c.collect_id = #{collectId}
+        </if>
+    </select>
+
+    <select id="getElementListForOM" parameterType="ElementParam" resultMap="elementResult">
+        select * from zdatasourelement se
+        inner join zdatadevdef d on d.zdatadevid = se.zdatadevid and d.zisdeleted = 0
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and c.zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisfactory = 1 and s.zisdeleted = 0 and s.zisclosed = 0
+        inner join zelementdef e on e.zelementid = se.zelementid and e.zisdeleted = 0
+        where se.zisdeleted = 0 and se.zelementid &lt; 101000
+        <if test="sourceId != null">
+            and s.zdatasourid = #{sourceId}
+        </if>
+        <if test="collectId != null">
+            and c.zcheckpointid = #{collectId}
+        </if>
+    </select>
+
+    <select id="getElementListForLingXing" parameterType="ElementParam" resultMap="elementResult">
+        select ce.cp_elem_id, ce.collect_id, c.full_name collect_name, s.full_name source_name,
+               ce.ele_type_id, ce.element_code, ce.element_desc, ce.install_location, ce.judgementval,
+               ce.is_online, ce.check_date, ce.facility_id,
+               cast(case when er.src_elemid is null then 0 else 1 end as number(1)) is_other,
+               er.src_elemid, er.src_tag_head_id, er.src_mn
+        from bas_checkpoint_element ce
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        inner join basecenter.pf_bas_source s on s.source_id = c.source_id and s.is_deleted = 0
+        left join basecenter.pf_bas_element_ref er on er.dst_elemid = ce.cp_elem_id and er.dst_tag_head_id = 1003 and er.is_deleted = 0
+        where ce.is_deleted = 0
+        <if test="sourceId != null">
+            and ce.source_id = #{sourceId}
+        </if>
+        <if test="collectId != null">
+            and c.collect_id = #{collectId}
+        </if>
+        <if test="facilityId != null">
+            and ce.facility_id = #{facilityId}
+        </if>
+        <if test="facilityIds != null">
+            and ce.facility_id in
+            <foreach collection="facilityIds" item="facilityId" open="(" separator="," close=")">
+                #{facilityId}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getElementListForVOC" parameterType="ElementParam" resultMap="elementResult">
+        select ce.cp_elem_id, ce.collect_id, c.full_name collect_name, s.full_name source_name,
+               ce.ele_type_id, ce.element_code, ce.element_desc, ce.install_location, ce.judgementval,
+               ce.is_online, ce.check_date, ce.facility_id, ce.tech_id,
+               cast(case when er.src_elemid is null then 0 else 1 end as number(1)) is_other,
+               er.src_elemid, er.src_tag_head_id, er.src_mn
+        from bas_checkpoint_element ce
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        inner join basecenter.pf_bas_source s on s.source_id = c.source_id and s.is_deleted = 0
+        left join basecenter.pf_bas_element_ref er on er.dst_elemid = ce.cp_elem_id and er.dst_tag_head_id = 1003 and er.is_deleted = 0
+        where ce.is_deleted = 0
+        <if test="sourceId != null">
+            and ce.source_id = #{sourceId}
+        </if>
+        <if test="collectId != null">
+            and c.collect_id = #{collectId}
+        </if>
+        <if test="facilityId != null">
+            and ce.facility_id = #{facilityId}
+        </if>
+        <if test="facilityIds != null">
+            and ce.facility_id in
+            <foreach collection="facilityIds" item="facilityId" open="(" separator="," close=")">
+                #{facilityId}
+            </foreach>
+        </if>
+    </select>
+
+    <insert id="addElement" parameterType="ElementEntity">
+        <selectKey keyProperty="cpElemId" resultType="int" order="BEFORE">
+            select seq_element_id.nextval from dual
+        </selectKey>
+        insert into bas_checkpoint_element (cp_elem_id, collect_id, ele_type_id, element_code, element_desc, install_location, judgementval,
+        <if test="facilityId != null">facility_id,</if>
+        <if test="techId != null">tech_id,</if>
+        <if test="outletId != null">outlet_id,</if>
+        created_by, updated_by)
+        values (#{cpElemId}, #{collectId}, #{eleTypeId}, #{elementCode}, #{elementDesc}, #{installLocation, jdbcType=VARCHAR}, 0,
+        <if test="facilityId != null">#{facilityId, jdbcType=VARCHAR}, </if>
+        <if test="techId != null">#{techId, jdbcType=VARCHAR}, </if>
+        <if test="outletId != null">#{outletId, jdbcType=VARCHAR}, </if>
+        #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="editElement" parameterType="ElementEntity">
+        update bas_checkpoint_element set element_desc = #{elementDesc}, updated_by = #{updatedBy}, date_updated = sysdate where cp_elem_id = #{cpElemId}
+    </update>
+
+    <update id="removeElement">
+        update bas_checkpoint_element set is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate
+        where cp_elem_id in
+        <foreach collection="cpElemIds" item="cpElemId" open="(" separator="," close=")">
+            #{cpElemId}
+        </foreach>
+    </update>
+</mapper>

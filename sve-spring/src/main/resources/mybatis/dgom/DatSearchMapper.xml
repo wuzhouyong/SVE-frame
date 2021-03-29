@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.DataSearchMapper">
+
+    <!--查找企业列表-->
+    <select id="selectEnterpriseList" parameterType="string" resultType="map">
+        select zdatasourid, zdatasourname from zdatasoursetting
+        where zisfactory = 1 and zisdeleted = 0 and zisclosed = 0
+        <if test="sourceId != null">
+            and zdatasourid = #{sourceId}
+        </if>
+        <if test="fullName != null and fullName !=''">
+            and zdatasourdesc like '%'||#{fullName}||'%'
+        </if>
+    </select>
+
+    <!--查找排放口-->
+    <select id="selectEmissionList" parameterType="string" resultType="map">
+        select zcheckpointid, zcheckpointdesc from zcheckpointdef where zisvalid = 1
+        <if test="sourceId != null and sourceId !=''">
+            and zdatasourid = #{sourceId,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <!--查找bizSourceId-->
+    <select id="checkBizSourceId" resultType="string">
+        select distinct biz_source_id from pf_bas_tag_detail
+         where is_deleted=0 and tag_head_id in(1016,1017,1021,1022,1023) and pf_source_id=#{sourceId,jdbcType=VARCHAR}
+    </select>
+
+    <!--查找sourceId-->
+    <select id="checkSourceId" resultType="string">
+        select distinct pf_source_id from pf_bas_tag_detail
+         where is_deleted=0 and tag_head_id in(1016,1017,1021,1022,1023) and biz_source_id=#{bizSourceId,jdbcType=VARCHAR}
+    </select>
+
+    <!--查找sourceId-->
+    <select id="getSourceId" resultType="string">
+        select zdatasourid from zcheckpointdef where zisvalid = 1 and zcheckpointid=#{checkpointid,jdbcType=VARCHAR}
+    </select>
+
+    <!--查找因子-->
+    <select id="selectElementList" resultType="map">
+       select zelementid, zelementdesc from zelementdef
+       where zisdeleted = 0 and zelementid not in (100074,100056,100013,100054,100073,100041,100030,100053,100052,100045,100055)
+    </select>
+
+    <!--查找排放口下的因子-->
+    <select id="getElementListByCheckpointId" parameterType="string" resultType="map">
+        select se.zdatasourid,se.zcheckpointid,e.* from zdatasourelement se
+        inner join zelementdef e on se.zelementid=e.zelementid and e.zisdeleted=0
+        where se.zcheckpointid=#{checkpointid,jdbcType=VARCHAR} and se.zisdeleted=0
+        order by se.zcheckpointid
+    </select>
+
+    <!--查找街镇-->
+    <select id="selectTownNameList" resultType="map">
+     select zlabelheadid, zlabelname from zlabelhead where zparentid = 100 and zisdeleted = 0
+    </select>
+
+    <resultMap id="searchPar" type="DataSearchPar">
+        <result property="taskheadid" column="ztaskheadid"/>
+        <result property="sourceName" column="zdatasourname"/>
+        <result property="sourceId" column="zdatasourid"/>
+        <result property="taskstatus" column="ztaskstatus"/>
+        <result property="ismanualtask" column="zismanualtask"/>
+        <result property="townName" column="zlabelname"/>
+        <result property="townCode" column="zlabelheadid"/>
+        <result property="abnortasktype" column="zabnortasktype"/>
+        <result property="elementdesc" column="zelementdesc"/>
+        <result property="elementid" column="zelementid"/>
+        <result property="tasksentDate" column="ztasksentdate"/>
+        <result property="startDate" column="zstarttime"/>
+        <result property="endDate" column="zendtime"/>
+        <result property="checkpointdesc" column="zcheckpointdesc"/>
+        <result property="checkpointid" column="zcheckpointid"/>
+        <result property="alarmlevel" column="zalarmlevel"/>
+        <result property="isreported" column="zisreported"/>
+        <result property="reportedDate" column="zdatereported"/>
+        <result property="isnormal" column="zisreturnnormal"/>
+        <result property="normalDate" column="zreturnnormaldate"/>
+    </resultMap>
+
+    <!--查找任务列表-->
+    <select id="selectTasklistByCondition" parameterType="DataSearcherParam"
+            resultMap="searchPar">
+        select th.ztaskheadid,s.zdatasourname,s.ZDATASOURID,th.ztaskstatus,th.zismanualtask,t.zlabelname,
+        th.zabnortasktype,te.zelementdesc,th.ztasksentdate,th.zstarttime,th.zendtime,c.zcheckpointdesc,
+        th.zalarmlevel,th.zisreported,th.zdatereported,th.zisreturnnormal,th.zreturnnormaldate
+        from zabnortaskhead th
+        inner join zdatasoursetting s on s.zdatasourid = th.zsourceid and s.zisfactory = 1 and s.zisdeleted = 0 and
+        s.zisclosed = 0
+        left join zlabelhead t on t.zlabelheadid = s.zsuperiorid and t.zparentid = 100 and t.zisdeleted = 0
+        inner join zcheckpointdef c on c.zcheckpointid = th.zcheckpointid and c.zisvalid = 1
+        inner join (
+        select distinct te.ztaskheadid, e.zelementid, e.zelementdesc
+        from zabnortaskelement te
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(te.zelementid, 1000) and e.zisdeleted = 0
+        where te.zisdeleted = 0
+        ) te on te.ztaskheadid = th.ztaskheadid
+        where th.zisdeleted = 0
+        <if test="startDate != null and endDate !=null ">
+            and trunc(th.zstarttime) &lt; to_date(#{endDate},'yyyy-MM-dd')+1 and trunc(th.zendtime) >=
+            to_date(#{startDate},'yyyy-MM-dd')
+        </if>
+        <if test="sourceName != null and sourceName != '' ">
+            and s.zdatasourname like '%'||#{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != '' ">
+            and s.zdatasourid = #{sourceId}
+        </if>
+        <if test="elementid != null ">
+            and te.zelementid = #{elementid}
+        </if>
+        <if test="townCode != null">
+            and s.zsuperiorid = #{townCode}
+        </if>
+        <if test="ismanualtask != null">
+            and th.zismanualtask = #{ismanualtask}
+        </if>
+        <if test="isreported != null">
+            and th.zisreported = #{isreported}
+        </if>
+        <if test="isnormal != null">
+            and th.zisreturnnormal = #{isnormal}
+        </if>
+        <if test="taskstatus != null ">
+            and th.ztaskstatus = #{taskstatus}
+        </if>
+        <if test="abnortasktype != null ">
+            and th.zabnortasktype = #{abnortasktype}
+        </if>
+    </select>
+
+    <!--查找任务详情-->
+    <select id="selectAbnortaskheadInfo" parameterType="string" resultType="map">
+         select th.ztaskheadid,th.ztaskstatus,th.ztasktitle,s.zdatasourname,th.zalarmlevel,
+         th.ztasksentdate,th.zstarttime,th.zendtime,c.zcheckpointdesc,th.zabnortasktype,
+         th.zabnordesc,th.zabnorreason,th.zreturnapprovedate,th.zisreported,th.zdatereported,th.zisreturnnormal,
+         th.zreturnnormaldate,th.zentprocessmemo,th.adminunitname,th.adminunitprocdate,th.adminunitprocdesc
+         from zabnortaskhead th
+         inner join zdatasoursetting s on s.zdatasourid = th.zsourceid and s.zisfactory = 1 and s.zisdeleted = 0 and s.zisclosed = 0
+         inner join zcheckpointdef c on c.zcheckpointid = th.zcheckpointid and c.zisvalid = 1
+         where th.ZISDELETED=0 and th.ztaskheadid = #{taskheadid,jdbcType=VARCHAR}
+    </select>
+
+    <!--查找任务详情-->
+    <select id="selectAbnortaskElementList" parameterType="string" resultType="map">
+        select te.ztaskheadid, e.zelementdesc,te.zdatadate,te.zamount,te.zupperlimit,te.zlowerlimit from zabnortaskelement te
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(te.zelementid, 1000) and e.zisdeleted = 0
+        where te.zisdeleted = 0 and te.ztaskheadid = #{taskheadid,jdbcType=VARCHAR}
+    </select>
+
+    <resultMap id="tableEntity" type="DataTableEntity">
+        <result property="elementid" column="zelementid"/>
+        <result property="elementdesc" column="zelementdesc"/>
+        <result property="unit" column="zunit"/>
+        <result property="decimaldigit" column="zdecimaldigit"/>
+        <result property="minvalue" column="zminvalue"/>
+        <result property="maxvalue" column="zmaxvalue"/>
+    </resultMap>
+
+    <!--表头实时数据-->
+    <select id="getHeaderReal" parameterType="DataSearchPar" resultMap="tableEntity">
+        select e.zelementid, e.zelementdesc, e.zunit, e.zdecimaldigit, se.zminvalue, se.zmaxvalue
+        from zdatasourelement se
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(se.zelementid, 1000) and e.zelementid
+        &lt; 101000 and e.zisdeleted = 0
+        where se.zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and se.zdatasourid = #{sourceId}
+        </if>
+        and se.zisdeleted = 0
+        and se.zelementid between 100000 and 101000 and e.zelementid not in (100002,100040, 100046)
+        order by e.zshowindex
+    </select>
+
+    <!--表头分钟数据-->
+    <select id="getHeaderMinute" parameterType="DataSearchPar" resultMap="tableEntity">
+        select e.zelementid, e.zelementdesc, e.zunit, e.zdecimaldigit, se.zminvalue, se.zmaxvalue
+        from zdatasourelement se
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(se.zelementid, 1000) and e.zelementid
+        &lt; 101000 and e.zisdeleted = 0
+        where se.zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and se.zdatasourid = #{sourceId}
+        </if>
+        and se.zisdeleted = 0
+        and se.zelementid between 113000 and 115000 and e.zelementid not in (100029,100040, 100046, 100070)
+        order by e.zshowindex
+    </select>
+
+    <!--表头小时数据-->
+    <select id="getHeaderHour" parameterType="DataSearchPar" resultMap="tableEntity">
+        select e.zelementid, e.zelementdesc, e.zunit, e.zdecimaldigit, se.zminvalue, se.zmaxvalue
+        from zdatasourelement se
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(se.zelementid, 1000) and e.zelementid
+        &lt; 101000 and e.zisdeleted = 0
+        where se.zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and se.zdatasourid = #{sourceId}
+        </if>
+        and se.zisdeleted = 0
+        and se.zelementid between 123000 and 125000 and e.zelementid not in (100029,100040, 100046, 100070)
+        order by e.zshowindex
+    </select>
+
+    <!--表头日数据-->
+    <select id="getHeaderDay" parameterType="DataSearchPar" resultMap="tableEntity">
+        select e.zelementid, e.zelementdesc, e.zunit, e.zdecimaldigit, se.zminvalue, se.zmaxvalue
+        from zdatasourelement se
+        inner join zelementdef e on mod(e.zelementid, 1000) = mod(se.zelementid, 1000) and e.zelementid
+        &lt;101000 and e.zisdeleted = 0
+        where se.zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and se.zdatasourid = #{sourceId}
+        </if>
+        and se.zisdeleted = 0
+        and se.zelementid between 133000 and 135000 and e.zelementid not in (100029,100040, 100046, 100070)
+        order by e.zshowindex
+    </select>
+
+    <resultMap id="searchEnt" type="DataSearchEnt">
+        <result property="datadate" column="zdatadate"/>
+        <result property="amount" column="zamount"/>
+        <result property="elementid" column="zelementid"/>
+    </resultMap>
+
+    <!--实时数据-->
+    <select id="getReal" parameterType="DataSearchPar" resultMap="searchEnt">
+        select t.zdatadate, d.zamount,t.zelementid from (
+        select * from (
+        select * from (
+        select zdatadate, zcheckpointid from zrealdata
+        where zcheckpointid = #{checkpointid}
+        and zdatadate >= sysdate - 15/(24*60) and zdatadate &lt;= sysdate
+        group by zdatadate, zcheckpointid
+        ) where rownum &lt;= 30 )
+        cross join (
+        select zelementid from zdatasourelement
+        where zisdeleted = 0 and zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and zdatasourid = #{sourceId}
+        </if>
+        and zelementid between 100000 and 101000 and zelementid not in (100002, 100040, 100046)
+        ) ) t
+        left join zrealdata d on d.zcheckpointid = t.zcheckpointid and d.zelementid = t.zelementid and d.zdatadate =
+        t.zdatadate
+        order by zdatadate desc
+    </select>
+
+    <!--查询停运时间-->
+    <select id="getStopTime" parameterType="DataSearchPar" resultType="date">
+        select distinct zStopTime from zOutageRecord
+        where zIsDeleted = 0 and zCheckPointId = #{checkpointid}
+        and zStopTime between to_date(#{startDate},'yyyy-MM-dd') and to_date(#{endDate},'yyyy-MM-dd')
+    </select>
+
+    <!--分钟数据-->
+    <select id="getMinute" parameterType="DataSearchPar" resultMap="searchEnt">
+        select t.zdatadate,nvl2(r.zcheckpointid,r.zamount,d.zamount) zamount, nvl2(r.zcheckpointid, 1, 0)
+        flag,t.zelementid from (
+        select * from (
+        select zdatadate,zcheckpointid from zdatacollectbase_${sourceId}
+        where zcheckpointid = #{checkpointid}
+        and zelementid between 113000 and 115000 and zdatadate >= to_date(#{startDate},'yyyy-MM-dd')
+        and zdatadate &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        group by zdatadate, zcheckpointid )
+        cross join (
+        select zelementid - 10000 zelementid from zdatasourelement
+        where zisdeleted = 0 and zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and zdatasourid = #{sourceId}
+        </if>
+        and zelementid between 123000 and 125000 and zelementid not in (123029, 123041,123046, 123070) ) ) t
+        left join zdatacollectbase_${sourceId} d on d.zcheckpointid = t.zcheckpointid and d.zelementid = t.zelementid
+        and d.zdatadate = t.zdatadate
+        left join zrevisedata r on r.zcheckpointid = d.zcheckpointid and r.zelementid = d.zelementid
+        and r.zdatadate = d.zdatadate
+        order by t.zdatadate desc
+    </select>
+
+    <!--小时数据-->
+    <select id="getHour" parameterType="DataSearchPar" resultMap="searchEnt">
+        select t.zdatadate, nvl2(r.zcheckpointid, r.zamount, d.zamount) zamount, nvl2(r.zcheckpointid, 1, 0)
+        flag,t.zelementid from (
+        select * from (
+        select zdatadate, zcheckpointid from zdatacollectbase_${sourceId}
+        where zcheckpointid = #{checkpointid}
+        and zelementid between 123000 and 125000 and zdatadate >= to_date(#{startDate},'yyyy-MM-dd')
+        and zdatadate &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        group by zdatadate, zcheckpointid )
+        cross join (
+        select zelementid zelementid from zdatasourelement
+        where zisdeleted = 0 and zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and zdatasourid = #{sourceId}
+        </if>
+        and zelementid between 123000 and 125000 and zelementid not in (123029, 123041,123046, 123070) ) ) t
+        left join zdatacollectbase_${sourceId} d on d.zcheckpointid = t.zcheckpointid and d.zelementid = t.zelementid
+        and d.zdatadate = t.zdatadate
+        left join zrevisedata r on r.zcheckpointid = d.zcheckpointid and r.zelementid = d.zelementid
+        and r.zdatadate = d.zdatadate
+        order by t.zdatadate desc
+    </select>
+
+    <!--日数据-->
+    <select id="getDay" parameterType="DataSearchPar" resultMap="searchEnt">
+        select t.zdatadate, nvl2(r.zcheckpointid, r.zamount, d.zamount) zamount, nvl2(r.zcheckpointid, 1, 0)
+        flag,t.zelementid from (
+        select * from (
+        select zdatadate, zcheckpointid from zdatacollectbase_${sourceId}
+        where zcheckpointid = #{checkpointid}
+        and zelementid between 133000 and 135000 and zdatadate >= to_date(#{startDate},'yyyy-MM-dd')
+        and zdatadate &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        group by zdatadate, zcheckpointid )
+        cross join (
+        select zelementid zelementid from zdatasourelement
+        where zisdeleted = 0 and zcheckpointid = #{checkpointid}
+        <if test="sourceId != null and sourceId != ''">
+            and zdatasourid = #{sourceId}
+        </if>
+        and zelementid between 133000 and 135000 and zelementid not in (133029, 133041,133046, 133070) ) ) t
+        left join zdatacollectbase_${sourceId} d on d.zcheckpointid = t.zcheckpointid and d.zelementid = t.zelementid
+        and d.zdatadate = t.zdatadate
+        left join zrevisedata r on r.zcheckpointid = d.zcheckpointid and r.zelementid = d.zelementid
+        and r.zdatadate = d.zdatadate
+        order by t.zdatadate desc
+    </select>
+
+    <resultMap id="returnEntity" type="DataReturnEntity">
+        <result property="datadate" column="zdatadate"/>
+        <result property="sourceName" column="zdatasourname"/>
+        <result property="townName" column="townName"/>
+        <result property="categoryname" column="categoryname"/>
+        <result property="checkpointdesc" column="zcheckpointdesc"/>
+        <result property="elementdesc" column="zelementdesc"/>
+        <result property="unit" column="zunit"/>
+        <result property="lowerlimit" column="zlowerlimit"/>
+        <result property="upperlimit" column="zupperlimit"/>
+        <result property="amount" column="zamount"/>
+    </resultMap>
+
+    <!--缺失数据(小时)-->
+    <select id="getMissingHour" parameterType="DataSearchPar" resultMap="returnEntity">
+        select d.zdatadate,s.zdatasourname,t.zlabelname townName, sc.zlabelname categoryname,
+        c.zcheckpointdesc,e.zelementdesc
+        from zlostdata d
+        inner join zelementdef e on mod(e.zelementid,1000) = mod(d.zelementid,1000) and e.zisdeleted = 0
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and c.zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisfactory = 1
+        and s.zisdeleted = 0 and s.zisclosed = 0
+        left join zlabelhead t on t.zlabelheadid = s.zsuperiorid and t.zparentid = 100 and t.zisdeleted = 0
+        left join zlabelhead sc on sc.zlabelheadid = s.zsubcategoryid and sc.zparentid = 200 and sc.zisdeleted = 0
+        where mod(e.zelementid,1000) in(1,26,27,28,35,42,43,44,58,59,60)
+        and trunc(d.zdatadate) >= to_date(#{startDate},'yyyy-MM-dd')
+        and trunc(d.zdatadate) &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        <choose>
+            <when test="ismanualtask != null and ismanualtask == 0">
+                and d.zelementid between 123000 and 125000
+            </when>
+            <when test="ismanualtask != null and ismanualtask == 1">
+                and d.zelementid between 133000 and 135000
+            </when>
+        </choose>
+        <if test="sourceId != null and sourceId != ''">
+            and s.zdatasourid=#{sourceId,jdbcType=VARCHAR}
+        </if>
+        <if test="elementid != null and elementid != ''">
+            and e.zelementid=#{elementid,jdbcType=VARCHAR}
+        </if>
+        order by d.zdatadate,s.zdatasourname
+    </select>
+
+    <!--零值数据和超标数据(小时和日)-->
+    <select id="getZerovalueHour" parameterType="DataSearchPar" resultMap="returnEntity">
+        select d.zdatadate, s.zdatasourname, t.zlabelname townName, sc.zlabelname categoryname, c.zcheckpointdesc,
+        e.zelementdesc, e.zunit, d.zlowerlimit, d.zupperlimit,d.zamount
+        from zoverlimitdata d
+        inner join zelementdef e on mod(e.zelementid,1000) = mod(d.zelementid,1000) and e.zisdeleted = 0
+        inner join zcheckpointdef c on c.zcheckpointid = d.zcheckpointid and c.zisvalid = 1
+        inner join zdatasoursetting s on s.zdatasourid = c.zdatasourid and s.zisfactory = 1
+        and s.zisdeleted = 0 and s.zisclosed = 0
+        left join zlabelhead t on t.zlabelheadid = s.zsuperiorid and t.zparentid = 100 and t.zisdeleted = 0
+        left join zlabelhead sc on sc.zlabelheadid = s.zsubcategoryid and sc.zparentid = 200 and sc.zisdeleted = 0
+        where mod(e.zelementid,1000) in(1,26,27,28,35,42,43,44,58,59,60)
+        and trunc(d.zdatadate) >= to_date(#{startDate},'yyyy-MM-dd')
+        and trunc(d.zdatadate) &lt; to_date(#{endDate},'yyyy-MM-dd')+1
+        <choose>
+            <when test="taskstatus != null and taskstatus == 0">
+                and d.zamount = 0
+            </when>
+            <when test="taskstatus != null and taskstatus == 1">
+                and d.zamount != 0
+            </when>
+        </choose>
+        <choose>
+            <when test="ismanualtask != null and ismanualtask == 0">
+                and d.zelementid between 123000 and 125000
+            </when>
+            <when test="ismanualtask != null and ismanualtask == 1">
+                and d.zelementid between 133000 and 135000
+            </when>
+        </choose>
+        <if test="sourceId != null and sourceId != ''">
+            and s.zdatasourid=#{sourceId,jdbcType=VARCHAR}
+        </if>
+        <if test="elementid != null and elementid != ''">
+            and e.zelementid=#{elementid,jdbcType=VARCHAR}
+        </if>
+        order by d.zdatadate,s.zdatasourname
+    </select>
+
+</mapper>

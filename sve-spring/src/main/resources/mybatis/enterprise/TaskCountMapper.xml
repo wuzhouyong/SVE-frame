@@ -1,0 +1,1261 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.enterprise.mapper.SourceCountMapper">
+
+    <resultMap id="entity" type="TaskCountEntity">
+        <result property="code" column="code"/>
+        <result property="name" column="name"/>
+        <result property="noconnected" column="noconnected"/>
+        <result property="constructed" column="constructed"/>
+        <result property="completed" column="completed"/>
+        <result property="accepting" column="accepting"/>
+        <result property="accepted" column="accepted"/>
+        <result property="count" column="count"/>
+    </resultMap>
+
+    <!--任务进度总览-->
+    <select id="selectTaskSummary" parameterType="MonitorTaskParam" resultMap="entity">
+        select
+        count(case when construction_status = 0 then 1 end) noconnected,
+        count(case when construction_status = 1 then 1 end) constructed,
+        count(case when construction_status between 2 and 4 then 1 end) completed,
+        count(case when construction_status = 6 then 1 end) accepted,
+        count(1) count
+        from pf_bas_constructioninfo c
+        inner join pf_bas_source s on s.source_id = c.pf_source_id
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id
+        inner join pf_bas_tag_head t on t.tag_head_id = d.tag_head_id and t.is_active = 1
+        where c.is_deleted=0 and s.is_deleted=0 and d.is_deleted = 0 and d.list_type = 0 and c.construction_status &gt;= 0
+        <if test="townCode != null">and s.town_code = #{townCode}</if>
+        <choose>
+            <when test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                and c.tag_head_id in
+                <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                    #{tagHeadId,jdbcType=BIGINT}
+                </foreach>
+            </when>
+            <!--            <when test="tagHeadIds == null">-->
+            <!--                and c.tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,1021,1022,1023)-->
+            <!--            </when>-->
+        </choose>
+        ${dataScope}
+    </select>
+
+    <!--获取镇街任务统计-->
+    <select id="selectTownTaskCount" parameterType="long" resultMap="entity">
+        select region_code code, region_name name,
+        nvl(sum(case status when 0 then total end), 0) noconnected,
+        nvl(sum(case status when 1 then total end), 0) constructed,
+        nvl(sum(case when status between 2 and 4 then total end), 0) completed,
+        nvl(sum(case status when 6 then total end), 0) accepted,
+        nvl(sum(total), 0) count
+        from (
+        select r.region_code, r.region_name, c.construction_status status, d.dict_label name, count(1) total
+        from pf_bas_constructioninfo c
+        left join pf_bas_source s on s.source_id = c.pf_source_id
+        left join pf_bas_region r on r.region_code = s.town_code
+        left join sys_dict_data d on d.dict_type = 'gc_construct_state' and d.dict_value = c.construction_status
+        left join pf_bas_tag_detail td on td.pf_source_id = s.source_id and td.tag_head_id = c.tag_head_id
+        where c.is_deleted=0 and s.is_deleted=0 and td.is_deleted = 0 and s.town_code is not null and td.list_type = 0 and
+        c.construction_status &gt;= 0
+        <if test="array != null and array.length != 0 ">
+            and c.tag_head_id in
+            <foreach collection="array" open="(" close=")" item="tagHeadId" separator=",">
+                #{tagHeadId,jdbcType=BIGINT}
+            </foreach>
+        </if>
+        group by r.region_code, r.region_name, c.construction_status, d.dict_label
+        order by r.region_code, c.construction_status )
+        group by region_code, region_name
+        order by count desc,name desc
+
+    </select>
+
+    <!--任务进度统计-->
+    <select id="selectScheduleTaskCount" parameterType="MonitorTaskParam" resultMap="entity">
+        select t.tag_head_id                                                             code,
+               t.tag_head_name                                                           name,
+               nvl(sum(case construction_status when 0 then total end), 0)               noconnected,
+               nvl(sum(case construction_status when 1 then total end), 0)               constructed,
+               nvl(sum(case when construction_status between 2 and 4 then total end), 0) completed,
+               nvl(sum(case construction_status when 6 then total end), 0)               accepted,
+               nvl(sum(total), 0)                                                        count
+        from pf_bas_tag_head t
+                 left join (
+            select s.town_code, c.tag_head_id, c.construction_status, count(1) total
+            from pf_bas_constructioninfo c
+             inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+             inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+            where c.is_deleted = 0 and d.list_type = 0 and c.construction_status &gt;= 0
+            <if test="townCode != null">and s.town_code = #{townCode}</if>
+            group by s.town_code, c.tag_head_id, c.construction_status
+        ) d on d.tag_head_id = t.tag_head_id ${dataScope}
+        where t.is_active = 1
+--             t.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1021, 1022, 1023)
+        group by t.tag_head_name, t.tag_head_id
+    </select>
+
+    <!--施工单位任务统计-->
+    <select id="selectConstructTaskCount" parameterType="MonitorTaskParam" resultMap="entity">
+        select short_name name,
+        nvl(sum(case status when 0 then total end), 0) noconnected,
+        nvl(sum(case status when 1 then total end), 0) constructed,
+        nvl(sum(case when status between 2 and 4 then total end), 0) completed,
+        nvl(sum(case status when 6 then total end), 0) accepted,
+        nvl(sum(total), 0) count
+        from (
+        select c.short_name, c.construction_status status, count(1) total
+        from pf_bas_constructioninfo c
+        left join pf_bas_source s on s.source_id = c.pf_source_id
+        left join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id
+        where c.is_deleted=0 and s.is_deleted=0 and d.is_deleted = 0 and d.list_type = 0 and c.construction_status &gt;=
+        0 and c.short_name is not null
+        <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+            and c.tag_head_id in
+            <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                #{tagHeadId,jdbcType=BIGINT}
+            </foreach>
+        </if>
+        <if test="townCode != null">and s.town_code = #{townCode}</if>
+        ${dataScope}
+        group by c.short_name, c.construction_status
+        order by c.short_name, c.construction_status )
+        group by short_name
+        order by count desc,name desc
+    </select>
+
+    <!--分局排名-->
+    <select id="selectCompletedSummary" parameterType="MonitorTaskParam" resultType="map">
+        select t.tag_head_id,
+               t.tag_head_name,
+               nvl(cnt, 0)      cnt,
+               nvl(totalcnt, 0) totalcnt,
+               nvl(rate, 0)     rate,
+               nvl(cntRank, 0)  cntRank,
+               nvl(rateRank, 0) rateRank
+        from pf_bas_tag_head t
+                 left join (
+            select town_code,
+                   tag_head_id,
+                   cnt,
+                   totalcnt,
+                   round(cnt * 100 / totalcnt, 2)                                      rate,
+                   rank() over (partition by tag_head_id order by cnt desc)            cntRank,
+                   rank() over (partition by tag_head_id order by cnt / totalcnt desc) rateRank
+            from (
+                     select s.town_code,
+                            c.tag_head_id,
+                            sum(case
+                                    when c.construction_status in (2, 3, 4, 6)
+                                        then 1
+                                    else 0 end) cnt,
+                            count(*)            totalcnt
+                     from pf_bas_constructioninfo c
+                              inner join pf_bas_source s on c.pf_source_id = s.source_id
+                              left join pf_bas_tag_detail d
+                                        on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id
+                     where c.is_deleted = 0
+                       and s.is_deleted = 0
+                       and d.is_deleted = 0
+                       and d.list_type = 0
+                     group by s.town_code, c.tag_head_id
+                 )) d on t.tag_head_id = d.tag_head_id
+            ${dataScope}
+        where t.is_active = 1
+--             t.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1021, 1022, 1023)
+    </select>
+
+    <!--任务总数-->
+    <select id="getMissionRank" parameterType="MonitorTaskParam" resultType="map">
+        select * from (
+        select * from (
+        select b.tag_head_id, b.tag_head_name, b.town_code, nvl(c.inTotal, 0) totalCnt, nvl(c.inlist, 0) inlist,
+        nvl(c.outlist, 0) outlist,
+        round(case when inTotal > 0 then inlist / inTotal else 0 end, 4) * 100 rate,
+        rank() over(partition by b.tag_head_id order by inlist desc) cntRank,
+        rank() over(partition by b.tag_head_id order by case when inTotal > 0 then inlist / inTotal else 0 end desc)
+        rateRank
+        from (
+        select * from (
+        select distinct town_code, town_name
+        from pf_bas_source s
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+        where s.is_deleted = 0
+        and d.tag_head_id in (1004,1006,1002,1003,1012,1013,1014,1015,1016,1017,1019)
+        ) a
+        cross join (
+        select tag_head_id, tag_head_name
+        from pf_bas_tag_head
+        where tag_head_id in (1004,1006,1002,1003,1012,1013,1014,1015,1016,1017,1019)
+        ) b
+        ) b
+        left join (
+        select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+        from (
+        select s.town_code, c.tag_head_id, count(case when list_type = 0 then 1 end) inTotal,
+        nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end),
+        0) inlist,
+        nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end),
+        0) outlist,
+        nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+        from pf_bas_constructioninfo c
+        inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and
+        d.is_deleted = 0
+        where c.is_deleted = 0 and c.tag_head_id in (1004,1006,1002,1003,1012,1013,1014,1015,1016,1017,1019)
+        group by s.town_code, c.tag_head_id
+        )
+        ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+        )
+        union all
+        select * from (
+        select '9999' tag_head_id, '合计' tag_head_name, b.town_code,
+        sum(c.inTotal) inTotal, sum(c.inlist) inlist, sum(c.outlist) outlist,
+        round(sum(c.inlist) / sum(c.inTotal), 4) * 100 rate,
+        rank() over(order by sum(c.inlist) desc) cntRank,
+        rank() over(order by sum(c.inlist) / sum(c.inTotal) desc) rateRank
+        from (
+        select * from (
+        select distinct town_code, town_name
+        from pf_bas_source s
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+        where s.is_deleted = 0
+        and d.tag_head_id in (1004,1006,1002,1003,1012,1013,1014,1015,1016,1017,1019)
+        ) a
+        cross join (
+        select tag_head_id, tag_head_name
+        from pf_bas_tag_head
+        where tag_head_id in (1004,1006,1002,1003,1012,1013,1014,1015,1016,1017,1019)
+        ) b
+        ) b
+        left join (
+        select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+        from (
+        select s.town_code, c.tag_head_id, count(case when list_type = 0 then 1 end) inTotal,
+        nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end),
+        0) inlist,
+        nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end),
+        0) outlist,
+        nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+        from pf_bas_constructioninfo c
+        inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and
+        d.is_deleted = 0
+        where c.is_deleted = 0
+        <choose>
+            <when test="listType == 1">
+                and c.tag_head_id in (1002,1003,1012,1015,1016,1017,1019,9999)
+            </when>
+            <when test="listType == 2">
+                and c.tag_head_id in (1004,1006,1013,1014,9999)
+            </when>
+            <otherwise>
+                and c.tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,9999)
+            </otherwise>
+        </choose>
+        group by s.town_code, c.tag_head_id
+        )
+        ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+        group by b.town_code
+        )
+        ) d
+        <where>
+            <choose>
+                <when test="listType == 1">
+                    tag_head_id in (1002,1003,1012,1015,1016,1017,1019,9999)
+                </when>
+                <when test="listType == 2">
+                    tag_head_id in (1004,1006,1013,1014,9999)
+                </when>
+                <otherwise>
+                    tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,9999)
+                </otherwise>
+            </choose>
+            ${dataScope}
+        </where>
+    </select>
+
+    <!--任务总数计算-->
+    <select id="getMissionRankCount" parameterType="MonitorTaskParam" resultType="map">
+        select s.*,
+        sum(decode(defer, null, 0, defer) +
+        decode(apply_not_install, null, 0, apply_not_install) +
+        decode(apply_defer, null, 0, apply_defer) +
+        decode(construction, null, 0, construction) +
+        decode(logged_in, null, 0, logged_in) +
+        decode(not_logged_in, null, 0, not_logged_in)) total
+        from (
+        select defer, apply_not_install, apply_defer,
+        construction - suspend_construct - apply_ni_construct - apply_ss_construct construction,
+        logged_in - apply_ni_logged_in - apply_ss_logged_in - suspend_logged_in logged_in,
+        not_logged_in - apply_ni_not_logged_in - apply_ss_not_logged_in - suspend_not_logged_in not_logged_in
+        from (
+        select count(case when construction_status = 1 then 1 end) construction,
+        count(case when construction_status = 1 and verify_status = 2 then 1 end) suspend_construct,
+        count(case when construction_status = 1 and adjust_item = 0 then 1 end) apply_ni_construct,
+        count(case when construction_status = 1 and adjust_item = 1 then 1 end) apply_ss_construct,
+
+        count(case when construction_status = 0 and login_flag = 1 then 1 end) logged_in,
+        count(case when (construction_status = 0 and login_flag = 1 and adjust_item = 0) then 1 end) apply_ni_logged_in,
+        count(case when (construction_status = 0 and login_flag = 1 and adjust_item = 1) then 1 end) apply_ss_logged_in,
+        count(case when (construction_status = 0 and login_flag = 1 and verify_status = 2) then 1 end)
+        suspend_logged_in,
+
+        count(case when construction_status = 0 and login_flag = 0 then 1 end) not_logged_in,
+        count(case when (construction_status = 0 and login_flag = 0 and adjust_item = 0) then 1 end)
+        apply_ni_not_logged_in,
+        count(case when (construction_status = 0 and login_flag = 0 and adjust_item = 1) then 1 end)
+        apply_ss_not_logged_in,
+        count(case when (construction_status = 0 and login_flag = 0 and verify_status = 2) then 1 end)
+        suspend_not_logged_in,
+
+        count(case when verify_status = 2 then 1 end) defer,
+        count(case when adjust_item = 0 then 1 end) apply_not_install,
+        count(case when adjust_item = 1 then 1 end) apply_defer
+        from (
+        select d.tag_head_id, u.source_id, nvl(u.login_flag,0) login_flag, c.construction_status, c.verify_status,
+        a.adjust_item
+        from pf_bas_tag_detail d
+        inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and
+        c.is_deleted = 0
+        left join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+        left join pf_bas_source_user u on u.source_id = d.pf_source_id
+        left join pf_bas_task_adjust a on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and
+        a.aduit_status = 0 and a.is_deleted = 0
+        where d.is_deleted = 0 and d.list_type = 0 and verify_status != 1 and d.is_deleted = 0
+        and construction_status&lt;= 1 ${dataScope}
+        <choose>
+            <when test="tagHeadIds != null and tagHeadIds.length !=0">
+                and d.tag_head_id in
+                <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                    #{tagHeadId,jdbcType=BIGINT}
+                </foreach>
+            </when>
+            <when test="tagHeadIds == null ">
+                and d.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+            </when>
+        </choose>
+        ) ) ) s
+        GROUP BY defer, apply_not_install, apply_defer, construction, logged_in, not_logged_in
+    </select>
+
+    <!--已接收任务总数计算-->
+    <select id="getMissionAcceptedCount" parameterType="MonitorTaskParam" resultType="map">
+        select s.*,
+        sum(decode(not_install, null, 0, not_install) +
+        decode(connected, null, 0, connected) +
+        decode(networked, null, 0, networked) +
+        decode(accepting, null, 0, accepting) +
+        decode(accepted, null, 0, accepted)) total
+        from (
+        select count(case when construction_status &lt;= 1 and verify_status = 1 then 1 end) not_install,
+        count(case when construction_status = 2 then 1 end) connected,
+        count(case when construction_status = 3 then 1 end) networked,
+        count(case when construction_status = 4 then 1 end) accepting,
+        count(case when construction_status = 6 then 1 end) accepted
+        from pf_bas_constructioninfo c
+        inner join pf_bas_tag_detail d on d.tag_head_id = c.tag_head_id and d.pf_source_id = c.pf_source_id and
+        d.is_deleted = 0
+        inner join pf_bas_source s on s.source_id = c.pf_source_id and s.is_deleted = 0
+        where c.is_deleted = 0 and d.list_type = 0 ${dataScope}
+        <choose>
+            <when test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                and c.tag_head_id in
+                <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                    #{tagHeadId,jdbcType=BIGINT}
+                </foreach>
+            </when>
+            <when test="tagHeadIds == null">
+                and c.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+            </when>
+        </choose>
+        ) s
+        GROUP BY not_install, connected, networked, accepting, accepted
+    </select>
+
+    <!--总排名-->
+    <select id="selectTownLeaderboard" parameterType="MonitorTaskParam" resultType="map">
+        select *
+        from (
+                 select town_code,
+                        totalcnt,
+                        cnt,
+                        round(cnt * 100 / totalcnt, 2)             rate,
+                        rank() over (order by cnt desc)            countRank,
+                        rank() over (order by cnt / totalcnt desc) rateRank
+                 from (
+                          select s.town_code,
+                                 sum(case
+                                         when c.construction_status in (2, 3, 4)
+                                             then 1
+                                         else 0 end) cnt,
+                                 count(1)            totalcnt
+                          from pf_bas_constructioninfo c
+                                   inner join pf_bas_source s on c.pf_source_id = s.source_id
+                                   left join pf_bas_tag_detail d
+                                             on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id
+                          where c.is_deleted = 0
+                            and s.is_deleted = 0
+                            and d.is_deleted = 0
+                            and d.list_type = 0
+                            and c.construction_status &gt;= 0
+                          group by s.town_code
+                      )) s
+        where 1 = 1 ${dataScope}
+    </select>
+
+    <!--未登录过企业总数-->
+    <select id="getCountNotlogin" parameterType="string" resultType="int">
+        select count(*)
+        from pf_bas_source_user su
+            inner join pf_bas_source s on s.source_id = su.source_id and s.is_deleted = 0
+                 inner join pf_bas_tag_detail td on td.pf_source_id = su.source_id and td.is_deleted = 0
+                 inner join pf_bas_tag_head h on h.tag_head_id = td.tag_head_id and h.is_deleted = 0
+        where h.is_active = 1
+        <if test="townCode != null">and s.town_code = #{townCode}</if>
+--                 td.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1021, 1022, 1023)
+          and login_flag = 0
+    </select>
+
+    <!--责考评分-->
+    <select id="getBlameScore" resultType="map" parameterType="MonitorTaskParam">
+        select s.* from (
+        select rank_type, town_code, case when score &lt; 0 then 0
+        when score > max_score then max_score
+        else score end score, rank
+        from (
+        select town_code, town_name,1 rank_type, round((tlimit - rate) / tlimit * 2, 2) score,
+        2 max_score,rank() over (order by (tlimit - rate) / tlimit * 2) rank
+        from (
+        select town_code,town_name,round((inlist + not_install) / inTotal, 2) rate,
+        case when inTotal > 800 then 0.8
+        when inTotal between 501 and 800 then 0.85
+        when inTotal between 201 and 500 then 0.9 else 0.95 end tlimit
+        from (
+        select s.town_code, s.town_name, count(case when list_type = 0 then 1 end) inTotal,
+        nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+        nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+        nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+        from pf_bas_constructioninfo c
+        inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+        where c.is_deleted = 0 and c.tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+        group by s.town_code, s.town_name
+        )
+        )
+        union all
+        select town_code, town_name,2 rank_type,round(rate / tlimit * 3, 2) score,
+        3 max_score,rank() over (order by rate / tlimit * 3 desc) rank
+        from (
+        select town_code, town_name, round((inlist + not_install) / inTotal, 2) rate,
+        case when inTotal > 500 then 0.8
+        when inTotal between 301 and 500 then 0.85
+        when inTotal between 101 and 300 then 0.9 else 0.95 end  tlimit
+        from (
+        select s.town_code, s.town_name, count(case when list_type = 0 then 1 end) inTotal,
+        nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+        --                         nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+        nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+        from pf_bas_constructioninfo c
+        inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+        where c.is_deleted = 0 and c.tag_head_id in (1004, 1006, 1013, 1014)
+        group by s.town_code, s.town_name
+        )
+        )
+        )
+        ) s
+        where 1 = 1 ${dataScope}
+
+    </select>
+
+
+    <!--总责考评分列表导出-->
+    <select id="getBlameScoreList" resultType="com.ruoyi.framework.web.domain.ExportScoreListEntity">
+        select b.town_code townCode, b.town_name townName,
+               sum(inTotal) inTotal,
+               sum(inlist) inlist,
+               sum(inTotal) - sum(inlist) inUnfinish,
+               sum(outlist) outlist,
+               case when sum(inTotal) > 0 then round(sum(inlist) / sum(inTotal) * 100, 2) else 0 end rate,
+               sum(case when b.tag_head_id = 1002 then inTotal else 0 end) inTotal1002,
+               sum(case when b.tag_head_id = 1002 then inlist else 0 end)  inlist1002,
+               sum(case when b.tag_head_id = 1002 then inTotal - inlist else 0 end) inUnfinish1002,
+               sum(case when b.tag_head_id = 1002 then outlist else 0 end) outlist1002,
+               sum(case when b.tag_head_id = 1002 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1002,
+               sum(case when b.tag_head_id = 1003 then inTotal else 0 end) inTotal1003,
+               sum(case when b.tag_head_id = 1003 then inlist else 0 end)  inlist1003,
+               sum(case when b.tag_head_id = 1003 then inTotal - inlist else 0 end) inUnfinish1003,
+               sum(case when b.tag_head_id = 1003 then outlist else 0 end) outlist1003,
+               sum(case when b.tag_head_id = 1003 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1003,
+               sum(case when b.tag_head_id = 1004 then inTotal else 0 end) inTotal1004,
+               sum(case when b.tag_head_id = 1004 then inlist else 0 end)  inlist1004,
+               sum(case when b.tag_head_id = 1004 then inTotal - inlist else 0 end) inUnfinish1004,
+               sum(case when b.tag_head_id = 1004 then outlist else 0 end) outlist1004,
+               sum(case when b.tag_head_id = 1004 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1004,
+               sum(case when b.tag_head_id = 1006 then inTotal else 0 end) inTotal1006,
+               sum(case when b.tag_head_id = 1006 then inlist else 0 end)  inlist1006,
+               sum(case when b.tag_head_id = 1006 then inTotal - inlist else 0 end) inUnfinish1006,
+               sum(case when b.tag_head_id = 1006 then outlist else 0 end) outlist1006,
+               sum(case when b.tag_head_id = 1006 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1006,
+               sum(case when b.tag_head_id = 1012 then inTotal else 0 end) inTotal1012,
+               sum(case when b.tag_head_id = 1012 then inlist else 0 end)  inlist1012,
+               sum(case when b.tag_head_id = 1012 then inTotal - inlist else 0 end) inUnfinish1012,
+               sum(case when b.tag_head_id = 1012 then outlist else 0 end) outlist1012,
+               sum(case when b.tag_head_id = 1012 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1012,
+               sum(case when b.tag_head_id = 1013 then inTotal else 0 end) inTotal1013,
+               sum(case when b.tag_head_id = 1013 then inlist else 0 end)  inlist1013,
+               sum(case when b.tag_head_id = 1013 then inTotal - inlist else 0 end) inUnfinish1013,
+               sum(case when b.tag_head_id = 1013 then outlist else 0 end) outlist1013,
+               sum(case when b.tag_head_id = 1013 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1013,
+               sum(case when b.tag_head_id = 1014 then inTotal else 0 end) inTotal1014,
+               sum(case when b.tag_head_id = 1014 then inlist else 0 end)  inlist1014,
+               sum(case when b.tag_head_id = 1014 then inTotal - inlist else 0 end) inUnfinish1014,
+               sum(case when b.tag_head_id = 1014 then outlist else 0 end) outlist1014,
+               sum(case when b.tag_head_id = 1014 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1014,
+               sum(case when b.tag_head_id = 1015 then inTotal else 0 end) inTotal1015,
+               sum(case when b.tag_head_id = 1015 then inlist else 0 end)  inlist1015,
+               sum(case when b.tag_head_id = 1015 then inTotal - inlist else 0 end) inUnfinish1015,
+               sum(case when b.tag_head_id = 1015 then outlist else 0 end) outlist1015,
+               sum(case when b.tag_head_id = 1015 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1015,
+               sum(case when b.tag_head_id = 1016 then inTotal else 0 end) inTotal1016,
+               sum(case when b.tag_head_id = 1016 then inlist else 0 end)  inlist1016,
+               sum(case when b.tag_head_id = 1016 then inTotal - inlist else 0 end) inUnfinish1016,
+               sum(case when b.tag_head_id = 1016 then outlist else 0 end) outlist1016,
+               sum(case when b.tag_head_id = 1016 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1016,
+               sum(case when b.tag_head_id = 1017 then inTotal else 0 end) inTotal1017,
+               sum(case when b.tag_head_id = 1017 then inlist else 0 end)  inlist1017,
+               sum(case when b.tag_head_id = 1017 then inTotal - inlist else 0 end) inUnfinish1017,
+               sum(case when b.tag_head_id = 1017 then outlist else 0 end) outlist1017,
+               sum(case when b.tag_head_id = 1017 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1017,
+               sum(case when b.tag_head_id = 1019 then inTotal else 0 end) inTotal1019,
+               sum(case when b.tag_head_id = 1019 then inlist else 0 end)  inlist1019,
+               sum(case when b.tag_head_id = 1019 then inTotal - inlist else 0 end) inUnfinish1019,
+               sum(case when b.tag_head_id = 1019 then outlist else 0 end) outlist1019,
+               sum(case when b.tag_head_id = 1019 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1019
+        from (
+                 select * from (
+                       select distinct town_code, town_name
+                       from pf_bas_source s
+                       inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+                       where s.is_deleted = 0
+                         and d.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+                    ) a
+                    cross join (
+                     select tag_head_id
+                     from pf_bas_tag_head
+                     where tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+                 ) b
+             ) b
+            inner join pf_bas_region r on r.region_code = b.town_code
+            left join (
+            select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+            from (
+                     select s.town_code, c.tag_head_id, count(case when list_type = 0 then 1 end) inTotal,
+                            nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+                            nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+                            nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+                     from pf_bas_constructioninfo c
+                              inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+                              inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+                     where c.is_deleted = 0 and c.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+                     group by s.town_code, c.tag_head_id
+                 )
+        ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+        group by b.town_code, b.town_name, r.sort_id
+        order by r.sort_id
+    </select>
+
+    <!--总责考评分列表合计-->
+    <select id="getBlameScoreTotal" resultType="com.ruoyi.framework.web.domain.ExportScoreListEntity">
+     select '合计' townName,
+		 sum(intotal) intotal,sum(inlist) inlist,sum(inunfinish) inunfinish,sum(outlist) outlist,
+		 round(sum(inlist) / sum(intotal) * 100, 2) rate,
+		 sum(intotal1002) intotal1002,sum(inlist1002) inlist1002,sum(inunfinish1002) inunfinish1002,sum(outlist1002) outlist1002,
+		 round(sum(inlist1002) / sum(intotal1002) * 100, 2) rate1002,
+		 sum(intotal1003) intotal1003,sum(inlist1003) inlist1003,sum(inunfinish1003) inunfinish1003,sum(outlist1003) outlist1003,
+		 round(sum(inlist1003) / sum(intotal1003) * 100, 2) rate1003,
+		 sum(intotal1004) intotal1004,sum(inlist1004) inlist1004,sum(inunfinish1004) inunfinish1004,sum(outlist1004) outlist1004,
+		 round(sum(inlist1004) / sum(intotal1004) * 100, 2) rate1004,
+		 sum(intotal1006) intotal1006,sum(inlist1006) inlist1006,sum(inunfinish1006) inunfinish1006,sum(outlist1006) outlist1006,
+		 round(sum(inlist1006) / sum(intotal1006) * 100, 2) rate1006,
+		 sum(intotal1012) intotal1012,sum(inlist1012) inlist1012,sum(inunfinish1012) inunfinish1012,sum(outlist1012) outlist1012,
+		 round(sum(inlist1012) / sum(intotal1012) * 100, 2) rate1012,
+		 sum(intotal1013) intotal1013,sum(inlist1013) inlist1013,sum(inunfinish1013) inunfinish1013,sum(outlist1013) outlist1013,
+		 round(sum(inlist1013) / sum(intotal1013) * 100, 2) rate1013,
+		 sum(intotal1014) intotal1014,sum(inlist1014) inlist1014,sum(inunfinish1014) inunfinish1014,sum(outlist1014) outlist1014,
+		 round(sum(inlist1014) / sum(intotal1014) * 100, 2) rate1014,
+		 sum(intotal1015) intotal1015,sum(inlist1015) inlist1015,sum(inunfinish1015) inunfinish1015,sum(outlist1015) outlist1015,
+		 round(sum(inlist1015) / sum(intotal1015) * 100, 2) rate1015,
+		 sum(intotal1016) intotal1016,sum(inlist1016) inlist1016,sum(inunfinish1016) inunfinish1016,sum(outlist1016) outlist1016,
+		 round(sum(inlist1016) / sum(intotal1016) * 100, 2) rate1016,
+		 sum(intotal1017) intotal1017,sum(inlist1017) inlist1017,sum(inunfinish1017) inunfinish1017,sum(outlist1017) outlist1017,
+		 round(sum(inlist1017) / sum(intotal1017) * 100, 2) rate1017,
+		 sum(intotal1019) intotal1019,sum(inlist1019) inlist1019,sum(inunfinish1019) inunfinish1019,sum(outlist1019) outlist1019,
+		 round(sum(inlist1019) / sum(intotal1019) * 100, 2) rate1019
+		 from (
+         select b.town_name townName,
+               sum(inTotal) inTotal,sum(inlist) inlist,
+               sum(inTotal) - sum(inlist) inUnfinish,sum(outlist) outlist,
+               case when sum(inTotal) > 0 then round(sum(inlist) / sum(inTotal) * 100, 2) else 0 end rate,
+               sum(case when b.tag_head_id = 1002 then inTotal else 0 end) inTotal1002,
+               sum(case when b.tag_head_id = 1002 then inlist else 0 end)  inlist1002,
+               sum(case when b.tag_head_id = 1002 then inTotal - inlist else 0 end) inUnfinish1002,
+               sum(case when b.tag_head_id = 1002 then outlist else 0 end) outlist1002,
+               sum(case when b.tag_head_id = 1002 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1002,
+               sum(case when b.tag_head_id = 1003 then inTotal else 0 end) inTotal1003,
+               sum(case when b.tag_head_id = 1003 then inlist else 0 end)  inlist1003,
+               sum(case when b.tag_head_id = 1003 then inTotal - inlist else 0 end) inUnfinish1003,
+               sum(case when b.tag_head_id = 1003 then outlist else 0 end) outlist1003,
+               sum(case when b.tag_head_id = 1003 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1003,
+               sum(case when b.tag_head_id = 1004 then inTotal else 0 end) inTotal1004,
+               sum(case when b.tag_head_id = 1004 then inlist else 0 end)  inlist1004,
+               sum(case when b.tag_head_id = 1004 then inTotal - inlist else 0 end) inUnfinish1004,
+               sum(case when b.tag_head_id = 1004 then outlist else 0 end) outlist1004,
+               sum(case when b.tag_head_id = 1004 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1004,
+               sum(case when b.tag_head_id = 1006 then inTotal else 0 end) inTotal1006,
+               sum(case when b.tag_head_id = 1006 then inlist else 0 end)  inlist1006,
+               sum(case when b.tag_head_id = 1006 then inTotal - inlist else 0 end) inUnfinish1006,
+               sum(case when b.tag_head_id = 1006 then outlist else 0 end) outlist1006,
+               sum(case when b.tag_head_id = 1006 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1006,
+               sum(case when b.tag_head_id = 1012 then inTotal else 0 end) inTotal1012,
+               sum(case when b.tag_head_id = 1012 then inlist else 0 end)  inlist1012,
+               sum(case when b.tag_head_id = 1012 then inTotal - inlist else 0 end) inUnfinish1012,
+               sum(case when b.tag_head_id = 1012 then outlist else 0 end) outlist1012,
+               sum(case when b.tag_head_id = 1012 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1012,
+               sum(case when b.tag_head_id = 1013 then inTotal else 0 end) inTotal1013,
+               sum(case when b.tag_head_id = 1013 then inlist else 0 end)  inlist1013,
+               sum(case when b.tag_head_id = 1013 then inTotal - inlist else 0 end) inUnfinish1013,
+               sum(case when b.tag_head_id = 1013 then outlist else 0 end) outlist1013,
+               sum(case when b.tag_head_id = 1013 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1013,
+               sum(case when b.tag_head_id = 1014 then inTotal else 0 end) inTotal1014,
+               sum(case when b.tag_head_id = 1014 then inlist else 0 end)  inlist1014,
+               sum(case when b.tag_head_id = 1014 then inTotal - inlist else 0 end) inUnfinish1014,
+               sum(case when b.tag_head_id = 1014 then outlist else 0 end) outlist1014,
+               sum(case when b.tag_head_id = 1014 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1014,
+               sum(case when b.tag_head_id = 1015 then inTotal else 0 end) inTotal1015,
+               sum(case when b.tag_head_id = 1015 then inlist else 0 end)  inlist1015,
+               sum(case when b.tag_head_id = 1015 then inTotal - inlist else 0 end) inUnfinish1015,
+               sum(case when b.tag_head_id = 1015 then outlist else 0 end) outlist1015,
+               sum(case when b.tag_head_id = 1015 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1015,
+               sum(case when b.tag_head_id = 1016 then inTotal else 0 end) inTotal1016,
+               sum(case when b.tag_head_id = 1016 then inlist else 0 end)  inlist1016,
+               sum(case when b.tag_head_id = 1016 then inTotal - inlist else 0 end) inUnfinish1016,
+               sum(case when b.tag_head_id = 1016 then outlist else 0 end) outlist1016,
+               sum(case when b.tag_head_id = 1016 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1016,
+               sum(case when b.tag_head_id = 1017 then inTotal else 0 end) inTotal1017,
+               sum(case when b.tag_head_id = 1017 then inlist else 0 end)  inlist1017,
+               sum(case when b.tag_head_id = 1017 then inTotal - inlist else 0 end) inUnfinish1017,
+               sum(case when b.tag_head_id = 1017 then outlist else 0 end) outlist1017,
+               sum(case when b.tag_head_id = 1017 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1017,
+               sum(case when b.tag_head_id = 1019 then inTotal else 0 end) inTotal1019,
+               sum(case when b.tag_head_id = 1019 then inlist else 0 end)  inlist1019,
+               sum(case when b.tag_head_id = 1019 then inTotal - inlist else 0 end) inUnfinish1019,
+               sum(case when b.tag_head_id = 1019 then outlist else 0 end) outlist1019,
+               sum(case when b.tag_head_id = 1019 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1019
+        from (
+                 select * from (
+                                   select distinct town_code, town_name
+                                   from pf_bas_source s
+                                            inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+                                   where s.is_deleted = 0
+                                     and d.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+                               ) a
+                                   cross join (
+                     select tag_head_id
+                     from pf_bas_tag_head
+                     where tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+                 ) b
+             ) b
+                 left join (
+            select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+            from (
+                     select s.town_code, c.tag_head_id, count(case when list_type = 0 then 1 end) inTotal,
+                            nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+                            nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+                            nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+                     from pf_bas_constructioninfo c
+                              inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+                              inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+                     where c.is_deleted = 0 and c.tag_head_id in (1004, 1006, 1002, 1003, 1012, 1013, 1014, 1015, 1016, 1019, 1017)
+                     group by s.town_code, c.tag_head_id
+                 )
+        ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+        group by b.town_name )
+    </select>
+
+    <!--涉气责考评分列表导出-->
+    <select id="getBlameScoreGasList" resultType="com.ruoyi.framework.web.domain.ExportScoreGasEntity">
+        select * from (
+                          select t.*, 3 maxScore,
+                                 case when rate / 100 / tlimit * 3 > 3 then 3 else round(rate / 100 / tlimit * 3, 2) end score
+                          from (
+                                   select b.town_name townName,
+                                          sum(inTotal) inTotal,
+                                          sum(inlist) inlist,
+                                          sum(inTotal) - sum(inlist) inUnfinish,
+                                          sum(outlist) outlist,
+                                          round(sum(inlist) / sum(inTotal) * 100, 2) rate,
+                                          case
+                                              when sum(inTotal) > 500 then 0.8
+                                              when sum(inTotal) between 301 and 500 then 0.85
+                                              when sum(inTotal) between 101 and 300 then 0.9
+                                              else 0.95 end tlimit,
+                                          sum(case when b.tag_head_id = 1004 then inTotal else 0 end) inTotal1004,
+                                          sum(case when b.tag_head_id = 1004 then inlist else 0 end)  inlist1004,
+                                          sum(case when b.tag_head_id = 1004 then inTotal - inlist else 0 end) inUnfinish1004,
+                                          sum(case when b.tag_head_id = 1004 then outlist else 0 end) outlist1004,
+                                          sum(case when b.tag_head_id = 1004 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1004,
+                                          sum(case when b.tag_head_id = 1006 then inTotal else 0 end) inTotal1006,
+                                          sum(case when b.tag_head_id = 1006 then inlist else 0 end)  inlist1006,
+                                          sum(case when b.tag_head_id = 1006 then inTotal - inlist else 0 end) inUnfinish1006,
+                                          sum(case when b.tag_head_id = 1006 then outlist else 0 end) outlist1006,
+                                          sum(case when b.tag_head_id = 1006 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1006,
+                                          sum(case when b.tag_head_id = 1013 then inTotal else 0 end) inTotal1013,
+                                          sum(case when b.tag_head_id = 1013 then inlist else 0 end)  inlist1013,
+                                          sum(case when b.tag_head_id = 1013 then inTotal - inlist else 0 end) inUnfinish1013,
+                                          sum(case when b.tag_head_id = 1013 then outlist else 0 end) outlist1013,
+                                          sum(case when b.tag_head_id = 1013 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1013,
+                                          sum(case when b.tag_head_id = 1014 then inTotal else 0 end) inTotal1014,
+                                          sum(case when b.tag_head_id = 1014 then inlist else 0 end)  inlist1014,
+                                          sum(case when b.tag_head_id = 1014 then inTotal - inlist else 0 end) inUnfinish1014,
+                                          sum(case when b.tag_head_id = 1014 then outlist else 0 end) outlist1014,
+                                          sum(case when b.tag_head_id = 1014 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1014
+                                   from (
+                                            select * from (
+                                                              select distinct town_code, town_name
+                                                              from pf_bas_source s
+                                                              inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+                                                              where s.is_deleted = 0 and d.tag_head_id in (1004, 1006, 1013, 1014)
+                                                          ) a
+                                                              cross join (
+                                                select tag_head_id
+                                                from pf_bas_tag_head
+                                                where tag_head_id in (1004, 1006, 1013, 1014)
+                                            ) b
+                                        ) b
+                                            left join (
+                                       select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+                                       from (
+                                                select s.town_code, c.tag_head_id, count(case when list_type = 0 then 1 end) inTotal,
+                                                       nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+                                                       nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+                                                       nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+                                                from pf_bas_constructioninfo c
+                                                         inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+                                                         inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+                                                where c.is_deleted = 0 and c.tag_head_id in (1004, 1006, 1013, 1014)
+                                                group by s.town_code, c.tag_head_id
+                                            )
+                                   ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+                                   group by b.town_name
+                               ) t
+                      )
+        order by score desc,rate desc
+    </select>
+
+    <!--涉气责考评分列表合计-->
+    <select id="getBlameScoreGasTotal" resultType="com.ruoyi.framework.web.domain.ExportScoreGasEntity">
+    select '合计' townName,sum(intotal) intotal,sum(inlist) inlist,sum(inunfinish) inunfinish ,sum(outlist) outlist ,round(sum(inlist) / sum(intotal) * 100, 2) rate,
+	null tlimit,sum(intotal1004) intotal1004,sum(inlist1004) inlist1004,sum(inunfinish1004) inunfinish1004,sum(outlist1004) outlist1004,
+	round(sum(inlist1004) / sum(intotal1004) * 100, 2) rate1004,
+	sum(intotal1006) intotal1006,sum(inlist1006) inlist1006,sum(inunfinish1006) inunfinish1006,sum(outlist1006) outlist1006,
+	round(sum(inlist1006) / sum(intotal1006) * 100, 2) rate1006,
+	sum(intotal1013) intotal1013,sum(inlist1013) inlist1013,sum(inunfinish1013) inunfinish1013,sum(outlist1013) outlist1013,
+	round(sum(inlist1013) / sum(intotal1013) * 100, 2) rate1013,
+	sum(intotal1014) intotal1014,sum(inlist1014) inlist1014,sum(inunfinish1014) inunfinish1014,sum(outlist1014) outlist1014,
+	round(sum(inlist1014) / sum(intotal1014) * 100, 2) rate1014,'3' maxscore,null score
+		from (
+             select t.*, 3 maxScore,
+                  case when rate / 100 / tlimit * 3 > 3 then 3 else round(rate / 100 / tlimit * 3, 2) end score
+                   from (
+                          select b.town_name townName,
+                          sum(inTotal) inTotal,
+                          sum(inlist) inlist,
+                                          sum(inTotal) - sum(inlist) inUnfinish,
+                                          sum(outlist) outlist,
+                                          round(sum(inlist) / sum(inTotal) * 100, 2) rate,
+                                          case
+                                              when sum(inTotal) > 500 then 0.8
+                                              when sum(inTotal) between 301 and 500 then 0.85
+                                              when sum(inTotal) between 101 and 300 then 0.9
+                                              else 0.95 end tlimit,
+                                          sum(case when b.tag_head_id = 1004 then inTotal else 0 end) inTotal1004,
+                                          sum(case when b.tag_head_id = 1004 then inlist else 0 end)  inlist1004,
+                                          sum(case when b.tag_head_id = 1004 then inTotal - inlist else 0 end) inUnfinish1004,
+                                          sum(case when b.tag_head_id = 1004 then outlist else 0 end) outlist1004,
+                                          sum(case when b.tag_head_id = 1004 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1004,
+                                          sum(case when b.tag_head_id = 1006 then inTotal else 0 end) inTotal1006,
+                                          sum(case when b.tag_head_id = 1006 then inlist else 0 end)  inlist1006,
+                                          sum(case when b.tag_head_id = 1006 then inTotal - inlist else 0 end) inUnfinish1006,
+                                          sum(case when b.tag_head_id = 1006 then outlist else 0 end) outlist1006,
+                                          sum(case when b.tag_head_id = 1006 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1006,
+                                          sum(case when b.tag_head_id = 1013 then inTotal else 0 end) inTotal1013,
+                                          sum(case when b.tag_head_id = 1013 then inlist else 0 end)  inlist1013,
+                                          sum(case when b.tag_head_id = 1013 then inTotal - inlist else 0 end) inUnfinish1013,
+                                          sum(case when b.tag_head_id = 1013 then outlist else 0 end) outlist1013,
+                                          sum(case when b.tag_head_id = 1013 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1013,
+                                          sum(case when b.tag_head_id = 1014 then inTotal else 0 end) inTotal1014,
+                                          sum(case when b.tag_head_id = 1014 then inlist else 0 end)  inlist1014,
+                                          sum(case when b.tag_head_id = 1014 then inTotal - inlist else 0 end) inUnfinish1014,
+                                          sum(case when b.tag_head_id = 1014 then outlist else 0 end) outlist1014,
+                                          sum(case when b.tag_head_id = 1014 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1014
+                                   from (
+                                            select * from (
+                                                              select distinct town_code, town_name
+                                                              from pf_bas_source s
+                                                              inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+                                                              where s.is_deleted = 0 and d.tag_head_id in (1004, 1006, 1013, 1014)
+                                                          ) a
+                                                              cross join (
+                                                select tag_head_id
+                                                from pf_bas_tag_head
+                                                where tag_head_id in (1004, 1006, 1013, 1014)
+                                            ) b
+                                        ) b
+                                            left join (
+                                       select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+                                       from (
+                                                select s.town_code, c.tag_head_id, count(case when list_type = 0 then 1 end) inTotal,
+                                                       nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+                                                       nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+                                                       nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+                                                from pf_bas_constructioninfo c
+                                                         inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+                                                         inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+                                                where c.is_deleted = 0 and c.tag_head_id in (1004, 1006, 1013, 1014)
+                                                group by s.town_code, c.tag_head_id
+                                            )
+                                   ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+                                   group by b.town_name
+                               ) t
+                      )
+    </select>
+
+    <!--涉水责考评分列表导出-->
+    <select id="getBlameScoreWaterList" resultType="com.ruoyi.framework.web.domain.ExportScoreWaterEntity">
+        select * from (
+            select t.*, 2 as maxScore,
+            case when (tlimit - rate / 100) / tlimit * 2 &lt; 0 then 0 else round((tlimit - rate / 100) / tlimit * 2, 2) end score
+            from (
+                select b.town_name as townName,
+                sum(inTotal) inTotal,
+                sum(inlist) inlist,
+                sum(inTotal) - sum(inlist) inUnfinish,
+                round(sum(inlist) / sum(inTotal) * 100, 2) rate,
+                case when sum(inTotal) > 800 then 0.8
+                when sum(inTotal) between 501 and 800 then 0.85
+                when sum(inTotal) between 201 and 500 then 0.9
+                else 0.95 end tlimit,
+                sum(case when b.tag_head_id = 1002 then inTotal else 0 end) inTotal1002,
+                sum(case when b.tag_head_id = 1002 then inlist else 0 end) inlist1002,
+                sum(case when b.tag_head_id = 1002 then inTotal - inlist else 0 end) inUnfinish1002,
+                sum(case when b.tag_head_id = 1002 then outlist else 0 end) outlist1002,
+                sum(case when b.tag_head_id = 1002 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1002,
+                sum(case when b.tag_head_id = 1003 then inTotal else 0 end) inTotal1003,
+                sum(case when b.tag_head_id = 1003 then inlist else 0 end) inlist1003,
+                sum(case when b.tag_head_id = 1003 then inTotal - inlist else 0 end) inUnfinish1003,
+                sum(case when b.tag_head_id = 1003 then outlist else 0 end) outlist1003,
+                sum(case when b.tag_head_id = 1003 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1003,
+                sum(case when b.tag_head_id = 1012 then inTotal else 0 end) inTotal1012,
+                sum(case when b.tag_head_id = 1012 then inlist else 0 end) inlist1012,
+                sum(case when b.tag_head_id = 1012 then inTotal - inlist else 0 end) inUnfinish1012,
+                sum(case when b.tag_head_id = 1012 then outlist else 0 end) outlist1012,
+                sum(case when b.tag_head_id = 1012 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1012,
+                sum(case when b.tag_head_id = 1015 then inTotal else 0 end) inTotal1015,
+                sum(case when b.tag_head_id = 1015 then inlist else 0 end) inlist1015,
+                sum(case when b.tag_head_id = 1015 then inTotal - inlist else 0 end) inUnfinish1015,
+                sum(case when b.tag_head_id = 1015 then outlist else 0 end) outlist1015,
+                sum(case when b.tag_head_id = 1015 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1015,
+                sum(case when b.tag_head_id = 1016 then inTotal else 0 end) inTotal1016,
+                sum(case when b.tag_head_id = 1016 then inlist else 0 end) inlist1016,
+                sum(case when b.tag_head_id = 1016 then inTotal - inlist else 0 end) inUnfinish1016,
+                sum(case when b.tag_head_id = 1016 then outlist else 0 end) outlist1016,
+                sum(case when b.tag_head_id = 1016 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1016,
+                sum(case when b.tag_head_id = 1017 then inTotal else 0 end) inTotal1017,
+                sum(case when b.tag_head_id = 1017 then inlist else 0 end) inlist1017,
+                sum(case when b.tag_head_id = 1017 then inTotal - inlist else 0 end) inUnfinish1017,
+                sum(case when b.tag_head_id = 1017 then outlist else 0 end) outlist1017,
+                sum(case when b.tag_head_id = 1017 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1017,
+                sum(case when b.tag_head_id = 1019 then inTotal else 0 end) inTotal1019,
+                sum(case when b.tag_head_id = 1019 then inlist else 0 end) inlist1019,
+                sum(case when b.tag_head_id = 1019 then inTotal - inlist else 0 end) inUnfinish1019,
+                sum(case when b.tag_head_id = 1019 then outlist else 0 end) outlist1019,
+                sum(case when b.tag_head_id = 1019 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1019
+                from (
+                    select * from (
+                        select distinct town_code, town_name
+                        from pf_bas_source s
+                        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+                        where s.is_deleted = 0
+                        and d.tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+                    ) a
+                    cross join (
+                        select tag_head_id
+                        from pf_bas_tag_head
+                        where tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+                    ) b
+                ) b
+                left join (
+                    select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+                    from (
+                        select s.town_code, c.tag_head_id,
+                        count(case when list_type = 0 then 1 end) inTotal,
+                        nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) inlist,
+                        nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end), 0) outlist,
+                        nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+                        from pf_bas_constructioninfo c
+                        inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+                        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and d.is_deleted = 0
+                        where c.is_deleted = 0 and c.tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+                        group by s.town_code, c.tag_head_id
+                    )
+                ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+                group by b.town_name
+            ) t
+        )
+        order by score,rate desc
+    </select>
+
+    <!--涉水责考评分列表合计-->
+    <select id="getBlameScoreWaterTotal" resultType="com.ruoyi.framework.web.domain.ExportScoreWaterEntity">
+        select '合计' townName,sum(intotal) intotal,sum(inlist) inlist,sum(inunfinish) inunfinish ,
+        round(sum(inlist) / sum(intotal) * 100, 2) rate, null tlimit,
+        sum(intotal1002) intotal1002,sum(inlist1002) inlist1002,sum(inunfinish1002) inunfinish1002,sum(outlist1002)
+        outlist1002,
+        round(sum(inlist1002) / sum(intotal1002) * 100, 2) rate1002,
+        sum(intotal1003) intotal1003,sum(inlist1003) inlist1003,sum(inunfinish1003) inunfinish1003,sum(outlist1003)
+        outlist1003,
+        round(sum(inlist1003) / sum(intotal1003) * 100, 2) rate1003,
+        sum(intotal1012) intotal1012,sum(inlist1012) inlist1012,sum(inunfinish1012) inunfinish1012,sum(outlist1012)
+        outlist1012,
+        round(sum(inlist1012) / sum(intotal1012) * 100, 2) rate1012,
+        sum(intotal1015) intotal1015,sum(inlist1015) inlist1015,sum(inunfinish1015) inunfinish1015,sum(outlist1015)
+        outlist1015,
+        round(sum(inlist1015) / sum(intotal1015) * 100, 2) rate1015,
+        sum(intotal1016) intotal1016,sum(inlist1016) inlist1016,sum(inunfinish1016) inunfinish1016,sum(outlist1016)
+        outlist1016,
+        round(sum(inlist1016) / sum(intotal1016) * 100, 2) rate1016,
+        sum(intotal1017) intotal1017,sum(inlist1017) inlist1017,sum(inunfinish1017) inunfinish1017,sum(outlist1017)
+        outlist1017,
+        round(sum(inlist1017) / sum(intotal1017) * 100, 2) rate1017,
+        sum(intotal1019) intotal1019,sum(inlist1019) inlist1019,sum(inunfinish1019) inunfinish1019,sum(outlist1019)
+        outlist1019,
+        round(sum(inlist1019) / sum(intotal1019) * 100, 2) rate1019,'2' maxscore,null score
+        from (
+        select t.*, 2 as maxScore,
+        case when (tlimit - rate / 100) / tlimit * 2  &lt;  0 then 0 else round((tlimit - rate / 100) / tlimit * 2, 2) end score
+        from (
+        select b.town_name as townName,
+        sum(inTotal) inTotal,
+        sum(inlist) inlist,
+        sum(inTotal) - sum(inlist) inUnfinish,
+        round(sum(inlist) / sum(inTotal) * 100, 2) rate,
+        case when sum(inTotal) > 800 then 0.8
+        when sum(inTotal) between 501 and 800 then 0.85
+        when sum(inTotal) between 201 and 500 then 0.9
+        else 0.95 end tlimit,
+        sum(case when b.tag_head_id = 1002 then inTotal else 0 end) inTotal1002,
+        sum(case when b.tag_head_id = 1002 then inlist else 0 end) inlist1002,
+        sum(case when b.tag_head_id = 1002 then inTotal - inlist else 0 end) inUnfinish1002,
+        sum(case when b.tag_head_id = 1002 then outlist else 0 end) outlist1002,
+        sum(case when b.tag_head_id = 1002 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1002,
+        sum(case when b.tag_head_id = 1003 then inTotal else 0 end) inTotal1003,
+        sum(case when b.tag_head_id = 1003 then inlist else 0 end) inlist1003,
+        sum(case when b.tag_head_id = 1003 then inTotal - inlist else 0 end) inUnfinish1003,
+        sum(case when b.tag_head_id = 1003 then outlist else 0 end) outlist1003,
+        sum(case when b.tag_head_id = 1003 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1003,
+        sum(case when b.tag_head_id = 1012 then inTotal else 0 end) inTotal1012,
+        sum(case when b.tag_head_id = 1012 then inlist else 0 end) inlist1012,
+        sum(case when b.tag_head_id = 1012 then inTotal - inlist else 0 end) inUnfinish1012,
+        sum(case when b.tag_head_id = 1012 then outlist else 0 end) outlist1012,
+        sum(case when b.tag_head_id = 1012 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1012,
+        sum(case when b.tag_head_id = 1015 then inTotal else 0 end) inTotal1015,
+        sum(case when b.tag_head_id = 1015 then inlist else 0 end) inlist1015,
+        sum(case when b.tag_head_id = 1015 then inTotal - inlist else 0 end) inUnfinish1015,
+        sum(case when b.tag_head_id = 1015 then outlist else 0 end) outlist1015,
+        sum(case when b.tag_head_id = 1015 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1015,
+        sum(case when b.tag_head_id = 1016 then inTotal else 0 end) inTotal1016,
+        sum(case when b.tag_head_id = 1016 then inlist else 0 end) inlist1016,
+        sum(case when b.tag_head_id = 1016 then inTotal - inlist else 0 end) inUnfinish1016,
+        sum(case when b.tag_head_id = 1016 then outlist else 0 end) outlist1016,
+        sum(case when b.tag_head_id = 1016 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1016,
+        sum(case when b.tag_head_id = 1017 then inTotal else 0 end) inTotal1017,
+        sum(case when b.tag_head_id = 1017 then inlist else 0 end) inlist1017,
+        sum(case when b.tag_head_id = 1017 then inTotal - inlist else 0 end) inUnfinish1017,
+        sum(case when b.tag_head_id = 1017 then outlist else 0 end) outlist1017,
+        sum(case when b.tag_head_id = 1017 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1017,
+        sum(case when b.tag_head_id = 1019 then inTotal else 0 end) inTotal1019,
+        sum(case when b.tag_head_id = 1019 then inlist else 0 end) inlist1019,
+        sum(case when b.tag_head_id = 1019 then inTotal - inlist else 0 end) inUnfinish1019,
+        sum(case when b.tag_head_id = 1019 then outlist else 0 end) outlist1019,
+        sum(case when b.tag_head_id = 1019 and inTotal > 0 then round(inlist / inTotal * 100, 2) else 0 end) rate1019
+        from (
+        select * from (
+        select distinct town_code, town_name
+        from pf_bas_source s
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.is_deleted = 0
+        where s.is_deleted = 0
+        and d.tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+        ) a
+        cross join (
+        select tag_head_id
+        from pf_bas_tag_head
+        where tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+        ) b ) b
+        left join (
+        select town_code, tag_head_id, inTotal, inlist + not_install inlist, outlist
+        from (
+        select s.town_code, c.tag_head_id,
+        count(case when list_type = 0 then 1 end) inTotal,
+        nvl(sum(case when list_type = 0 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end),
+        0) inlist,
+        nvl(sum(case when list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1 then 1 end),
+        0) outlist,
+        nvl(sum(case when list_type = 0 and c.verify_status = 1 then 1 end), 0) not_install
+        from pf_bas_constructioninfo c
+        inner join pf_bas_source s on c.pf_source_id = s.source_id and s.is_deleted = 0
+        inner join pf_bas_tag_detail d on d.pf_source_id = s.source_id and d.tag_head_id = c.tag_head_id and
+        d.is_deleted = 0
+        where c.is_deleted = 0 and c.tag_head_id in (1002, 1003, 1012, 1015, 1016, 1017, 1019)
+        group by s.town_code, c.tag_head_id
+        ) ) c on c.town_code = b.town_code and c.tag_head_id = b.tag_head_id
+        group by b.town_name
+        ) t )
+    </select>
+
+
+    <!--统计状态数-->
+    <select id="getStatusCount" resultType="map" parameterType="MonitorTaskParam">
+        select count(case when construction_status = 0 then 1 end)             noconnected,
+               count(case when construction_status = 1 then 1 end)             constructed,
+               count(case when construction_status between 2 and 4 then 1 end) completed,
+               count(case when construction_status = 6 then 1 end)             accepted,
+               count(case when verify_status = 1 then 1 end) notinstalled,
+               count(case when verify_status = 2 then 1 end) suspend,
+               count(case when aduit_status = 0 then 1 end) applying
+        from pf_bas_constructioninfo c
+        left join pf_bas_task_adjust a on a.pf_source_id = c.pf_source_id and a.tag_head_id = c.tag_head_id and a.is_deleted = 0
+        inner join pf_bas_tag_detail td on td.pf_source_id = c.pf_source_id and td.tag_head_id = c.tag_head_id and td.is_deleted = 0
+        inner join pf_bas_tag_head h on h.tag_head_id = td.tag_head_id and h.is_active = 1
+        inner join pf_bas_source s on s.source_id = td.pf_source_id and s.is_deleted = 0
+        where c.is_deleted = 0 and h.is_active = 1
+--           and td.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1021, 1022, 1023)
+            ${dataScope}
+    </select>
+
+    <!--已登录企业数-->
+    <select id="getLoggedinForTownCode" resultType="int" parameterType="MonitorTaskParam">
+        select count(1) loggedin
+        from pf_bas_source_user u
+                 inner join pf_bas_source s on s.source_id = u.source_id and s.is_deleted = 0
+        where login_flag = 1 ${dataScope}
+    </select>
+
+    <!--总任务数-->
+    <select id="getAdditionNumber" parameterType="MonitorTaskParam" resultType="map">
+        select tag_head_id,
+               count(1)                                                                         total,
+               count(case when construction_status in (0, 1) and verify_status != 1 then 1 end) not_finish,
+               count(case when (construction_status in (2, 3, 4, 6) and verify_status != 1) or verify_status = 1 then 1 end)finish
+        from ( select d.tag_head_id, u.source_id, u.login_flag, c.construction_status, c.verify_status, a.adjust_item
+                 from pf_bas_tag_detail d
+                          inner join pf_bas_constructioninfo c
+                                     on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and
+                                        c.is_deleted = 0
+                          left join pf_bas_task_adjust a
+                                    on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and
+                                       a.aduit_status = 0 and a.is_deleted = 0
+                          left join pf_bas_source_user u on u.source_id = d.pf_source_id
+                          left join pf_bas_source s on s.source_id = u.source_id and s.is_deleted = 0
+                 where d.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
+                   and d.list_type = 0
+                   and d.is_deleted = 0 ${dataScope}
+             ) s
+        group by tag_head_id
+    </select>
+
+    <!--总记-->
+    <select id="getAggregateNumber" parameterType="MonitorTaskParam" resultType="map">
+        select count(1) total,
+        count(case when construction_status in (0, 1) and verify_status != 1 then 1 end) not_finish,
+        count(case
+        when (construction_status in (2, 3, 4, 6) and verify_status != 1) or verify_status = 1
+        then 1 end) finish
+        from (
+        select d.tag_head_id, u.source_id, u.login_flag, c.construction_status, c.verify_status, a.adjust_item
+        from pf_bas_tag_detail d
+        inner join pf_bas_constructioninfo c
+        on c.tag_head_id = d.tag_head_id and c.pf_source_id = d.pf_source_id and
+        c.is_deleted = 0
+        left join pf_bas_task_adjust a
+        on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id and
+        a.aduit_status = 0 and a.is_deleted = 0
+        left join pf_bas_source_user u on u.source_id = d.pf_source_id
+        left join pf_bas_source s on s.source_id = u.source_id and s.is_deleted = 0
+        where d.list_type = 0 and d.is_deleted = 0 ${dataScope}
+        <choose>
+            <when test="tagHeadIds != null and tagHeadIds.length !=0">
+                and d.tag_head_id in
+                <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                    #{tagHeadId,jdbcType=BIGINT}
+                </foreach>
+            </when>
+            <when test="tagHeadIds == null ">
+                and d.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
+            </when>
+        </choose>
+        ) s
+    </select>
+
+    <select id="getTotalAggregate" parameterType="MonitorTaskParam"
+            resultType="com.ruoyi.project.enterprise.domain.TaskSourceEntity">
+        select d.tag_head_id tagHeadId, u.source_id sourceId, s.full_name fullName, s.town_name townName,
+        h.tag_head_name tagHeadName
+        from pf_bas_tag_detail d
+        inner join pf_bas_tag_head h on d.tag_head_id=h.tag_head_id
+        inner join pf_bas_constructioninfo c on c.tag_head_id = d.tag_head_id
+        and c.pf_source_id = d.pf_source_id and c.is_deleted = 0
+        left join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+        left join pf_bas_source_user u on u.source_id = d.pf_source_id
+        left join pf_bas_task_adjust a on a.tag_head_id = c.tag_head_id and a.pf_source_id = c.pf_source_id
+        and a.aduit_status = 0 and a.is_deleted = 0
+        where d.is_deleted = 0
+        and d.tag_head_id in (1002, 1003, 1004, 1006, 1012, 1013, 1014, 1015, 1016, 1017, 1019)
+        <choose>
+            <when test="listType == 0">
+                and d.list_type = 0 and verify_status != 1 and construction_status &lt;= 1
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 1">
+                and d.list_type = 0 and (c.construction_status > 1 or (construction_status &lt;= 1 and c.verify_status = 1))
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 2">
+                and d.list_type = 0 and construction_status &lt;= 1 and c.verify_status = 1
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 3">
+                and d.list_type = 0 and c.construction_status = 2
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 4">
+                and d.list_type = 0 and c.construction_status = 3
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 5">
+                and d.list_type = 0 and c.construction_status = 4
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 6">
+                and d.list_type = 0 and c.construction_status = 6
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 7">
+                and d.list_type = 0 and c.construction_status = 0 and (u.login_flag = 0 or u.login_flag is null) and c.verify_status = 0
+                and a.adjust_item is null
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 8">
+                and d.list_type = 0 and c.construction_status = 0 and u.login_flag = 1 and c.verify_status = 0 and a.adjust_item is null
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 9">
+                and d.list_type = 0 and c.construction_status = 1 and c.verify_status = 0 and a.adjust_item is null
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 10">
+                and d.list_type = 0 and c.construction_status &lt;= 1 and c.verify_status = 2
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 11">
+                and d.list_type = 0 and c.construction_status &lt;= 1 and a.adjust_item = 1
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 12">
+                and d.list_type = 0 and c.construction_status &lt;= 1 and a.adjust_item = 0
+                <if test="tagHeadIds != null and tagHeadIds.length != 0 ">
+                    and d.tag_head_id in
+                    <foreach collection="tagHeadIds" open="(" close=")" item="tagHeadId" separator=",">
+                        #{tagHeadId,jdbcType=BIGINT}
+                    </foreach>
+                </if>
+            </when>
+            <when test="listType == 13">
+                and d.list_type = 0
+            </when>
+            <when test="listType == 14">
+                and d.list_type = 0 and ((c.construction_status in (2, 3, 4, 6) and c.verify_status != 1) or c.verify_status = 1)
+            </when>
+            <when test="listType == 15">
+                and d.list_type = 0 and not ((c.construction_status in (2, 3, 4, 6) and c.verify_status != 1) or c.verify_status = 1)
+            </when>
+            <when test="listType == 16">
+                and d.list_type = 1 and c.construction_status in (2, 3, 4, 6) and c.verify_status != 1
+            </when>
+        </choose>
+        <if test="townCode != null">and s.town_code = #{townCode}</if>
+        <if test="tagHeadId != null">and d.tag_head_id = #{tagHeadId}</if>
+    </select>
+
+</mapper>

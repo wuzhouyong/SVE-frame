@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.outwater.mapper.BasCheckPointMapper">
+
+    <resultMap id="basEntity" type="BasCheckPoint">
+        <id property="checkPointId" column="CheckPoint_Id"/>
+        <result property="collectId" column="Collect_Id"/>
+        <result property="sourceId" column="Source_Id"/>
+        <result property="checkPointName" column="CheckPoint_Name"/>
+        <result property="checkPointType" column="CheckPoint_Type"/>
+        <result property="isOnline" column="Is_Online"/>
+        <result property="checkDate" column="Check_Date"/>
+        <result property="fullName" column="Full_Name"/>
+        <result property="collectName" column="Collect_Name"/>
+        <result property="amount" column="Amount"/>
+        <result property="checkDate" column="CHECK_DATE"/>
+        <result property="dateCreated" column="DATE_CREATED"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+        <result property="latItude" column="latitude"/>
+        <result property="longItude" column="longitude"/>
+        <result property="acquisitionBrand" column="ACQUISITION_BRAND"/>
+        <result property="mn" column="mn"/>
+        <result property="ipAddress" column="IP_ADDRESS"/>
+        <result property="isEnvcert" column="IS_ENVCERT"/>
+    </resultMap>
+
+    <resultMap id="entity" type="CollectCheckPointEntity">
+        <result property="collectId" column="Collect_Id"/>
+        <result property="sourceId" column="Source_Id"/>
+        <result property="checkPointName" column="CheckPoint_Name"/>
+        <result property="checkPointType" column="CheckPoint_Type"/>
+        <result property="isOnline" column="Is_Online"/>
+        <result property="checkDate" column="Check_Date"/>
+        <result property="fullName" column="Full_Name"/>
+        <result property="mn" column="MN"/>
+        <result property="ipAddress" column="IpAddress"/>
+        <result property="brandName" column="Brand_Name"/>
+        <result property="collectName" column="Collect_Name"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+    </resultMap>
+
+    <resultMap id="nameAndId" type="NameAndIdEntity">
+        <result property="Name" column="CheckPoint_Name"/>
+        <result property="Id" column="CheckPoint_Id"/>
+    </resultMap>
+
+    <select id="checkConstruction" parameterType="String" resultType="int">
+        SELECT CONSTRUCTION_STATUS FROM DAT_CONSTRUCTIONINFO WHERE IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            and SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <select id="selectCheckPointIdNameList" parameterType="String" resultMap="nameAndId">
+        SELECT CheckPoint_Id,CheckPoint_Name FROM
+        (select rownum num, COLLECT_ID CheckPoint_Id,FULL_NAME CheckPoint_Name
+        from Bas_CheckPoint
+        where IS_DELETED = 0
+        <if test="checkPointName != null and checkPointName != ''">
+            and FULL_NAME like '%'|| #{checkPointName}||'%'
+        </if>
+        <if test="checkPointId != null and checkPointId != ''">
+            and COLLECT_ID like '%'|| #{checkPointId}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and source_id = #{sourceId}
+        </if>
+        ORDER by CheckPoint_Name)
+        WHERE num BETWEEN 1 AND 30
+    </select>
+
+    <delete id="deleteCheckPointById" parameterType="SqlInEntity">
+        UPDATE Bas_CheckPoint
+        <set>
+            is_deleted = 1,
+            <if test="updatedBy != null and updatedBy != ''">
+                updated_by = #{updatedBy},
+            </if>
+            date_updated = SYSDATE
+        </set>
+        where COLLECT_ID in
+        <foreach collection="array" item="checkPointId" open="(" separator="," close=")">
+            #{checkPointId}
+        </foreach>
+    </delete>
+
+    <select id="getCollectIdList" parameterType="SqlInEntity" resultMap="basEntity">
+        SELECT COLLECT_ID,SOURCE_ID,full_name,checkpoint_type,IS_ONLINE,
+        CHECK_DATE,IS_DELETED,CREATED_BY,UPDATED_BY,DATE_CREATED,DATE_UPDATED,
+        latitude,longitude,MN,IP_ADDRESS,ACQUISITION_BRAND,IS_ENVCERT
+        FROM Bas_CheckPoint where COLLECT_ID in
+        <foreach collection="array" item="checkPointId" open="(" separator="," close=")">
+            #{checkPointId}
+        </foreach>
+    </select>
+
+    <update id="updateCheckPoint" parameterType="BasCheckPoint">
+        UPDATE Bas_CheckPoint
+        <set>
+            Source_Id = #{sourceId, jdbcType=VARCHAR},
+            FULL_NAME = #{checkPointName, jdbcType=VARCHAR},
+            CheckPoint_Type = #{checkPointType, jdbcType=VARCHAR},
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where Collect_Id = #{collectId}
+    </update>
+
+    <select id="selectCheckPointList" parameterType="CollectCheckPointEntity" resultMap="entity">
+        select rownum num,s.Full_Name,p.MN,p.IP_ADDRESS IpAddress,p.ACQUISITION_BRAND Brand_Name,
+        p.collect_id,p.collect_id checkPointId,p.source_id,p.full_name checkpoint_Name,p.full_name Collect_Name,
+        p.checkpoint_type,p.is_online,p.Check_Date,p.is_deleted,p.created_by,p.updated_by,
+        p.date_created,p.date_updated,p.longitude,p.latitude,s.town_name townName,dc.construction_unit constructionUnit
+        from Bas_CheckPoint p
+        left join pf_bas_source s on p.SOURCE_ID = s.SOURCE_ID and s.is_deleted=0
+        left join basecenter.PF_BAS_CONSTRUCTIONINFO dc on s.source_id = dc.pf_source_id and dc.is_deleted=0
+        where p.IS_DELETED = 0 and dc.tag_head_id = 1012
+        <if test="fullName != null and fullName != ''">
+            and s.Full_Name like '%'||#{fullName}||'%'
+        </if>
+        <if test="mn != null and mn != ''">
+            and p.MN like '%'||#{mn}||'%'
+        </if>
+        <if test="checkPointName != null and checkPointName != ''">
+            and p.FULL_NAME like '%'||#{checkPointName}||'%'
+        </if>
+        <if test="checkPointType != null and checkPointType != ''">
+            and p.CheckPoint_Type like '%'||#{checkPointType}||'%'
+        </if>
+        <if test="brandName != null and brandName != ''">
+            and p.ACQUISITION_BRAND like '%'||#{brandName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.SOURCE_ID = #{sourceId}
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="constructionUnit != null and constructionUnit != ''">
+            and dc.construction_unit like '%'||#{constructionUnit}||'%'
+        </if>
+        ${dataScope}
+        ORDER BY p.date_created DESC
+    </select>
+
+    <select id="getTotal" resultType="int" parameterType="CollectCheckPointEntity">
+        select count(1) from Bas_CheckPoint p
+        left join pf_bas_source s on p.SOURCE_ID = s.SOURCE_ID
+        where p.IS_DELETED = 0
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="mn != null and mn != ''">
+            and p.MN like '%'|| #{mn}||'%'
+        </if>
+        <if test="checkPointType != null and checkPointType != ''">
+            and p.CheckPoint_Type like '%'|| #{checkPointType}||'%'
+        </if>
+        <if test="checkPointName != null and checkPointName != ''">
+            and p.FULL_NAME like '%'|| #{checkPointName}||'%'
+        </if>
+        ${dataScope}
+    </select>
+
+    <insert id="insertCheckPoint" parameterType="BasCheckPoint">
+        INSERT INTO Bas_CheckPoint (
+        Collect_Id,Source_Id,FULL_NAME,CheckPoint_Type,is_deleted,created_by,
+        updated_by,date_created,date_updated ) VALUES (
+        <if test="collectId != null and collectId != ''">#{collectId},</if>
+        <if test="sourceId != null and sourceId != ''">#{sourceId},</if>
+        <if test="checkPointName != null and checkPointName != ''">#{checkPointName},</if>
+        <if test="checkPointType != null and checkPointType != ''">#{checkPointType},</if>
+        0,
+        <if test="createdBy != null and createdBy != ''">#{createdBy},</if>
+        <if test="updatedBy != null and updatedBy != ''">#{updatedBy},</if>
+        sysdate,
+        sysdate )
+    </insert>
+
+    <select id="isExitCon" resultType="int">
+      select  count(1) from Dat_ConStructionInfo where source_id=#{sourceId}
+    </select>
+
+</mapper>

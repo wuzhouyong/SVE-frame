@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.construction.mapper.ConstructionElementMapper">
+    <select id="getNoFacilityElement" parameterType="string" resultType="map">
+        select count(1) cnt, listagg(te.ele_type_id, ',') within group (order by te.ele_type_id) ele_type_ids
+        from basecenter.pf_bas_tag_element te
+        left join (
+            select distinct ele_type_id, facility_id
+            from bas_checkpoint_element ce
+            inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+            where ce.is_deleted = 0
+            and c.source_id = #{sourceId}
+        ) e on e.ele_type_id = te.ele_type_id
+        where te.is_deleted = 0 and e.facility_id is null and te.tag_head_id = #{tagHeadId}
+    </select>
+
+    <select id="getNoFacilityElementForVOC" parameterType="string" resultType="map">
+        select count(1) cnt, listagg(te.ele_type_id, ',') within group (order by te.ele_type_id) ele_type_ids
+        from basecenter.pf_bas_tag_element te
+        left join (
+            select distinct ele_type_id, facility_id, tech_id
+            from bas_checkpoint_element ce
+            inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+            where ce.is_deleted = 0
+            and c.source_id = #{sourceId}
+        ) e on e.ele_type_id = te.ele_type_id
+        where te.is_deleted = 0 and e.facility_id is null and e.tech_id is null and te.tag_head_id = #{tagHeadId}
+    </select>
+
+    <select id="getNoFacilityElementForQiXiu" parameterType="string" resultType="map">
+        select count(1) cnt, listagg(te.ele_type_id, ',') within group (order by te.ele_type_id) ele_type_ids
+        from basecenter.pf_bas_tag_element te
+        left join (
+            select distinct ele_type_id, outlet_id
+            from bas_checkpoint_element ce
+            inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+            where ce.is_deleted = 0
+            and c.source_id = #{sourceId}
+        ) e on e.ele_type_id = te.ele_type_id
+        where te.is_deleted = 0 and e.outlet_id is null and te.tag_head_id = #{tagHeadId}
+    </select>
+
+    <select id="getHasDataElement" parameterType="string" resultType="map">
+        select count(1) cnt, listagg(te.ele_type_id, ',') within group (order by te.ele_type_id) ele_type_ids
+        from basecenter.pf_bas_tag_element te
+        left join (
+            select ele_type_id, max(ce.is_online) cnt
+            from bas_checkpoint_element ce
+            inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+            where ce.is_deleted = 0 and c.source_id = #{sourceId}
+            group by ele_type_id
+        ) e on e.ele_type_id = te.ele_type_id
+        where te.is_deleted = 0 and e.cnt is not null and te.tag_head_id = #{tagHeadId}
+    </select>
+
+    <select id="getNoDataElement" parameterType="string" resultType="map">
+        select count(1) cnt, listagg(te.ele_type_id, ',') within group (order by te.ele_type_id) ele_type_ids
+        from basecenter.pf_bas_tag_element te
+        left join (
+            select ele_type_id, max(ce.is_online) cnt
+            from bas_checkpoint_element ce
+            inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+            where ce.is_deleted = 0 and c.source_id = #{sourceId}
+            group by ele_type_id
+        ) e on e.ele_type_id = te.ele_type_id
+        where te.is_deleted = 0 and (e.cnt is null or e.cnt = 0) and te.tag_head_id = #{tagHeadId}
+    </select>
+</mapper>

@@ -1,0 +1,933 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.enterprise.mapper.PfBasSourceMapper">
+
+    <resultMap type="PfBasSource" id="PfBasSourceResult">
+        <result property="sourceId" column="source_id"/>
+        <result property="sourceNo" column="source_no"/>
+        <result property="fullName" column="full_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="organizationCode" column="organization_code"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+        <result property="villageCode" column="village_code"/>
+        <result property="villageName" column="village_name"/>
+        <result property="industryCode" column="industry_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="address" column="address"/>
+        <result property="longitude" column="longitude"/>
+        <result property="latitude" column="latitude"/>
+        <result property="sourceStatus" column="source_status"/>
+        <result property="sourceScale" column="source_scale"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="legalPersonPhone" column="legal_person_phone"/>
+        <result property="envContactName" column="env_contact_name"/>
+        <result property="envContactPhone" column="env_contact_phone"/>
+        <result property="inflowWaterName" column="inflow_water_name"/>
+        <result property="processFlow" column="process_flow"/>
+        <result property="envMonitorLevel" column="env_monitor_level"/>
+        <result property="hasWasteWater" column="has_waste_water"/>
+        <result property="hasWasteGas" column="has_waste_gas"/>
+        <result property="hasGeneralSolid" column="has_general_solid"/>
+        <result property="hasHazardousWaste" column="has_hazardous_waste"/>
+        <result property="hasRareEarth" column="has_rare_earth"/>
+        <result property="memo" column="memo"/>
+        <result property="longitudeD" column="longitude_d"/>
+        <result property="longitudeF" column="longitude_f"/>
+        <result property="longitudeM" column="longitude_m"/>
+        <result property="latitudeD" column="latitude_d"/>
+        <result property="latitudeF" column="latitude_f"/>
+        <result property="latitudeM" column="latitude_m"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="dateCreated" column="date_created"/>
+        <result property="dateUpdated" column="date_updated"/>
+        <result property="zsourcenamenew" column="zsourcenamenew"/>
+        <result property="zflag" column="zflag"/>
+        <result property="zpsourceid" column="zpsourceid"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="status" column="status"/>
+        <result property="userName" column="USER_NAME"/>
+        <result property="dictLabel" column="DICT_LABEL"/>
+        <result property="warnLevel" column="warnLevel"/>
+    </resultMap>
+
+    <resultMap id="nameAndId" type="NameAndIdEntity">
+        <result property="Name" column="menu_name"/>
+        <result property="Id" column="perms"/>
+    </resultMap>
+
+    <resultMap id="pfTagDetail" type="PfBasTagDetail">
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="tagDetailId" column="tag_detail_id"/>
+        <result property="pfSourceId" column="pf_source_id"/>
+        <result property="bizSourceId" column="biz_source_id"/>
+        <result property="listType" column="list_type"/>
+        <result property="isAudit" column="is_audit"/>
+    </resultMap>
+
+    <resultMap id="pfTagDetailEntity" type="PfBasTagDetailEntity">
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="tagDetailId" column="tag_detail_id"/>
+        <result property="pfSourceId" column="pf_source_id"/>
+        <result property="bizSourceId" column="biz_source_id"/>
+        <result property="listType" column="list_type"/>
+        <result property="isAudit" column="is_audit"/>
+    </resultMap>
+
+    <resultMap id="tagHeadInfo" type="TagHeadEntity">
+        <result property="tagHeadName" column="tag_head_name"/>
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="orderBy" column="sort_id"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="wts" type="WadeTaskSummary">
+        <result property="townName" column="town_name"/>
+        <result property="qyzs" column="qyzs"/>
+        <result property="zdpwdw" column="zdpwdw"/>
+        <result property="zdpsh" column="zdpsh"/>
+        <result property="lxfscsdw" column="lxfscsdw"/>
+        <result property="lxfscldw" column="lxfscldw"/>
+        <result property="sdly" column="sdly"/>
+        <result property="zzhy" column="zzhy"/>
+        <result property="jsbmcl" column="jsbmcl"/>
+        <result property="zcdmyth" column="zcdmyth"/>
+    </resultMap>
+
+    <resultMap id="gts" type="GasTaskSummary">
+        <result property="townName" column="town_name"/>
+        <result property="qyzs" column="qyzs"/>
+        <result property="zdpwdw" column="zdpwdw"/>
+        <result property="voc" column="voc"/>
+        <result property="qxhy" column="qxhy"/>
+        <result property="cyhy" column="cyhy"/>
+        <result property="jyz" column="jyz"/>
+    </resultMap>
+
+    <resultMap id="menu" type="MenuEntity">
+        <result property="menuName" column="menu_name"/>
+        <result property="path" column="path"/>
+        <result property="perms" column="perms"/>
+    </resultMap>
+
+    <resultMap id="leftMenu" type="LeftMenuEntity">
+        <result property="count" column="c"/>
+        <result property="type" column="type"/>
+        <result property="desc" column="des"/>
+    </resultMap>
+
+    <resultMap type="SourceVocsParamEntity" id="sourceVocsParamEntity">
+        <result property="sourceId" column="source_id"/>
+        <result property="invsertTotal" column="invsert_total"/>
+        <result property="constructionUnit" column="construction_unit"/>
+        <result property="productFlow" column="product_flow"/>
+        <result property="gasCollect" column="gas_collect"/>
+        <result property="processFlow" column="process_flow"/>
+        <result property="processFlowMemo" column="process_flow_memo"/>
+        <result property="keyPump" column="key_pump"/>
+        <result property="keyBlower" column="key_blower"/>
+        <result property="keySorbMaterial" column="key_sorb_material"/>
+        <result property="keySorbPeriod" column="key_sorb_period"/>
+        <result property="keyPhotoPower" column="key_photo_power"/>
+        <result property="keyPlasmaPower" column="key_plasma_power"/>
+        <result property="keyRecoveryRate" column="key_recovery_rate"/>
+        <result property="keyBurnTemp" column="key_burn_temp"/>
+        <result property="keyRecoveryTime" column="key_recovery_time"/>
+        <result property="keyLossPeriod" column="key_loss_period"/>
+        <result property="keyBurnerCount" column="key_burner_count"/>
+        <result property="keyHeatTime" column="key_heat_time"/>
+        <result property="keyInterTemp" column="key_inter_temp"/>
+        <result property="keyOutgasTemp" column="key_outgas_temp"/>
+        <result property="keyTowerTime" column="key_tower_time"/>
+        <result property="keyMudPeriod" column="key_mud_period"/>
+        <result property="keyLiquidPeriod" column="key_liquid_period"/>
+        <result property="keyLiquidAmount" column="key_liquid_amount"/>
+        <result property="keyCyclePeriod" column="key_cycle_period"/>
+        <result property="keyArea" column="key_area"/>
+        <result property="keyWorkTime" column="key_work_time"/>
+        <result property="memo" column="memo"/>
+        <result property="shortName" column="short_name"></result>
+    </resultMap>
+
+    <resultMap id="moduleOne" type="SourceModuleOne">
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="organizationCode" column="organization_code"/>
+        <result property="emissionPermitCode" column="emission_permit_code"/>
+        <result property="townCode" column="town_code"/>
+        <result property="townName" column="town_name"/>
+        <result property="address" column="address"/>
+        <result property="industryCode" column="industry_code"/>
+        <result property="industryName" column="industry_name"/>
+        <result property="sourceScale" column="source_scale"/>
+        <result property="sourceStatus" column="source_status"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="legalPersonPhone" column="legal_person_phone"/>
+    </resultMap>
+
+    <resultMap id="moduleTwo" type="SourceModuleTwo">
+        <result property="sourceId" column="source_id"/>
+        <result property="fullName" column="full_name"/>
+        <result property="envContactName" column="ENV_CONTACT_NAME"/>
+        <result property="envContactPhone" column="ENV_CONTACT_PHONE"/>
+        <result property="inflowWaterName" column="INFLOW_WATER_NAME"/>
+        <result property="processFlow" column="PROCESS_FLOW"/>
+        <result property="hasWasteWater" column="HAS_WASTE_WATER"/>
+        <result property="hasWasteGas" column="HAS_WASTE_GAS"/>
+        <result property="hasGeneralSolid" column="HAS_GENERAL_SOLID"/>
+        <result property="hasHazardousWaste" column="HAS_HAZARDOUS_WASTE"/>
+        <result property="hasRareEarth" column="HAS_RARE_EARTH"/>
+        <result property="memo" column="MEMO"/>
+    </resultMap>
+
+    <select id="selectModuleOne" parameterType="String" resultMap="moduleOne">
+        SELECT * FROM PF_BAS_SOURCE WHERE IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            AND SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <select id="selectModuleTwo" parameterType="String" resultMap="moduleTwo">
+        SELECT * FROM PF_BAS_SOURCE WHERE IS_DELETED = 0
+        <if test="sourceId != null and sourceId != ''">
+            AND SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <select id="isHasVOCs" parameterType="String" resultType="int">
+        SELECT COUNT (1) FROM PF_BAS_TAG_DETAIL
+        WHERE IS_DELETED = 0 AND TAG_HEAD_ID = 1004
+        <if test="sourceId != null and sourceId != ''">
+            AND PF_SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <select id="selectSourceVocsParam" resultMap="sourceVocsParamEntity" parameterType="String">
+        SELECT * FROM PF_BAS_SOURCE_VOCSPARAM WHERE 1 = 1
+        <if test="sourceId != null and sourceId != ''">
+            AND SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <select id="existsConstruction" parameterType="ConstructioninfoEntity" resultType="int">
+        select count(1) from pf_bas_constructioninfo
+        where tag_head_id = #{tagHeadId} and pf_source_id = #{pfSourceId} and is_deleted = 0
+    </select>
+
+    <insert id="insertConstructioninfo" parameterType="PfBasTagDetailEntity">
+        INSERT INTO PF_BAS_CONSTRUCTIONINFO
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            PF_SOURCE_ID,
+            TAG_HEAD_ID,
+            CONSTRUCTION_UNIT,
+            <if test="shortName != null and shortName != ''">
+                SHORT_NAME,
+            </if>
+            CONSTRUCTION_PERSON,
+            CONSTRUCTION_PHONE,
+            CONSTRUCTION_STATUS,
+            IS_DELETED,
+            CREATED_BY,
+            UPDATED_BY,
+            DATE_CREATED,
+            DATE_UPDATED
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{pfSourceId},#{tagHeadId},#{constructionUnit},
+            <if test="shortName != null and shortName != ''">
+                #{shortName},
+            </if>
+            #{constructionPerson},#{constructionPhone},#{constructionStatus},
+            0,#{createdBy},#{updatedBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <update id="removeConstructioninfo" parameterType="ConstructioninfoEntity">
+        UPDATE PF_BAS_CONSTRUCTIONINFO SET IS_DELETED = 1,DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        WHERE PF_SOURCE_ID = #{pfSourceId} AND TAG_HEAD_ID = #{tagHeadId} AND IS_DELETED = 0
+    </update>
+
+    <update id="removeAdjust" parameterType="ConstructioninfoEntity">
+        update pf_bas_task_adjust set is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate
+        where tag_head_id = #{tagHeadId} and pf_source_id = #{pfSourceId} and aduit_status = 0 and is_deleted = 0
+    </update>
+
+    <!--查询tag名字-->
+    <select id="selectTagHeadName" parameterType="String" resultMap="tagHeadInfo">
+        select h.tag_head_id,h.tag_head_name, h.sort_id from pf_bas_tag_head h
+        inner join sys_role_tag rt on rt.tag_id = h.tag_head_id and rt.is_deleted=0
+        inner join sys_user_role ur on ur.role_id = rt.role_id
+        inner join sys_user u on u.user_id = ur.user_id and u.user_id = #{userId,jdbcType=VARCHAR}
+        where h.is_deleted=0 and h.is_active = 1
+--          and h.tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,1021,1022,1023)
+         order by sort_id
+    </select>
+    <!--根据sourceid查询tag名字-->
+    <select id="getTagsBySource" parameterType="String" resultMap="tagHeadInfo">
+        select h.tag_head_id,h.tag_head_name, h.sort_id from pf_bas_tag_detail d
+        inner join pf_bas_tag_head h on h.tag_head_id = d.tag_head_id and h.is_deleted=0
+        where d.is_deleted=0 and d.pf_source_id = #{sourceId,jdbcType=VARCHAR}
+            and h.is_active = 1
+--         and h.tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,1021,1022,1023)
+    </select>
+
+    <select id="selectWarnLe1" parameterType="SourceSearchParam" resultMap="leftMenu">
+        select w.WARN_TYPE type,w.WARN_DESC des,sum(WARN_CNT) c from dat_warnstat w
+        INNER join pf_bas_source s on s.SOURCE_ID = w.SOURCE_ID and s.IS_DELETED = 0
+        INNER JOIN PF_BAS_CONSTRUCTIONINFO BC ON W.TAG_HEAD_ID = BC.TAG_HEAD_ID AND W.SOURCE_ID = BC.PF_SOURCE_ID AND
+        BC.CONSTRUCTION_STATUS >= 0
+        where
+        w.tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        and w.WARN_LEVEL = 1
+        and w.proc_state = 0
+        <if test="beginTime != null and endTime !=null "><!-- 开始时间检索,不同时间做约束也可以 -->
+            and w.warn_date >= to_date(#{beginTime},'yyyy-MM-dd') and w.warn_date &lt; to_date(#{endTime},'yyyy-MM-dd')+
+            1
+        </if>
+        ${dataScope}
+        group by w.WARN_TYPE,w.WARN_DESC
+        order by c desc
+    </select>
+
+    <select id="selectWarnLe2" parameterType="SourceSearchParam" resultMap="leftMenu">
+        select WARN_TYPE type,w.WARN_DESC des,sum(WARN_CNT) c from dat_warnstat w
+        INNER join pf_bas_source s on s.SOURCE_ID = w.SOURCE_ID and s.IS_DELETED = 0
+        INNER JOIN PF_BAS_CONSTRUCTIONINFO BC ON W.TAG_HEAD_ID = BC.TAG_HEAD_ID AND W.SOURCE_ID = BC.PF_SOURCE_ID AND
+        BC.CONSTRUCTION_STATUS >= 0
+        where
+        w.tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        and w.WARN_LEVEL = 2
+        and w.proc_state = 0
+        <if test="beginTime != null and endTime !=null "><!-- 开始时间检索,不同时间做约束也可以 -->
+            and w.warn_date >= to_date(#{beginTime},'yyyy-MM-dd') and w.warn_date &lt; to_date(#{endTime},'yyyy-MM-dd')+
+            1
+        </if>
+        ${dataScope}
+        group by w.WARN_TYPE,w.WARN_DESC
+        order by c desc
+    </select>
+
+    <select id="selectWarnLe3" parameterType="SourceSearchParam" resultMap="leftMenu">
+        select WARN_TYPE type,w.WARN_DESC des,sum(WARN_CNT) c from dat_warnstat w
+        INNER join pf_bas_source s on s.SOURCE_ID = w.SOURCE_ID and s.IS_DELETED = 0
+        INNER JOIN PF_BAS_CONSTRUCTIONINFO BC ON W.TAG_HEAD_ID = BC.TAG_HEAD_ID AND W.SOURCE_ID = BC.PF_SOURCE_ID AND
+        BC.CONSTRUCTION_STATUS >= 0
+        where
+        w.tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        and w.WARN_LEVEL = 3
+        and w.proc_state = 0
+        <if test="beginTime != null and endTime !=null "><!-- 开始时间检索,不同时间做约束也可以 -->
+            and w.warn_date >= to_date(#{beginTime},'yyyy-MM-dd') and w.warn_date &lt; to_date(#{endTime},'yyyy-MM-dd')+
+            1
+        </if>
+        ${dataScope}
+        group by w.WARN_TYPE,w.WARN_DESC
+        order by c desc
+    </select>
+
+    <select id="selectWarnCount" parameterType="SourceParam" resultType="int">select count(distinct s.source_id) from dat_warnstat ws
+        inner join pf_bas_tag_detail d on d.tag_head_id = ws.tag_head_id and d.pf_source_id = ws.source_id and d.is_deleted = 0
+        inner join pf_bas_source s on s.source_id = d.pf_source_id and s.is_deleted = 0
+        where ws.proc_state = 0 and d.tag_head_id in
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        ${dataScope}
+    </select>
+
+    <select id="selectSourceSum" parameterType="SourceSearchParam" resultType="int">
+        select count(1) from pf_bas_source s
+        INNER JOIN (SELECT DISTINCT D.PF_SOURCE_ID FROM pf_bas_tag_detail D
+        INNER JOIN PF_BAS_CONSTRUCTIONINFO C ON D.TAG_HEAD_ID = C.TAG_HEAD_ID AND D.PF_SOURCE_ID = C.PF_SOURCE_ID AND
+        C.CONSTRUCTION_STATUS >= 0
+        WHERE D.tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        AND D.IS_DELETED = 0) T ON S.SOURCE_ID = T.PF_SOURCE_ID
+        WHERE s.IS_DELETED = 0
+        ${dataScope}
+    </select>
+
+    <select id="selectLeftMenuSourceCount" parameterType="SourceSearchParam" resultMap="leftMenu">
+        select S.SOURCE_STATUS type,count(1) c from pf_bas_source s
+        INNER JOIN (SELECT DISTINCT D.PF_SOURCE_ID FROM pf_bas_tag_detail D
+        INNER JOIN PF_BAS_CONSTRUCTIONINFO C ON D.TAG_HEAD_ID = C.TAG_HEAD_ID AND D.PF_SOURCE_ID = C.PF_SOURCE_ID AND
+        C.CONSTRUCTION_STATUS >= 0
+        WHERE D.tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        AND D.IS_DELETED = 0) T ON S.SOURCE_ID = T.PF_SOURCE_ID
+        where S.SOURCE_STATUS in (3,4,5,6) and S.IS_DELETED = 0
+        ${dataScope}
+        group by S.SOURCE_STATUS
+        order by S.SOURCE_STATUS
+    </select>
+
+    <select id="selectConStatus" parameterType="SourceSearchParam" resultMap="leftMenu">
+        select COUNT(c.pf_source_id) c,c.construction_status type from
+        (SELECT DISTINCT cc.* from PF_BAS_CONSTRUCTIONINFO cc WHERE cc.TAG_HEAD_ID in
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        and cc.is_deleted = 0 and cc.construction_status >= 0) c
+        left JOIN pf_bas_source s on s.SOURCE_ID = c.pf_source_id
+        INNER JOIN (SELECT DISTINCT PF_SOURCE_ID FROM pf_bas_tag_detail WHERE tag_head_id
+        IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        AND IS_DELETED = 0) T
+        ON S.SOURCE_ID = T.PF_SOURCE_ID
+        where s.IS_DELETED = 0
+        GROUP BY c.construction_status
+        ORDER BY c.construction_status desc
+    </select>
+
+    <select id="selectSourceHomeIndex" resultMap="PfBasSourceResult" parameterType="SourceParam">
+        select s.* from (SELECT s.*,nvl(w.warnlevel,0) warnLevel ,d.DICT_LABEL from pf_bas_source s
+        INNER JOIN (SELECT DISTINCT PF_SOURCE_ID FROM pf_bas_tag_detail WHERE tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        AND IS_DELETED = 0) T ON S.SOURCE_ID = T.PF_SOURCE_ID
+        inner join (select pf_source_id from pf_bas_constructioninfo where is_deleted=0 and tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        <if test="status != null and status != ''">
+            and construction_status in
+            <foreach collection="statusArray" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        and construction_status >= 0
+        group by pf_source_id) i on i.pf_source_id=s.source_id
+        left join SYS_DICT_DATA D ON D.DICT_VALUE = S.SOURCE_STATUS and D.DICT_TYPE = 'source_status'
+        left join (select min(warn_level) warnlevel,source_id from dat_warnstat where proc_state = 0
+        and tag_head_id IN
+        <foreach collection="array" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        group by source_id) w on w.source_id = s.source_id
+        where s.IS_DELETED = 0) s where 1 = 1
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="warnLevel != null and warnLevel != ''">
+            and s.warnLevel = #{warnLevel}
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        ${dataScope}
+        ORDER BY s.full_name
+    </select>
+
+    <select id="selectWadeTaskSummary" resultMap="wts" parameterType="WadeTaskSummary">
+        select * from (
+        select town_name,count(distinct(c.source_id)) qyzs,
+        sum(decode(a.tag_head_id,1017,1,0)) zdpwdw,
+        sum(decode(a.tag_head_id,1012,1,0)) zdpsh,
+        sum(decode(a.tag_head_id,1003,1,0)) lxfscsdw,
+        sum(decode(a.tag_head_id,1018,1,0)) lxfscldw,
+        sum(decode(a.tag_head_id,1002,1,0)) sdly,
+        0 zzhy,
+        sum(decode(a.tag_head_id,1015,1,0)) jsbmcl,
+        sum(decode(a.tag_head_id,1016,1,0)) zcdmyth
+        from pf_bas_tag_detail a
+        inner join pf_bas_tag_head b on a.tag_head_id=b.tag_head_id and a.is_deleted=0 and a.tag_head_id in (1017,1012,1003,1018,1002,1015,1016)
+        inner join pf_bas_source c on a.pf_source_id = c.source_id where trim(c.town_name) is not null
+        ${dataScope}
+        group by c.town_name
+        union
+        select '合计',count(distinct(c.source_id)) qyzs,
+        sum(decode(a.tag_head_id,1017,1,0)) zdpwdw,
+        sum(decode(a.tag_head_id,1012,1,0)) zdpsh,
+        sum(decode(a.tag_head_id,1003,1,0)) lxfscsdw,
+        sum(decode(a.tag_head_id,1018,1,0)) lxfscldw,
+        sum(decode(a.tag_head_id,1002,1,0)) sdly,
+        0 zzhy,
+        sum(decode(a.tag_head_id,1015,1,0)) jsbmcl,
+        sum(decode(a.tag_head_id,1016,1,0)) zcdmyth
+        from pf_bas_tag_detail a
+        inner join pf_bas_tag_head b on a.tag_head_id=b.tag_head_id and a.is_deleted=0 and a.tag_head_id in (1017,1012,1003,1018,1002,1015,1016)
+        inner join pf_bas_source c on a.pf_source_id = c.source_id where trim(c.town_name) is not null
+        ${dataScope}
+        )
+        order by qyzs
+    </select>
+
+    <select id="selectGasTaskSummary" resultMap="gts" parameterType="GasTaskSummary">
+        select * from (
+            select town_name,count(distinct(c.source_id)) qyzs,
+            sum(decode(a.tag_head_id,1017,1,0)) zdpwdw,
+            sum(decode(a.tag_head_id,1004,1,0)) voc,
+            sum(decode(a.tag_head_id,1013,1,0)) qxhy,
+            sum(decode(a.tag_head_id,1006,1,0)) cyhy,
+            sum(decode(a.tag_head_id,1014,1,0)) jyz
+            from pf_bas_tag_detail a
+            inner join pf_bas_tag_head b on a.tag_head_id=b.tag_head_id and a.is_deleted=0
+            inner join pf_bas_source c on a.pf_source_id = c.source_id
+            where trim(c.town_name) is not null and (a.tag_head_id in (1004,1013,1006,1014) or a.tag_head_id=1017 and c.source_id in (select source_id from lianwang where mod(ptype/2,2)>=1))
+            ${dataScope}
+            group by c.town_name
+            union
+            select '合计',count(distinct(c.source_id)) qyzs,
+            sum(decode(a.tag_head_id,1017,1,0)) zdpwdw,
+            sum(decode(a.tag_head_id,1004,1,0)) voc,
+            sum(decode(a.tag_head_id,1013,1,0)) qxhy,
+            sum(decode(a.tag_head_id,1006,1,0)) cyhy,
+            sum(decode(a.tag_head_id,1014,1,0)) jyz
+            from pf_bas_tag_detail a
+            inner join pf_bas_tag_head b on a.tag_head_id=b.tag_head_id and a.is_deleted=0
+            inner join pf_bas_source c on a.pf_source_id = c.source_id
+            where trim(c.town_name) is not null and (a.tag_head_id in (1004,1013,1006,1014) or a.tag_head_id=1017 and c.source_id in (select source_id from lianwang where mod(ptype/2,2)>=1))
+            ${dataScope}
+            ) order by qyzs
+    </select>
+
+    <select id="selectTagHeadInfo" parameterType="String" resultMap="tagHeadInfo">
+        SELECT h.tag_head_name,h.tag_head_id, h.sort_id from pf_bas_tag_detail t
+		left join pf_bas_tag_head h on h.TAG_HEAD_ID = t.TAG_HEAD_ID and h.is_deleted=0
+		WHERE t.IS_DELETED = 0 and h.is_active = 1
+-- 		and h.tag_head_id in (1002,1003,1004,1006,1012,1013,1014,1015,1016,1017,1018,1019,1021,1022,1023)
+		and t.pf_source_id = #{pfSourceId}
+    </select>
+
+    <select id="selectTagIdNameListAll" parameterType="Long" resultMap="nameAndId">
+        select m.menu_name, m.perms
+        from sys_menu m
+        where m.menu_type in ('S') and m.status = 0 and m.perms is not NULL
+        order by m.parent_id, m.order_num
+    </select>
+
+    <select id="selectTagIdNameList" parameterType="Long" resultMap="nameAndId">
+        select distinct m.menu_name, m.perms
+        from sys_menu m
+        left join sys_role_menu rm on m.menu_id = rm.menu_id
+        left join sys_user_role ur on rm.role_id = ur.role_id
+        left join sys_role ro on ur.role_id = ro.role_id
+        left join sys_user u on ur.user_id = u.user_id
+        where u.user_id = #{userId} and m.menu_type in ('S') and m.status = 0  AND ro.status = 0 and m.perms is not NULL
+        order by m.menu_name, m.perms
+    </select>
+
+    <select id="selectSourceListMap" parameterType="PfBasSource" resultMap="PfBasSourceResult">
+        SELECT s.* FROM (SELECT DISTINCT ss.*,CASE WHEN d.construction_status is Null THEN 0 ELSE d.construction_status
+        END status
+        FROM BASECENTER.pf_bas_source ss
+        left join DAT_CONSTRUCTIONINFO d on d.SOURCE_ID = ss.SOURCE_ID) s
+        INNER JOIN (SELECT DISTINCT PF_SOURCE_ID FROM pf_bas_tag_detail WHERE tag_head_id IN ( 1012 ) AND IS_DELETED =
+        0) T ON S.SOURCE_ID = T.PF_SOURCE_ID
+        where s.IS_DELETED = 0
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="townCode != null and townCode != ''">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="constructionStatus != null and constructionStatus != ''">
+            and s.status = #{constructionStatus}
+        </if>
+        ${dataScope}
+        ORDER BY s.full_name
+    </select>
+
+    <sql id="selectPfBasSourceVo">
+        select s.source_id, s.source_no, s.full_name, s.social_credit_code, s.organization_code, s.emission_permit_code, s.town_code, s.town_name, s.village_code, s.village_name,
+        s.industry_code, s.industry_name, s.address, s.longitude, s.latitude, s.source_status, s.source_scale, s.legal_person_name, s.legal_person_phone, s.env_contact_name, s.env_contact_phone,
+        s.inflow_water_name, s.process_flow, s.env_monitor_level, s.has_waste_water, s.has_waste_gas, s.has_general_solid, s.has_hazardous_waste, s.has_rare_earth, s.memo, s.longitude_d, s.longitude_f, s.longitude_m,
+        s.latitude_d, s.latitude_f, s.latitude_m, s.is_deleted, s.created_by, s.updated_by, s.date_created, s.date_updated, s.zsourcenamenew, s.zflag, s.zpsourceid, su.user_name
+        from pf_bas_source s
+        left join pf_bas_source_user su on su.source_id = s.source_id
+    </sql>
+
+    <select id="getTotal" resultType="int" parameterType="PfBasSource">
+        SELECT COUNT(1) FROM pf_bas_source s
+        left join pf_bas_tag_detail t on t.PF_SOURCE_ID = s.SOURCE_ID
+        where s.IS_DELETED = 0 and t.IS_DELETED = 0
+        <if test="tagHeadId != null  and tagHeadId != ''">and t.TAG_HEAD_ID = #{tagHeadId}</if>
+        <if test="fullName != null  and fullName != ''">and s.full_name like '%'|| #{fullName}||'%'</if>
+        <if test="townCode != null  and townCode != ''">and s.town_code like '%'|| #{townCode}||'%'</if>
+        <if test="industryCode != null  and industryCode != ''">and s.industry_code like '%'|| #{industryCode}||'%'</if>
+        ${dataScope}
+    </select>
+
+    <resultMap id="sourceByTag" type="SourceByTag">
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="sourceName" column="source_name"/>
+        <result property="townName" column="town_name"/>
+        <result property="sourceId" column="source_id"/>
+    </resultMap>
+
+    <select id="getSourceListByTag" parameterType="SourceByTag" resultMap="sourceByTag">
+        select c.tag_head_id, s.source_id, s.full_name source_name, s.town_name
+        from pf_bas_source s
+        inner join pf_bas_constructioninfo c on c.pf_source_id = s.source_id and c.is_deleted = 0
+        where s.is_deleted = 0 and c.tag_head_id = #{tagHeadId}
+        <if test="sourceName != null">
+            and s.full_name like '%'|| #{sourceName} ||'%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="constructionStatus != null">
+            and c.construction_status = #{constructionStatus}
+        </if>
+        ${labelQuery}
+    </select>
+
+    <resultMap id="sourceResult" type="SourceResult">
+        <result column="source_id" property="sourceId"/>
+        <result column="source_no" property="sourceNo"/>
+        <result column="full_name" property="sourceName"/>
+        <result column="social_credit_code" property="socialCreditCode"/>
+        <result column="organization_code" property="organizationCode"/>
+        <result column="emission_permit_code" property="emissionPermitCode"/>
+        <result column="town_code" property="townCode"/>
+        <result column="town_name" property="townName"/>
+        <result column="village_code" property="villageCode"/>
+        <result column="village_name" property="villageName"/>
+        <result column="industry_code" property="industryCode"/>
+        <result column="industry_name" property="industryName"/>
+        <result column="address" property="address"/>
+        <result column="longitude" property="longitude"/>
+        <result column="latitude" property="latitude"/>
+        <result column="source_status" property="sourceStatus"/>
+        <result column="status_name" property="statusName"/>
+        <result column="source_scale" property="sourceScale"/>
+        <result column="legal_person_name" property="legalPersonName"/>
+        <result column="legal_person_phone" property="legalPersonPhone"/>
+        <result column="env_contact_name" property="envContactName"/>
+        <result column="env_contact_phone" property="envContactPhone"/>
+        <result column="inflow_water_name" property="inflowWaterName"/>
+        <result column="process_flow" property="processFlow"/>
+        <result column="env_monitor_level" property="envMonitorLevel"/>
+        <result column="has_waste_water" property="hasWasteWater"/>
+        <result column="has_waste_gas" property="hasWasteGas"/>
+        <result column="has_general_solid" property="hasGeneralSolid"/>
+        <result column="has_hazardous_waste" property="hasHazardousWaste"/>
+        <result column="has_rare_earth" property="hasRareEarth"/>
+        <result column="memo" property="memo"/>
+        <result column="user_name" property="userName"/>
+    </resultMap>
+    <select id="getSourceList" parameterType="BasSourceParam" resultMap="sourceResult">
+        select s.source_id, s.source_no, s.full_name, s.social_credit_code, s.organization_code, s.emission_permit_code,
+               s.town_code, s.town_name, s.village_code, s.village_name, s.industry_code, s.industry_name,
+               s.address, s.longitude, s.latitude, s.source_status, s.source_scale, s.legal_person_name, s.legal_person_phone,
+               s.env_contact_name, s.env_contact_phone, s.inflow_water_name, s.process_flow, s.env_monitor_level,
+               s.has_waste_water, s.has_waste_gas, s.has_general_solid, s.has_hazardous_waste, s.has_rare_earth, s.memo,
+               d.dict_label status_name, su.user_name
+        from pf_bas_source s
+<!--        inner join (-->
+<!--            select distinct pf_source_id from pf_bas_tag_detail-->
+<!--            where is_deleted = 0-->
+<!--            <if test="tagHeadIds != null and tagHeadIds.size() > 0">-->
+<!--                and tag_head_id in-->
+<!--                <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">-->
+<!--                    #{tagHeadId}-->
+<!--                </foreach>-->
+<!--            </if>-->
+<!--        ) t on t.pf_source_id = s.source_id-->
+        left join sys_dict_data d on d.dict_value = s.source_status and d.dict_type = 'source_status'
+        left join pf_bas_source_user su on su.source_id = s.source_id
+        where s.is_deleted = 0
+        <if test="sourceName != null">and s.full_name like '%'||#{sourceName}||'%'</if>
+        <if test="sourceStatus != null and sourceStatus != ''">and s.source_status = #{sourceStatus}</if>
+        <if test="townCode != null and townCode != ''">and s.town_code like '%'||#{townCode}||'%'</if>
+        <if test="industryCode != null and industryCode != ''">and s.industry_code like '%'||#{industryCode}||'%'</if>
+        <if test="tagHeadIds != null and tagHeadIds.size() > 0">
+            and exists (
+                select 1 from pf_bas_tag_detail
+                where is_deleted = 0 and pf_source_id = s.source_id
+                and tag_head_id in
+                <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                    #{tagHeadId}
+                </foreach>
+                group by pf_source_id
+                having count(1) = ${tagHeadIds.size()}
+            )
+        </if>
+        ${dataScope}
+        order by s.full_name desc
+    </select>
+
+    <select id="selectPfBasSourceListByTag" parameterType="PfBasSource" resultMap="PfBasSourceResult">
+        SELECT distinct s.*,su.USER_NAME,d.DICT_LABEL,e.CONSTRUCTION_STATUS constructionStatus FROM pf_bas_source s
+        LEFT JOIN PF_BAS_SOURCE_USER su on s.SOURCE_ID = su.SOURCE_ID
+        <if test="tagHeadId != null  and tagHeadId != ''">
+            INNER JOIN (SELECT DISTINCT PF_SOURCE_ID FROM pf_bas_tag_detail
+            WHERE tag_head_id = #{tagHeadId,jdbcType=VARCHAR } AND IS_DELETED = 0) T ON S.SOURCE_ID = T.PF_SOURCE_ID
+        </if>
+        left join SYS_DICT_DATA D ON D.DICT_VALUE = S.SOURCE_STATUS and D.DICT_TYPE = 'source_status'
+        left join (select pf_source_id,CONSTRUCTION_STATUS from pf_bas_constructioninfo where tag_head_id = #{tagHeadId}
+        and
+        is_deleted=0)e
+        on s.source_id=e.pf_source_id
+        where s.IS_DELETED = 0
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="sourceStatus != null and sourceStatus != ''">and s.source_status = #{sourceStatus}</if>
+        <if test="constructionStatus != null and constructionStatus != ''">and e.construction_status =
+            #{constructionStatus}
+        </if>
+        <if test="townCode != null and townCode != ''">and s.town_code like '%'||#{townCode}||'%'</if>
+        <if test="industryCode != null and industryCode != ''">and s.industry_code like '%'||#{industryCode}||'%'</if>
+        ${labelQuery}
+        ${dataScope}
+        ORDER BY s.full_name DESC
+    </select>
+
+    <select id="selectDetailListById" parameterType="PfBasSource" resultMap="pfTagDetail">
+        SELECT s.tag_head_id FROM pf_bas_tag_detail s
+        inner join pf_bas_tag_head t on t.tag_head_id = s.tag_head_id and t.is_active = 1
+        where s.IS_DELETED = 0 and t.is_active = 1
+--           and tag_head_id in (1017,1012,1003,1018,1002,1019,1015,1016,1004,1013,1006,1014,1021,1022,1023)
+        and s.pf_source_id = #{sourceId}
+    </select>
+
+    <select id="selectPfBasSourceById" parameterType="String" resultMap="PfBasSourceResult">
+        <include refid="selectPfBasSourceVo"/>
+        where s.source_id = #{sourceId}
+    </select>
+
+    <insert id="insertPfBasSource" parameterType="PfBasSource">
+        insert into pf_bas_source
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            source_id,
+            <if test="sourceNo != null  and sourceNo != ''">source_no,</if>
+            <if test="fullName != null  and fullName != ''">full_name,</if>
+            <if test="socialCreditCode != null  and socialCreditCode != ''">social_credit_code,</if>
+            <if test="organizationCode != null  and organizationCode != ''">organization_code,</if>
+            <if test="emissionPermitCode != null  and emissionPermitCode != ''">emission_permit_code,</if>
+            <if test="townCode != null  and townCode != ''">town_code,</if>
+            <if test="townCode != null  and townCode != ''">town_name,</if>
+            <if test="villageCode != null  and villageCode != ''">village_code,</if>
+            <if test="villageCode != null  and villageCode != ''">village_name,</if>
+            <if test="industryCode != null  and industryCode != ''">industry_code,</if>
+            <if test="industryCode != null  and industryCode != ''">industry_name,</if>
+            <if test="address != null  and address != ''">address,</if>
+            <if test="longitude != null ">longitude,</if>
+            <if test="latitude != null ">latitude,</if>
+            <if test="sourceStatus != null  and sourceStatus != ''">source_status,</if>
+            <if test="sourceScale != null  and sourceScale != ''">source_scale,</if>
+            <if test="legalPersonName != null  and legalPersonName != ''">legal_person_name,</if>
+            <if test="legalPersonPhone != null  and legalPersonPhone != ''">legal_person_phone,</if>
+            <if test="envContactName != null  and envContactName != ''">env_contact_name,</if>
+            <if test="envContactPhone != null  and envContactPhone != ''">env_contact_phone,</if>
+            <if test="inflowWaterName != null  and inflowWaterName != ''">inflow_water_name,</if>
+            <if test="processFlow != null  and processFlow != ''">process_flow,</if>
+            <if test="envMonitorLevel != null  and envMonitorLevel != ''">env_monitor_level,</if>
+            <if test="hasWasteWater != null  and hasWasteWater != ''">has_waste_water,</if>
+            <if test="hasWasteGas != null  and hasWasteGas != ''">has_waste_gas,</if>
+            <if test="hasGeneralSolid != null  and hasGeneralSolid != ''">has_general_solid,</if>
+            <if test="hasHazardousWaste != null  and hasHazardousWaste != ''">has_hazardous_waste,</if>
+            <if test="hasRareEarth != null  and hasRareEarth != ''">has_rare_earth,</if>
+            <if test="memo != null  and memo != ''">memo,</if>
+            <if test="longitudeD != null  and longitudeD != ''">longitude_d,</if>
+            <if test="longitudeF != null  and longitudeF != ''">longitude_f,</if>
+            <if test="longitudeM != null  and longitudeM != ''">longitude_m,</if>
+            <if test="latitudeD != null  and latitudeD != ''">latitude_d,</if>
+            <if test="latitudeF != null  and latitudeF != ''">latitude_f,</if>
+            <if test="latitudeM != null  and latitudeM != ''">latitude_m,</if>
+            is_deleted,
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by,</if>
+            date_created,
+            date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{sourceId},
+            <if test="sourceNo != null  and sourceNo != ''">#{sourceNo},</if>
+            <if test="fullName != null  and fullName != ''">#{fullName},</if>
+            <if test="socialCreditCode != null  and socialCreditCode != ''">#{socialCreditCode},</if>
+            <if test="organizationCode != null  and organizationCode != ''">#{organizationCode},</if>
+            <if test="emissionPermitCode != null  and emissionPermitCode != ''">#{emissionPermitCode},</if>
+            <if test="townCode != null  and townCode != ''">#{townCode},</if>
+            <if test="townCode != null  and townCode != ''">
+                (select REGION_NAME from pf_bas_region where REGION_CODE = #{townCode}),
+            </if>
+            <if test="villageCode != null  and villageCode != ''">#{villageCode},</if>
+            <if test="villageCode != null  and villageCode != ''">
+                (select REGION_NAME from pf_bas_region where REGION_CODE = #{villageCode}),
+            </if>
+            <if test="industryCode != null  and industryCode != ''">#{industryCode},</if>
+            <if test="industryCode != null  and industryCode != ''">
+                (SELECT INDUSTRY_NAME from pf_bas_industry where industry_code = #{industryCode}),
+            </if>
+            <if test="address != null  and address != ''">#{address},</if>
+            <if test="longitude != null ">#{longitude},</if>
+            <if test="latitude != null ">#{latitude},</if>
+            <if test="sourceStatus != null  and sourceStatus != ''">#{sourceStatus},</if>
+            <if test="sourceScale != null  and sourceScale != ''">#{sourceScale},</if>
+            <if test="legalPersonName != null  and legalPersonName != ''">#{legalPersonName},</if>
+            <if test="legalPersonPhone != null  and legalPersonPhone != ''">#{legalPersonPhone},</if>
+            <if test="envContactName != null  and envContactName != ''">#{envContactName},</if>
+            <if test="envContactPhone != null  and envContactPhone != ''">#{envContactPhone},</if>
+            <if test="inflowWaterName != null  and inflowWaterName != ''">#{inflowWaterName},</if>
+            <if test="processFlow != null  and processFlow != ''">#{processFlow},</if>
+            <if test="envMonitorLevel != null  and envMonitorLevel != ''">#{envMonitorLevel},</if>
+            <if test="hasWasteWater != null  and hasWasteWater != ''">#{hasWasteWater},</if>
+            <if test="hasWasteGas != null  and hasWasteGas != ''">#{hasWasteGas},</if>
+            <if test="hasGeneralSolid != null  and hasGeneralSolid != ''">#{hasGeneralSolid},</if>
+            <if test="hasHazardousWaste != null  and hasHazardousWaste != ''">#{hasHazardousWaste},</if>
+            <if test="hasRareEarth != null  and hasRareEarth != ''">#{hasRareEarth},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="longitudeD != null  and longitudeD != ''">#{longitudeD},</if>
+            <if test="longitudeF != null  and longitudeF != ''">#{longitudeF},</if>
+            <if test="longitudeM != null  and longitudeM != ''">#{longitudeM},</if>
+            <if test="latitudeD != null  and latitudeD != ''">#{latitudeD},</if>
+            <if test="latitudeF != null  and latitudeF != ''">#{latitudeF},</if>
+            <if test="latitudeM != null  and latitudeM != ''">#{latitudeM},</if>
+            0,
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            sysdate,
+            sysdate
+        </trim>
+    </insert>
+
+    <update id="updatePfBasSource" parameterType="PfBasSource">
+        update pf_bas_source
+        <trim prefix="SET" suffixOverrides=",">
+            source_no = #{sourceNo, jdbcType=VARCHAR},
+            full_name = #{fullName, jdbcType=VARCHAR},
+            social_credit_code = #{socialCreditCode, jdbcType=VARCHAR},
+            <if test="organizationCode != null">organization_code = #{organizationCode},</if>
+            emission_permit_code = #{emissionPermitCode, jdbcType=VARCHAR},
+            town_code = #{townCode, jdbcType=VARCHAR},
+            <if test="townCode != null  and townCode != ''">
+                town_name = (select region_name from pf_bas_region where region_code = #{townCode}),
+            </if>
+            village_code = #{villageCode, jdbcType=VARCHAR},
+            <if test="villageCode != null  and villageCode != ''">
+                village_name = (select region_name from pf_bas_region where region_code = #{villageCode}),
+            </if>
+            industry_code = #{industryCode, jdbcType=VARCHAR},
+            <if test="industryCode != null  and industryCode != ''">
+                industry_name = (select INDUSTRY_NAME From PF_BAS_INDUSTRY where INDUSTRY_CODE = #{industryCode}),
+            </if>
+            address = #{address, jdbcType=VARCHAR},
+            longitude = #{longitude, jdbcType=NUMERIC},
+            latitude = #{latitude, jdbcType=NUMERIC},
+            source_status = #{sourceStatus, jdbcType=VARCHAR},
+            source_scale = #{sourceScale, jdbcType=VARCHAR},
+            legal_person_name = #{legalPersonName, jdbcType=VARCHAR},
+            legal_person_phone = #{legalPersonPhone, jdbcType=VARCHAR},
+            env_contact_name = #{envContactName, jdbcType=VARCHAR},
+            env_contact_phone = #{envContactPhone, jdbcType=VARCHAR},
+            inflow_water_name = #{inflowWaterName, jdbcType=VARCHAR},
+            process_flow = #{processFlow, jdbcType=VARCHAR},
+            env_monitor_level = #{envMonitorLevel, jdbcType=VARCHAR},
+            <if test="hasWasteWater != null">has_waste_water = #{hasWasteWater},</if>
+            <if test="hasWasteGas != null">has_waste_gas = #{hasWasteGas},</if>
+            <if test="hasGeneralSolid != null">has_general_solid = #{hasGeneralSolid},</if>
+            <if test="hasHazardousWaste != null">has_hazardous_waste = #{hasHazardousWaste},</if>
+            <if test="hasRareEarth != null">has_rare_earth = #{hasRareEarth},</if>
+            memo = #{memo, jdbcType=VARCHAR},
+            <if test="longitudeD != null">longitude_d = #{longitudeD},</if>
+            <if test="longitudeF != null">longitude_f = #{longitudeF},</if>
+            <if test="longitudeM != null">longitude_m = #{longitudeM},</if>
+            <if test="latitudeD != null">latitude_d = #{latitudeD},</if>
+            <if test="latitudeF != null">latitude_f = #{latitudeF},</if>
+            <if test="latitudeM != null">latitude_m = #{latitudeM},</if>
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </trim>
+        where source_id = #{sourceId}
+    </update>
+
+    <!--根据tagId修改tagName-->
+    <update id="updateTagName" parameterType="PfBasSource">
+        update pf_bas_tag_head
+        <trim prefix="SET" suffixOverrides=",">
+            tag_head_name = #{fullName, jdbcType=VARCHAR},
+            sort_id = #{isHasVOCs, jdbcType=NUMERIC},
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = #{dateUpdated, jdbcType=VARCHAR},
+        </trim>
+        where tag_head_id = #{tagHeadId} and is_deleted=0
+    </update>
+
+    <delete id="deletePfBasSourceById" parameterType="String">
+        delete from pf_bas_source where source_id = #{sourceId}
+    </delete>
+
+    <delete id="deletePfBasSourceByIds">
+        UPDATE pf_bas_source SET is_deleted = 1
+        where source_id in
+        <foreach item="sourceId" collection="array" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteTagDetailByIds">
+        UPDATE pf_bas_tag_detail SET is_deleted = 1
+        where pf_source_id in
+        <foreach item="sourceId" collection="array" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+        AND is_deleted = 0
+    </delete>
+
+    <delete id="deleteEnterUserByIds">
+        delete from pf_bas_source_user where source_id in
+        <foreach item="sourceId" collection="array" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
+    </delete>
+
+    <!-- 查找企业标签-->
+    <select id="selectSourceTagById" parameterType="String" resultType="java.util.HashMap">
+        select d.TAG_HEAD_ID as id,h.TAG_HEAD_NAME as name,h.tag_desc as exp from PF_BAS_TAG_DETAIL d
+        left join PF_BAS_TAG_HEAD h on h.TAG_HEAD_ID = d.TAG_HEAD_ID
+        where PF_SOURCE_ID = #{sourceId}
+    </select>
+
+    <insert id="insertTagDetail" parameterType="PfBasTagDetailEntity">
+        INSERT INTO pf_bas_tag_detail
+        (tag_detail_id, tag_head_id, pf_source_id, biz_source_id, is_audit, list_type, is_deleted, created_by, updated_by, date_created, date_updated)
+        VALUES (#{tagDetailId}, #{tagHeadId}, #{pfSourceId}, #{bizSourceId}, 1, #{listType}, 0, #{createdBy}, #{updatedBy}, sysdate, sysdate)
+    </insert>
+
+    <select id="selectTagDetail" parameterType="String" resultMap="pfTagDetail">
+        SELECT * from pf_bas_tag_detail where pf_source_id = #{pfSourceId} and is_deleted = 0
+    </select>
+
+    <select id="selectTagDetailFJ" parameterType="String" resultMap="pfTagDetailEntity">
+        SELECT * from pf_bas_tag_detail where pf_source_id = #{pfSourceId} and is_deleted = 0 and list_type = 0
+    </select>
+
+    <select id="selectTaskAdjust" parameterType="String" resultType="int">
+        select COUNT(1) from PF_BAS_TASK_ADJUST where ADUIT_STATUS=0 and is_deleted=0 and pf_source_id=#{pfSourceId} and tag_head_id = #{tagHeadId}
+    </select>
+
+    <select id="checkHasDetail" parameterType="PfBasTagDetailEntity" resultType="int">
+        SELECT COUNT(1) FROM pf_bas_tag_detail WHERE is_deleted = 0 AND pf_source_id = #{pfSourceId} and tag_head_id = #{tagHeadId}
+    </select>
+
+    <update id="removeDetail" parameterType="PfBasTagDetailEntity">
+        UPDATE pf_bas_tag_detail SET is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate
+        WHERE tag_detail_id = #{tagDetailId}
+    </update>
+
+    <update id="updateDetail" parameterType="PfBasTagDetailEntity">
+        UPDATE pf_bas_tag_detail SET LIST_TYPE = #{listType}, updated_by = #{updatedBy}, date_updated = sysdate
+        WHERE tag_detail_id = #{tagDetailId}
+    </update>
+
+</mapper>

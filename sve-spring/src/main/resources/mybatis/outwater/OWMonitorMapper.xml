@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.outwater.mapper.OWMonitorMapper">
+
+    <!--设备数量-->
+    <select id="getEquipmentQuantity" resultType="map">
+       select count(*) total,sum(decode(is_online,1,1,0)) on_line,sum(decode(is_online,0,1,0)) off_line
+       from bas_checkpoint where is_deleted = 0
+    </select>
+
+    <!--预警数-->
+    <select id="getWarningQuantity" resultType="map">
+        select count(*) total, nvl(sum(decode(warn_level,1,1,0)), 0) one,
+        nvl(sum(decode(warn_level,2,1,0)), 0) two,
+        nvl(sum(decode(warn_level,3,1,0)), 0) three
+        from dat_warnmsgheads
+        where is_deleted = 0 and start_date &lt;= trunc(sysdate) and end_date >= trunc(sysdate, 'dd')-7
+    </select>
+
+    <!--近30天预警数-->
+    <select id="getWarningQuantityMonth" resultType="map">
+        select count(*) total,
+        nvl(sum(decode(warn_level,1,1,0)), 0) 一级预警,
+        nvl(sum(decode(warn_level,2,1,0)), 0) 二级预警,
+        nvl(sum(decode(warn_level,3,1,0)), 0) 三级预警
+        from dat_warnmsgheads
+        where is_deleted = 0 and start_date &lt;= trunc(sysdate) and end_date &gt;= trunc(sysdate, 'dd') - 30
+    </select>
+
+    <!--街镇报警排名-->
+    <select id="getWarningRank" resultType="map">
+        select r.region_name name, count(w.id) amount from (
+	    select rc.* from basecenter.pf_bas_region rc
+	    inner join basecenter.pf_bas_region rp on rp.region_id = rc.parent_id
+	    where rp.region_code = '4419'    ) r
+        left join bas_source s on s.town_code = r.region_code and s.is_deleted = 0
+        left join dat_warnmsgheads w on w.source_id = s.source_id and w.is_deleted = 0
+        group by r.region_name
+        order by amount desc
+    </select>
+
+    <!--预警产生趋势-->
+    <select id="getWarningTrend" resultType="map">
+    select to_char(send_date, 'yyyy-mm') datadate, nvl(sum(decode(warn_level,1,1,0)), 0) one,
+    nvl(sum(decode(warn_level,2,1,0)), 0) two, nvl(sum(decode(warn_level,3,1,0)), 0) three
+    from dat_warnmsgheads where is_deleted = 0 and send_date >= sysdate - interval '2' month
+    group by to_char(send_date, 'yyyy-mm') ORDER BY datadate
+    </select>
+
+    <!--污染最严重企业top10-->
+    <select id="getWarningPollution" resultType="map">
+        select * from (
+        select * from (
+        select c.collect_id, s.full_name source_name, c.full_name cp_name,s.town_name, max(d.avg_amt) wqi from dat_minute d
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        inner join bas_source s on s.source_id = c.source_id and s.is_deleted = 0
+        where ce.ele_type_id = 'ps00' and d.datadate >= trunc(sysdate, 'dd')
+        group by c.collect_id, s.full_name, c.full_name,s.town_name
+        ) order by wqi desc
+        ) where rownum &lt;= 20
+    </select>
+
+    <!--近24小时污染程度分析-->
+    <select id="getWarningHour" resultType="map">
+        select count(case when wqi &lt;= 2 then 1 end) superior, count(case when wqi > 2 and wqi &lt;= 5 then 1 end) good,
+        count(case when wqi > 5 and wqi &lt;= 10 then 1 end) mild, count(case when wqi > 10 and wqi &lt;= 20 then 1 end) medium,
+        count(case when wqi > 20 and wqi &lt;= 30 then 1 end) severe, count(case when wqi > 30 then 1 end) serious
+        from (
+        select c.collect_id, max(d.avg_amt) wqi from dat_hour d
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id = 'ps00' and d.datadate >= sysdate - 1
+        group by c.collect_id
+        )
+    </select>
+
+    <!--近7天污染程度分析-->
+    <select id="getWarningDay" resultType="map">
+        select count(case when wqi &lt;= 2 then 1 end) superior, count(case when wqi > 2 and wqi &lt;= 5 then 1 end) good,
+        count(case when wqi > 5 and wqi &lt;= 10 then 1 end) mild, count(case when wqi > 10 and wqi &lt;= 20 then 1 end) medium,
+        count(case when wqi > 20 and wqi &lt;= 30 then 1 end) severe, count(case when wqi > 30 then 1 end) serious
+        from (
+        select c.collect_id, max(d.avg_amt) wqi from dat_day d
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id = 'ps00' and d.datadate >= trunc(sysdate, 'dd') -  7
+        group by c.collect_id
+        )
+    </select>
+
+    <!--近30天污染程度分析-->
+    <select id="getWarningMonth" resultType="map">
+        select count(case when wqi &lt;= 2 then 1 end) superior, count(case when wqi > 2 and wqi &lt;= 5 then 1 end) good,
+        count(case when wqi > 5 and wqi &lt;=  10 then 1 end) mild, count(case when wqi > 10 and wqi &lt;=  20 then 1 end) medium,
+        count(case when wqi > 20 and wqi &lt;=  30 then 1 end) severe, count(case when wqi > 30 then 1 end) serious
+        from (
+        select c.collect_id, max(d.avg_amt) wqi from dat_day d
+        inner join bas_checkpoint_element ce on ce.cp_elem_id = d.cp_elem_id and ce.is_deleted = 0
+        inner join bas_checkpoint c on c.collect_id = ce.collect_id and c.is_deleted = 0
+        where ce.ele_type_id = 'ps00' and d.datadate >= trunc(sysdate, 'dd') - 30
+        group by c.collect_id
+        )
+    </select>
+
+</mapper>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.outwater.mapper.SourceListMapper">
+
+    <resultMap id="sourceList" type="OWNameIdEntity">
+        <result property="id"       column="source_id"      />
+        <result property="name"       column="full_name"      />
+    </resultMap>
+
+    <select id="selectSourceList" parameterType="OWSourceParam" resultMap="sourceList" >
+        select s.source_id, s.full_name
+        FROM bas_source s
+        where s.is_deleted = 0
+        <if test="sourceName != null and sourceName != ''">
+            and s.full_name like '%'|| #{sourceName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.source_id = #{sourceId}
+        </if>
+        ${dataScope}
+        order by s.full_name
+    </select>
+
+</mapper>

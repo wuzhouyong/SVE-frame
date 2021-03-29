@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.ops.mapper.QuestionMapper">
+
+    <resultMap type="QuestionEntity" id="question">
+        <result property="questionId" column="question_id"/>
+        <result property="questionDesc" column="question_Desc"/>
+        <result property="fullMarks" column="full_Marks"/>
+        <result property="isUse" column="is_Use"/>
+    </resultMap>
+
+    <!--评分问题列表-->
+    <select id="selectQuestionList" parameterType="QuestionEntity" resultMap="question">
+        select question_id, question_desc, full_marks, is_use from pf_bas_question
+        where is_deleted=0
+        <if test="questionDesc != null  and questionDesc != ''">and question_desc like '%'||#{questionDesc}||'%'</if>
+        <if test="isUse != null">and is_use = #{isUse}</if>
+        order by date_created desc
+    </select>
+
+    <!--新增评分问题-->
+    <insert id="insertQuestion" parameterType="QuestionEntity">
+        insert into pf_bas_question
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            question_id,
+            <if test="questionDesc != null and questionDesc != ''">question_desc,</if>
+            <if test="fullMarks != null">full_marks,</if>
+            created_by,updated_by
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_bas_question.nextval,
+            <if test="questionDesc != null  and questionDesc != ''">#{questionDesc},</if>
+            <if test="fullMarks != null">#{fullMarks},</if>
+            #{createdBy,jdbcType=VARCHAR},#{updatedBy,jdbcType=VARCHAR}
+        </trim>
+    </insert>
+
+    <!--编辑评分问题-->
+    <update id="updateQuestion" parameterType="QuestionEntity">
+        update pf_bas_question
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="questionDesc != null and questionDesc != ''">question_desc=#{questionDesc,jdbcType=VARCHAR},</if>
+            <if test="fullMarks != null">full_marks=#{fullMarks,jdbcType=INTEGER},</if>
+            <if test="updatedBy != null  and updatedBy != ''">updated_by = #{updatedBy,jdbcType=VARCHAR},</if>
+            date_updated = SYSDATE
+        </trim>
+        where question_id = #{questionId} and is_deleted=0
+    </update>
+
+    <!--删除评分问题-->
+    <update id="deleteQuestionByIds">
+        UPDATE pf_bas_question
+        set is_deleted = 1,date_updated = SYSDATE,updated_by = #{updatedBy}
+        where is_deleted=0 and question_id in
+        <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
+            #{questionId}
+        </foreach>
+    </update>
+
+    <!--评分问题单条-->
+    <select id="selectQuestionById" parameterType="QuestionEntity" resultMap="question">
+        select question_id, question_desc, full_marks, is_use from pf_bas_question
+        where is_deleted=0 and question_id=#{questionId}
+    </select>
+
+    <select id="selectQuestionByIds" parameterType="int" resultMap="question">
+        select question_id, question_desc, full_marks, is_use from pf_bas_question
+        where is_deleted=0 and question_id in
+        <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
+            #{questionId}
+        </foreach>
+    </select>
+
+    <!--新增评分邀请记录-->
+    <insert id="insertQuestionnaire" parameterType="QuestionnaireEntity">
+        <selectKey keyProperty="questionnaireId" resultType="int" order="BEFORE">
+            select seq_bas_questionnaire.nextval from dual
+        </selectKey>
+        insert into pf_bas_questionnaire
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            questionnaire_id,
+            <if test="questionnaireName != null and questionnaireName != ''">questionnaire_name,</if>
+            <if test="coefficient != null and coefficient != ''">coefficient,</if>
+            <if test="startDate != null and startDate != ''">start_date,</if>
+            <if test="endDate != null and endDate != ''">end_date,</if>
+            <if test="createdBy != null and createdBy != ''">created_by,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{questionnaireId},
+            <if test="questionnaireName != null and questionnaireName != ''">#{questionnaireName},</if>
+            <if test="coefficient != null and coefficient != ''">#{coefficient},</if>
+            <if test="startDate != null and startDate != ''">to_date(#{startDate},'yyyy-mm-dd'),</if>
+            <if test="endDate != null and endDate != ''">to_date(#{endDate},'yyyy-mm-dd'),</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+        </trim>
+    </insert>
+
+    <!--新增评分邀请记录详情-->
+    <insert id="insertQuestionnaireDetail" parameterType="QuestionnaireDetail">
+        insert into pf_bas_questionnaire_detail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            detail_id,
+            <if test="questionnaireId != null">questionnaire_Id,</if>
+            <if test="questionId != null">question_Id,</if>
+            <if test="score != null">score,</if>
+            <if test="serialNo != null">serial_No,</if>
+            <if test="createdBy != null and createdBy != ''">created_by,</if>
+            date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_bas_questionnaire_detail.nextval,
+            <if test="questionnaireId != null">#{questionnaireId},</if>
+            <if test="questionId != null">#{questionId},</if>
+            <if test="score != null">#{score},</if>
+            <if test="serialNo != null">#{serialNo},</if>
+            <if test="createdBy != null and createdBy != ''">#{createdBy},</if>
+            SYSDATE
+        </trim>
+    </insert>
+
+    <!--评分邀请记录列表-->
+    <select id="selectQuestionaireList" resultType="QuestionnaireEntity">
+        select questionnaire_id questionnaireId, questionnaire_name questionnaireName, coefficient,
+        closed_date closedDate,to_char(start_Date,'yyyy-mm-dd') startDate,to_char(end_Date,'yyyy-mm-dd') endDate,
+        case when closed_date &lt;= trunc(sysdate, 'dd') then 1 else 0 end isClosed
+        from pf_bas_questionnaire
+    </select>
+
+    <!--问卷发布之后把问题改为已使用-->
+    <update id="updateQuestionById">
+        UPDATE pf_bas_question set is_use = 1,date_updated = SYSDATE,updated_by = #{createdBy}
+        where is_deleted=0 and question_id =#{questionId}
+    </update>
+
+    <!--获取问卷主题列表-->
+    <select id="selectQuestionaireListById" parameterType="string" resultType="QuestionnaireEntity">
+        select s.questionnaire_id questionnaireId, questionnaire_name questionnaireName, s.op_source_id opSourceId, full_name fullName,
+               case when sh.score_id is null then 0 else 1 end isFinish
+        from (
+                 select q.questionnaire_id, q.questionnaire_name, d.pf_source_id, d.op_source_id, d.full_name
+                 from pf_bas_questionnaire q
+                          full join (
+                     select dc.pf_source_id, d.op_source_id, d.full_name, dc.start_date, dc.end_date
+                     from pf_op_source d
+                     inner join pf_op_project dc on dc.op_source_id = d.op_source_id and dc.is_deleted = 0 and parent_op_proj_id is null
+                     where d.is_deleted = 0
+                 ) d on d.start_date &lt;= q.end_date and d.end_date > q.start_date
+                 where trunc(sysdate, 'dd') &lt; closed_date
+                 group by q.questionnaire_id, q.questionnaire_name, d.pf_source_id, d.op_source_id,
+                          d.full_name
+             ) s
+        left join pf_bas_devops_score_head sh on sh.op_source_id = s.op_source_id and sh.questionnaire_id = s.questionnaire_id
+        where s.pf_source_id = #{sourceId}
+    </select>
+
+    <!--评分邀请记录详情列表-->
+    <select id="selectQuestionaireDetailList" parameterType="int" resultType="QuestionnaireDetail">
+        select d.detail_Id detailId,d.questionnaire_Id questionnaireId,d.question_Id questionId,
+        d.score,d.serial_No serialNo,q.question_desc questionDesc
+        from pf_bas_questionnaire_detail d
+        inner join pf_bas_question q on d.question_Id=q.question_Id and q.is_deleted=0
+        where d.questionnaire_Id= #{questionnaireId}
+    </select>
+
+    <!--企业评分列表-->
+    <select id="selectDevopsScoreList" parameterType="int" resultType="ScoreHeadEntity">
+        select d.op_source_id opSourceId, d.full_name opSourceName, count(h.pf_source_id) sourceCnt,
+        avg(h.total_score) avgScore,
+        avg(h.total_score * q.coefficient) finalScore
+        from pf_bas_devops_score_head h
+        inner join pf_op_source d on d.op_source_id = h.op_source_id and d.is_deleted = 0
+        inner join pf_bas_questionnaire q on q.questionnaire_id = h.questionnaire_id
+        where d.is_on_list = 1
+        <if test="questionnaireId != null and questionnaireId != ''">
+            and q.questionnaire_id = #{questionnaireId}
+        </if>
+        group by d.op_source_id, d.full_name
+    </select>
+
+    <!--企业评分详情列表-->
+    <select id="selectScoreDetailList" parameterType="int" resultType="ScoreDetailEntity">
+        select q.question_id questionId, q.question_desc questionDesc, avg(sd.score) score
+        from pf_bas_devops_score_detail sd
+        inner join pf_bas_question q on q.question_id = sd.question_id
+        inner join pf_bas_devops_score_head h on h.score_id = sd.score_id
+        inner join pf_op_source d on d.op_source_id = h.op_source_id and d.is_deleted = 0
+        where d.is_on_list = 1 and d.op_source_id = #{opSourceId}
+        group by q.question_id, q.question_desc
+    </select>
+
+    <!--新增企业评分-->
+    <insert id="insertScoreHead" parameterType="ScoreHeadEntity">
+        <selectKey keyProperty="scoreId" resultType="int" order="BEFORE">
+            select seq_bas_devops_score_head.nextval from dual
+        </selectKey>
+        insert into pf_bas_devops_score_head
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            score_id,
+            <if test="pfSourceId != null and pfSourceId != ''">pf_source_id,</if>
+            <if test="opSourceId != null">op_source_id,</if>
+            <if test="questionnaireId != null">questionnaire_id,</if>
+            <if test="totalScore != null">total_score,</if>
+            <if test="createdBy != null and createdBy != ''">created_by,</if>
+            date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{scoreId},
+            <if test="pfSourceId != null and pfSourceId != ''">#{pfSourceId},</if>
+            <if test="opSourceId != null">#{opSourceId},</if>
+            <if test="questionnaireId != null">#{questionnaireId},</if>
+            <if test="totalScore != null">#{totalScore},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            SYSDATE
+        </trim>
+    </insert>
+
+    <!--新增企业评分详情-->
+    <insert id="insertScoreDetail" parameterType="ScoreDetailEntity">
+        insert into pf_bas_devops_score_detail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            detail_id,
+            <if test="scoreId != null">score_id,</if>
+            <if test="questionId != null">question_Id,</if>
+            <if test="score != null">score,</if>
+            <if test="createdBy != null and createdBy != ''">created_by,</if>
+            date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            seq_bas_devops_score_detail.nextval,
+            <if test="scoreId != null">#{scoreId},</if>
+            <if test="questionId != null">#{questionId},</if>
+            <if test="score != null">#{score},</if>
+            <if test="createdBy != null and createdBy != ''">#{createdBy},</if>
+            SYSDATE
+        </trim>
+    </insert>
+
+    <!--获取问题列表 中心端-->
+    <select id="selectQuestionDetailList" parameterType="int" resultType="QuestionnaireDetail">
+        select q.question_id questionId,  qd.serial_no serialNo, q.question_desc questionDesc, qd.score
+        from pf_bas_questionnaire dq
+        inner join pf_bas_questionnaire_detail qd on qd.questionnaire_id = dq.questionnaire_id
+        inner join pf_bas_question q on q.question_id = qd.question_id
+        where dq.questionnaire_id = #{questionnaireId}
+    </select>
+</mapper>

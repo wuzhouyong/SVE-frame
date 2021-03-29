@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.construction.mapper.ConstructionMapper">
+    <resultMap id="constructionResult" type="ConstructionResult">
+        <result column="tag_head_id" property="tagHeadId"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="tag_head_name" property="tagHeadName"/>
+        <result column="source_name" property="sourceName"/>
+        <result column="town_code" property="townCode"/>
+        <result column="town_name" property="townName"/>
+        <result column="source_status" property="sourceStatus"/>
+        <result column="source_status_name" property="sourceStatusName"/>
+        <result column="construction_status" property="constructionStatus"/>
+        <result column="construction_status_name" property="constructionStatusName"/>
+        <result column="env_contact_name" property="envContactName"/>
+        <result column="env_contact_phone" property="envContactPhone"/>
+        <result column="construction_unit" property="constructionUnit"/>
+        <result column="short_name" property="shortName"/>
+        <result column="construction_person" property="constructionPerson"/>
+        <result column="construction_phone" property="constructionPhone"/>
+        <result column="accept_by" property="acceptBy"/>
+        <result column="accept_date" property="acceptDate"/>
+        <result column="accept_result" property="acceptResult"/>
+    </resultMap>
+
+    <select id="getConstructionList" parameterType="ConstructionParam" resultMap="constructionResult">
+        select td.tag_head_id, s.source_id, th.tag_head_name, s.full_name source_name, s.town_code, s.town_name,
+        s.source_status, ssd.dict_label source_status_name, c.construction_status, cd.dict_label construction_status_name,
+        s.env_contact_name, s.env_contact_phone, construction_unit, c.short_name, c.construction_person, c.construction_phone,
+        c.accept_date, c.accept_by, c.accept_result
+        from pf_bas_tag_detail td
+        inner join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted=0
+        inner join pf_bas_source s on s.source_id = td.pf_source_id and s.is_deleted=0
+        inner join pf_bas_constructioninfo c on c.pf_source_id = s.source_id and c.tag_head_id = td.tag_head_id and c.is_deleted = 0
+        left join sys_dict_data ssd on ssd.dict_type = 'source_status' and ssd.dict_value = s.source_status
+        left join sys_dict_data cd on cd.dict_type = 'ty_construct_state' and cd.dict_value = c.construction_status
+        where td.is_deleted = 0 and th.is_active = 1 and c.construction_status >= 4
+        and td.tag_head_id in
+        <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+            #{tagHeadId}
+        </foreach>
+        <if test="sourceName != null">
+            and s.full_name like '%' || #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="sourceStatus != null">
+            and s.source_status = #{sourceStatus}
+        </if>
+        <if test="isAudited != null">
+            and exists (select 1 from pf_bas_construction_return where tag_head_id = c.tag_head_id and pf_source_id = c.pf_source_id)
+        </if>
+        ${labelQuery}
+        ${dataScope}
+    </select>
+
+    <resultMap id="constructionEntity" type="ConstructionEntity">
+        <result property="tagHeadId" column="tag_head_id"/>
+        <result property="sourceId" column="pf_source_id"/>
+        <result property="socialCreditCode" column="social_credit_code"/>
+        <result property="constructionStatus" column="construction_status"/>
+        <result property="constructionUnit" column="construction_unit"/>
+        <result property="shortName" column="short_name"/>
+        <result property="constructionPerson" column="construction_person"/>
+        <result property="constructionPhone" column="construction_phone"/>
+        <result property="verifyStatus" column="verify_status"/>
+        <result property="completeDate" column="complete_date"/>
+        <result property="completeMemo" column="complete_memo"/>
+        <result property="acceptanceDate" column="acceptance_date"/>
+        <result property="acceptanceMemo" column="acceptance_memo"/>
+        <result property="acceptDate" column="accept_date"/>
+        <result property="acceptBy" column="accept_by"/>
+        <result property="acceptResult" column="accept_result"/>
+        <result property="flag" column="flag" javaType="boolean"/>
+    </resultMap>
+    <select id="getConstructionModel" parameterType="string" resultMap="constructionEntity">
+        select c.tag_head_id, c.pf_source_id, social_credit_code, construction_status,
+               construction_unit, short_name, construction_person, construction_phone,
+               verify_status, complete_date, complete_memo, acceptance_date, acceptance_memo,
+               accept_date, accept_by, accept_result,
+               cast(case when accept_date is not null and r.cnt > 0 then 1 else 0 end as number(1)) flag
+        from pf_bas_constructioninfo c
+        left join (
+            select tag_head_id, pf_source_id, count(1) cnt
+            from pf_bas_construction_return
+            group by tag_head_id, pf_source_id
+        ) r on r.tag_head_id = c.tag_head_id and r.pf_source_id = c.pf_source_id
+        where is_deleted = 0
+          and c.pf_source_id = #{sourceId} and c.tag_head_id = #{tagHeadId}
+    </select>
+
+    <select id="getAcceptReturnList" parameterType="string" resultType="map">
+        select return_id, return_reason, contact_name, contact_phone, memo,
+               to_char(date_created, 'yyyy-mm-dd hh24:mi:ss') date_created, u.nick_name created_by, cr.return_result
+        from pf_bas_construction_return cr
+        left join sys_user u on to_char(cr.created_by) = to_char(u.user_name)
+        where pf_source_id = #{sourceId} and tag_head_id = #{tagHeadId}
+        ORDER BY date_created desc
+    </select>
+
+    <select id="getAttachCountList" parameterType="string" resultType="map">
+        select dict_value, dict_label, count(attachment_id) attach_cnt from sys_dict_data d
+        left join pf_file_attachment a on a.biz_table_name = d.dict_type and a.attachment_type = d.dict_value
+            and a.biz_record_id = #{sourceId} and a.is_deleted = 0
+        where d.status = 0 and d.dict_type = #{refType}
+        group by dict_value, dict_label
+    </select>
+
+    <update id="mergeConstruction" parameterType="ConstructionEntity">
+        merge into pf_bas_constructioninfo c
+        using (
+            select #{tagHeadId} tag_head_id,
+                   #{sourceId} pf_source_id,
+                   #{socialCreditCode} social_credit_code,
+                   #{constructionStatus} construction_status,
+                   #{constructionUnit} construction_unit,
+                   #{shortName} short_name,
+                   #{constructionPerson} construction_person,
+                   #{constructionPhone} construction_phone,
+                   #{createdBy} created_by,
+                   #{updatedBy} updated_by
+            from dual
+        ) t on (t.tag_head_id = c.tag_head_id and t.pf_source_id = c.pf_source_id and c.is_deleted = 0)
+        when matched then update set
+            social_credit_code = t.social_credit_code,
+            construction_status = t.construction_status,
+            construction_unit = t.construction_unit,
+            short_name = t.short_name,
+            construction_person = t.construction_person,
+            construction_phone = t.construction_phone,
+            updated_by = t.updated_by,
+            date_updated = sysdate
+        when not matched then insert (tag_head_id, pf_source_id, social_credit_code, construction_status, construction_unit, short_name, construction_person, construction_phone, created_by, updated_by)
+        values (t.tag_head_id, t.pf_source_id, t.social_credit_code, 0, t.construction_unit, t.short_name, t.construction_person, t.construction_phone, t.created_by, t.updated_by)
+    </update>
+
+    <update id="completeConstruction" parameterType="ConstructionEntity">
+        update pf_bas_constructioninfo set
+            complete_date = #{completeDate},
+            complete_memo = #{completeMemo, jdbcType=VARCHAR},
+            construction_status = 3,
+            updated_by = #{updatedBy},
+            date_updated = sysdate
+        where tag_head_id = #{tagHeadId} and pf_source_id = #{sourceId} and is_deleted = 0
+    </update>
+
+    <update id="acceptanceConstruction" parameterType="ConstructionEntity">
+        update pf_bas_constructioninfo set
+            acceptance_date = #{acceptanceDate},
+            acceptance_memo = #{acceptanceMemo, jdbcType=VARCHAR},
+            construction_status = 6,
+            updated_by = #{updatedBy},
+            date_updated = sysdate
+        where tag_head_id = #{tagHeadId} and pf_source_id = #{sourceId} and is_deleted = 0
+    </update>
+
+    <update id="acceptConstruction" parameterType="AcceptParam">
+        update pf_bas_constructioninfo set
+            accept_by = #{acceptBy},
+            accept_date = sysdate,
+            construction_status = #{constructionStatus},
+            accept_result = #{acceptResult, jdbcType=VARCHAR},
+            updated_by = #{updatedBy},
+            date_updated = sysdate
+        where tag_head_id = #{tagHeadId} and pf_source_id = #{sourceId}
+          and construction_status >= 4 and is_deleted = 0
+    </update>
+
+    <insert id="addAcceptRecord" parameterType="AcceptRecordEntity">
+        <selectKey keyProperty="returnId" order="BEFORE" resultType="int">
+            select seq_construction_return.nextval from dual
+        </selectKey>
+        insert into pf_bas_construction_return (return_id, pf_source_id, tag_head_id, construction_status, return_reason, contact_name, contact_phone, memo, return_result, created_by)
+        values (#{returnId}, #{sourceId}, #{tagHeadId}, #{constructionStatus}, #{returnReason,jdbcType=VARCHAR}, #{contactName,jdbcType=VARCHAR}, #{contactPhone,jdbcType=VARCHAR}, #{memo,jdbcType=VARCHAR}, #{returnResult}, #{createdBy})
+    </insert>
+</mapper>

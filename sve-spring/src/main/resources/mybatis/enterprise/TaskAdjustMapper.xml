@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.enterprise.mapper.TaskAdjustMapper">
+
+    <resultMap id="entity" type="TaskAdjustEntity">
+        <result property="taskAdjustId" column="task_adjust_id"></result>
+        <result property="tagHeadId" column="tag_head_id"></result>
+        <result property="pfSourceId" column="pf_source_id"></result>
+        <result property="adjustItem" column="adjust_item"></result>
+        <result property="adjustReason" column="adjust_reason"></result>
+        <result property="otherReason" column="other_reason"></result>
+        <result property="memo" column="memo"></result>
+        <result property="applyDate" column="apply_date"></result>
+        <result property="aduitStatus" column="aduit_status"></result>
+        <result property="aduitReason" column="aduit_reason"></result>
+        <result property="aduitDate" column="aduit_date"></result>
+        <result property="suspendDate" column="suspend_date"></result>
+        <result property="constructionStatus" column="construction_status"></result>
+    </resultMap>
+
+    <resultMap id="detail" type="TaskAdjustDetail">
+        <result property="detailId" column="DETAIL_ID"></result>
+        <result property="taskAdjustId" column="TASK_ADJUST_ID"></result>
+        <result property="aduitStatus" column="AUDIT_STATUS"></result>
+        <result property="aduitReason" column="AUDIT_REASON"></result>
+        <result property="aduitDate" column="AUDIT_DATE"></result>
+        <result property="userName" column="USER_NAME"></result>
+        <result property="roleName" column="ROLE_NAME"></result>
+        <result property="dateCreated" column="DATE_CREATED"></result>
+        <result property="createdBy" column="created_by"></result>
+    </resultMap>
+
+    <insert id="insertTaskAdjust" parameterType="TaskAdjustEntity">
+        INSERT INTO PF_BAS_TASK_ADJUST
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            TASK_ADJUST_ID,
+            <if test="tagHeadId != null  and tagHeadId != ''">TAG_HEAD_ID,</if>
+            <if test="pfSourceId != null  and pfSourceId != ''">PF_SOURCE_ID,</if>
+            <if test="adjustItem != null  and adjustItem != ''">ADJUST_ITEM,</if>
+            <if test="adjustReason != null  and adjustReason != ''">ADJUST_REASON,</if>
+            <if test="otherReason != null  and otherReason != ''">OTHER_REASON,</if>
+            <if test="aduitReason != null  and aduitReason != ''">aduit_reason,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            <if test="suspendDate != null  and suspendDate != ''">SUSPEND_DATE,</if>
+            APPLY_DATE, ADUIT_STATUS, IS_DELETED,
+            CREATED_BY,UPDATED_BY,DATE_CREATED,DATE_UPDATED
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{taskAdjustId},
+            <if test="tagHeadId != null  and tagHeadId != ''">#{tagHeadId},</if>
+            <if test="pfSourceId != null  and pfSourceId != ''">#{pfSourceId},</if>
+            <if test="adjustItem != null  and adjustItem != ''">#{adjustItem},</if>
+            <if test="adjustReason != null  and adjustReason != ''">#{adjustReason},</if>
+            <if test="otherReason != null  and otherReason != ''">#{otherReason},</if>
+            <if test="aduitReason != null  and aduitReason != ''">#{aduitReason},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="suspendDate != null  and suspendDate != ''">to_date(#{suspendDate}, 'yyyy-MM-dd'),</if>
+            SYSDATE, 0, 0,
+            #{updatedBy},#{updatedBy},SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <select id="selectTaskAdjustDetailCount" parameterType="TaskAdjustEntity" resultType="int">
+        select count(*) from pf_bas_task_adjust_detail
+        WHERE TASK_ADJUST_ID = #{taskAdjustId} and audit_status=1 and is_deleted=0
+    </select>
+
+    <insert id="insertTaskAdjustDetail" parameterType="TaskAdjustDetail">
+        INSERT INTO pf_bas_task_adjust_detail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            DETAIL_ID,
+            <if test="taskAdjustId != null  and taskAdjustId != ''">TASK_ADJUST_ID,</if>
+            <if test="aduitStatus != null  and aduitStatus != ''">AUDIT_STATUS,</if>
+            <if test="aduitReason != null  and aduitReason != ''">AUDIT_REASON,</if>
+            <if test="userName != null  and userName != ''">USER_NAME,</if>
+            <if test="roleName != null  and roleName != ''">ROLE_NAME,</if>
+            AUDIT_DATE,IS_DELETED,CREATED_BY,DATE_CREATED
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #{detailId},
+            <if test="taskAdjustId != null  and taskAdjustId != ''">#{taskAdjustId},</if>
+            <if test="aduitStatus != null  and aduitStatus != ''">#{aduitStatus},</if>
+            <if test="aduitReason != null  and aduitReason != ''">#{aduitReason},</if>
+            <if test="userName != null  and userName != ''">#{userName},</if>
+            <if test="roleName != null  and roleName != ''">#{roleName},</if>
+            SYSDATE, 0,#{createdBy},SYSDATE
+        </trim>
+    </insert>
+
+    <select id="selectEntity" parameterType="String" resultMap="entity">
+        SELECT * FROM PF_BAS_TASK_ADJUST WHERE TASK_ADJUST_ID = #{taskAdjustId} and is_deleted=0
+    </select>
+
+    <select id="selectTaskAdjustDetail" parameterType="String" resultMap="detail">
+        SELECT * FROM pf_bas_task_adjust_detail WHERE TASK_ADJUST_ID = #{taskAdjustId} and audit_status=1 and is_deleted=0
+    </select>
+
+    <select id="selectTaskAdjustDetailList" parameterType="String" resultMap="detail">
+        SELECT * FROM pf_bas_task_adjust_detail WHERE TASK_ADJUST_ID = #{taskAdjustId} and is_deleted=0
+        ORDER BY DATE_CREATED desc
+    </select>
+
+    <select id="selectTaskAdjustList" parameterType="String" resultMap="entity">
+        SELECT * FROM PF_BAS_TASK_ADJUST WHERE PF_SOURCE_ID = #{pfSourceId} AND TAG_HEAD_ID = #{tagHeadId} AND IS_DELETED = 0
+        order by DATE_UPDATED desc
+    </select>
+
+    <update id="agree" parameterType="TaskAdjustEntity">
+        UPDATE PF_BAS_TASK_ADJUST SET
+        ADUIT_STATUS = #{aduitStatus, jdbcType=VARCHAR},
+        ADUIT_REASON = #{aduitReason, jdbcType=VARCHAR},
+        ADUIT_DATE = SYSDATE,
+        DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        WHERE TASK_ADJUST_ID = #{taskAdjustId}
+    </update>
+
+    <update id="updateConStatus" parameterType="TaskAdjustEntity">
+        UPDATE PF_BAS_CONSTRUCTIONINFO SET
+        verify_status = #{verifyStatus, jdbcType=VARCHAR},
+        DATE_UPDATED = SYSDATE,UPDATED_BY = #{updatedBy}
+        WHERE PF_SOURCE_ID = #{pfSourceId} AND TAG_HEAD_ID = #{tagHeadId} and is_deleted=0
+    </update>
+
+    <insert id="insertReport" parameterType="ReportEntity">
+        <selectKey keyProperty="reportId" order="BEFORE" resultType="int">
+            select seq_bas_source_report.nextval as reportId from dual
+        </selectKey>
+        INSERT INTO pf_bas_source_report (
+        report_id,source_id,audit_status,is_deleted,
+        CREATED_BY,UPDATED_BY,DATE_CREATED,DATE_UPDATED ) VALUES
+        ( #{reportId},#{sourceId},0,0,#{updatedBy},#{updatedBy},SYSDATE,SYSDATE)
+    </insert>
+
+    <update id="editReportAudit" parameterType="ReportEntity">
+        UPDATE pf_bas_source_report set audit_status=#{auditStatus}
+        where is_deleted=0 and report_id=#{reportId}
+    </update>
+
+    <select id="selectReportList" parameterType="ReportEntity" resultType="ReportEntity">
+        select DISTINCT sr.report_id reportId,sr.source_id sourceId,sr.audit_status auditStatus,s.full_name fullName,
+        f.show_name showName, s.town_code townCode,s.town_name townName,f.attachment_id attachmentId
+        from pf_bas_source_report sr
+        inner join pf_bas_source s on s.source_id = sr.source_id and s.is_deleted = 0
+        inner join pf_file_attachment f on f.biz_record_id = sr.report_id and f.is_deleted = 0
+        inner join pf_bas_tag_detail d on s.source_id=d.pf_source_id and d.is_deleted=0
+        where sr.is_deleted=0 and f.biz_table_name = 'report_sysfile_type'
+        and d.tag_head_id in (1016,1017,1021,1022,1023) ${dataScope}
+        <choose>
+            <when test="sourceId != null and sourceId != ''">
+                and s.source_id =#{sourceId} and sr.audit_status in (0,1,2)
+            </when>
+            <otherwise>
+                and sr.audit_status in (0,2)
+            </otherwise>
+        </choose>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="showName != null and showName != ''">and f.show_name like '%'||#{showName}||'%'</if>
+        <if test="townName != null and townName != ''">and s.town_code = #{townCode}</if>
+        <if test="auditStatus != null">and sr.audit_status = #{auditStatus}</if>
+    </select>
+
+</mapper>

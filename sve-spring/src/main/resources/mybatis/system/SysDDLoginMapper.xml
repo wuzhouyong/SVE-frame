@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.system.mapper.SysDDLoginMapper">
+    <resultMap type="UserRelationEntity" id="entity">
+        <result property="tagHeadId"    column="TAG_HEAD_ID"    />
+        <result property="pfUserId"     column="PF_USER_ID"     />
+        <result property="bizUserId"   column="BIZ_USER_ID"   />
+        <result property="userType"   column="user_type"   />
+    </resultMap>
+
+    <select id="selectUserId" resultMap="entity" parameterType="String">
+        SELECT * FROM PF_BAS_USER_RELATION WHERE IS_DELETED = 0 AND BIZ_USER_ID = #{bizUserId} AND TAG_HEAD_ID = #{tagHeadId}
+    </select>
+
+    <insert id="addUserRelation" parameterType="UserRelationEntity">
+        insert into pf_bas_user_relation(tag_head_id, pf_user_id, biz_user_id, user_type, is_deleted)
+        values(#{tagHeadId}, #{pfUserId}, #{bizUserId}, #{userType}, 0)
+    </insert>
+
+</mapper>

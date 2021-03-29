@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.outwater.mapper.BasCollectMapper">
+
+    <resultMap id="basEntity" type="BasCollectEntity">
+        <id     property="collectId"       column="Collect_Id"        />
+        <result property="sourceId"     column="Source_Id"      />
+        <result property="collectName"      column="Collect_Name"       />
+        <result property="mn"     column="MN"      />
+        <result property="ipAddress"     column="IpAddress"    />
+        <result property="isOnline"       column="Is_Online"    />
+        <result property="brandName"     column="Brand_Name"    />
+        <result property="hasEnvCert"       column="Has_Env_Cert"    />
+        <result property="fullName"       column="Full_Name"    />
+        <result property="checkDate"       column="Check_Date"    />
+    </resultMap>
+
+    <resultMap id="checkPoint" type="BasCheckPoint">
+        <id     property="checkPointId"       column="CheckPoint_Id"        />
+        <result property="collectId"     column="Collect_Id"      />
+        <result property="sourceId"      column="Source_Id"       />
+        <result property="checkPointName"     column="CheckPoint_Name"      />
+        <result property="checkPointType"     column="CheckPoint_Type"    />
+        <result property="isOnline"       column="Is_Online"    />
+        <result property="checkDate"       column="Check_Date"    />
+        <result property="fullName"       column="Full_Name"    />
+        <result property="collectName"       column="Collect_Name"    />
+    </resultMap>
+
+    <resultMap id="element" type="CheckPointElementEntity">
+        <result property="cpElementId"     column="CP_Element_Id"      />
+        <result property="elemName"      column="Elem_Name"       />
+        <result property="elemTypeId"     column="Elem_Type_Id"      />
+        <result property="elemCode"     column="Elem_Code"    />
+    </resultMap>
+
+    <resultMap id="nameAndId" type="NameAndIdEntity">
+        <result property="Name"     column="Collect_Name"      />
+        <result property="Id"      column="Collect_Id"       />
+    </resultMap>
+
+    <select id="getSourceId" resultType="String" parameterType="String">
+        SELECT Source_Id sourceId FROM bas_checkpoint WHERE Collect_Id = #{collectId}
+    </select>
+
+    <select id="selectBasCollectList" parameterType="BasCollectEntity" resultMap="basEntity">
+         select s.full_name,c.COLLECT_ID,c.SOURCE_ID,c.IS_ONLINE,c.CHECK_DATE,
+         c.MN,c.IP_ADDRESS IpAddress,c.ACQUISITION_BRAND Brand_Name,
+         c.full_name COLLECT_NAME FROM bas_checkpoint c
+         left join pf_bas_source s on c.SOURCE_ID = s.SOURCE_ID
+         where s.IS_DELETED = 0 and c.IS_DELETED = 0
+         <if test="fullName != null and fullName != ''">
+             and s.full_name like '%'|| #{fullName}||'%'
+         </if>
+         <if test="collectName != null and collectName != ''">
+             and c.COLLECT_NAME like '%'|| #{collectName}||'%'
+         </if>
+         <if test="sourceId != null and sourceId != ''">
+             and s.SOURCE_ID = #{sourceId}
+         </if>
+         ORDER BY c.date_created DESC
+    </select>
+
+    <select id="selectBasCollectIdNameList" parameterType="String" resultMap="nameAndId">
+        SELECT Collect_Id, Collect_Name FROM
+        (select rownum num, Collect_Id,full_name Collect_Name
+        from Bas_checkpoint
+        where IS_DELETED = 0
+        <if test="collectName != null and collectName != ''">
+            and full_name like '%'|| #{collectName}||'%'
+        </if>
+        <if test="collectId != null and collectId != ''">
+            and COLLECT_ID like '%'|| #{collectId}||'%'
+        </if>
+        ORDER by Collect_Name)
+        WHERE num BETWEEN 1 AND 30
+    </select>
+
+    <select id="getTotal" resultType="int" parameterType="BasCollectEntity">
+        select COUNT(1) FROM Bas_checkpoint c
+        left join pf_bas_source s on c.SOURCE_ID = s.SOURCE_ID
+        where s.IS_DELETED = 0 and c.IS_DELETED = 0
+        <if test="fullName != null and fullName != ''">
+            and s.full_name like '%'|| #{fullName}||'%'
+        </if>
+        <if test="collectName != null and collectName != ''">
+            and c.full_name like '%'|| #{collectName}||'%'
+        </if>
+        <if test="sourceId != null and sourceId != ''">
+            and s.SOURCE_ID = #{sourceId}
+        </if>
+    </select>
+
+    <update id="updateBasCollect" parameterType="BasCollectEntity">
+        UPDATE Bas_checkpoint
+        <set>
+            Source_Id = #{sourceId, jdbcType=VARCHAR},
+            full_name = #{collectName, jdbcType=VARCHAR},
+            MN = #{mn, jdbcType=VARCHAR},
+            IP_ADDRESS = #{ipAddress, jdbcType=VARCHAR},
+            ACQUISITION_BRAND = #{brandName, jdbcType=VARCHAR},
+            <if test="hasEnvCert != null">IS_ENVCERT = #{hasEnvCert},</if>
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where Collect_Id = #{collectId}
+    </update>
+
+    <delete id="deleteRoleByIds" parameterType="Long">
+        update sys_role set del_flag = '2' where role_id in
+        <foreach collection="array" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
+    </delete>
+
+    <update id="deleteBasCollectById" parameterType="String">
+        UPDATE Bas_checkpoint
+        <set>
+            is_deleted = 1,
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = SYSDATE
+        </set>
+        where Collect_Id = #{collectId}
+    </update>
+
+    <insert id="insertBasCollect" parameterType="BasCollectEntity">
+        INSERT INTO Bas_checkpoint (
+            Collect_Id,Source_Id,FULL_NAME,MN,IP_ADDRESS,ACQUISITION_BRAND,is_deleted,
+            created_by,updated_by,date_created,date_updated ) VALUES (
+            <if test="collectId != null and collectId != ''">#{collectId},</if>
+            <if test="sourceId != null and sourceId != ''">#{sourceId},</if>
+            <if test="collectName != null and collectName != ''">#{collectName},</if>
+            <if test="mn != null and mn != ''">#{mn},</if>
+            <if test="ipAddress != null and ipAddress != ''">#{ipAddress},</if>
+            <if test="brandName != null and brandName != ''">#{brandName},</if>
+            0,
+            <if test="createdBy != null and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null and updatedBy != ''">#{updatedBy},</if>
+            sysdate,
+            sysdate
+        )
+    </insert>
+
+    <update id="insertCollect" parameterType="CollectCheckPointEntity">
+        merge into Bas_checkpoint a using (select #{collectId} devid,#{sourceId} sid,#{checkPointName} pname,#{mn} mn,
+        #{ipAddress} ipadd,#{brandName} bname,#{createdBy} cb,#{updatedBy} ub,#{checkPointType} pt,#{collectPass, jdbcType=VARCHAR} cp from dual) b on (a.Collect_Id=b.devid)
+        when matched then update set Source_Id=b.sid,full_name=b.pname,mn=b.mn,ip_address=b.ipadd,ACQUISITION_BRAND=b.bname,
+        is_deleted=0,updated_by=b.ub,date_updated=sysdate,checkpoint_type=b.pt,COLLECT_PASS=b.cp
+        when not matched then insert(Collect_Id,Source_Id,full_name,MN,IP_ADDRESS,ACQUISITION_BRAND,is_deleted,
+        created_by,updated_by,date_created,date_updated,checkpoint_type,COLLECT_PASS)
+        values(b.devid ,b.sid,b.pname,b.mn,b.ipadd,b.bname,0,b.cb,b.ub,sysdate,sysdate,b.pt,b.cp)
+    </update>
+
+    <update id="modifyPassWord" parameterType="map">
+        UPDATE BAS_CHECKPOINT set COLLECT_PASS = #{collectPass} where IS_DELETED = 0 and COLLECT_ID = #{collectId}
+    </update>
+
+    <select id="getMN" resultMap="basEntity">
+        select getid('PS') MN from dual
+    </select>
+
+    <select id="checkMN" resultMap="basEntity">
+        SELECT * FROM Bas_checkpoint where IS_DELETED = 0 and MN = #{mn}
+    </select>
+
+    <update id="updateCollect" parameterType="CollectCheckPointEntity">
+        UPDATE Bas_checkpoint
+        <set>
+            Source_Id = #{sourceId, jdbcType=VARCHAR},
+            full_name = #{checkPointName, jdbcType=VARCHAR},
+            CheckPoint_Type = #{checkPointType, jdbcType=VARCHAR},
+            MN = #{mn, jdbcType=VARCHAR},
+            IP_ADDRESS = #{ipAddress, jdbcType=VARCHAR},
+            ACQUISITION_BRAND = #{brandName, jdbcType=VARCHAR},
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where Collect_Id = #{collectId}
+    </update>
+
+    <update id="insertBasCheckPoint" parameterType="CollectCheckPointEntity">
+        merge into Bas_checkpoint a using (select #{collectId} devid,#{sourceId} sid,#{checkPointName} pname,#{checkPointType} cptype,
+        #{createdBy} cb,#{updatedBy} ub,#{longitude} ltude,#{latitude} lat,#{collectPass, jdbcType=VARCHAR} cp from dual) b on (a.Collect_Id=b.devid)
+        when matched then update set Source_Id=b.sid,full_name=b.pname,longitude=b.ltude,latitude=b.lat,CheckPoint_Type=b.cptype,
+        is_deleted=0,updated_by=b.ub,date_updated=sysdate,COLLECT_PASS=b.cp
+        when not matched then insert(Collect_Id,Source_Id,full_name,CheckPoint_Type,is_deleted,created_by,
+        updated_by,date_created,date_updated,longitude,latitude,COLLECT_PASS)
+        values(b.devid,b.sid,b.pname,b.cptype,0,b.cb,b.ub,sysdate,sysdate,b.ltude,b.lat,b.cp)
+    </update>
+
+    <select id="selectCheckPointType" parameterType="String" resultMap="checkPoint">
+        SELECT CheckPoint_Type from Bas_CheckPoint where COLLECT_ID = #{checkPointId}
+    </select>
+
+    <insert id="insertCheckPointElementEa70" parameterType="CollectCheckPointEntity">
+        insert into Bas_CheckPoint_Element(CP_ELEM_ID,COLLECT_ID,ELE_TYPE_ID,ELEMENT_CODE,ELEMENT_DESC,is_deleted,created_by,updated_by,date_created,date_updated)
+        values(SEQ_CPELEMID.NEXTVAL,#{collectId},'ea70','ea7001','污水监测井pH值',0,#{createdBy},#{updatedBy},sysdate,sysdate)
+    </insert>
+
+    <select id="selectCheckPointElement" parameterType="String" resultMap="element">
+        SELECT CP_ELEM_ID CP_Element_Id,ELE_TYPE_ID Elem_Type_Id,ELEMENT_CODE Elem_Code,ELEMENT_DESC Elem_Name from Bas_CheckPoint_Element where COLLECT_ID = #{checkPointId} and is_deleted = 0
+    </select>
+
+    <select id="selectCpElementId" parameterType="SqlInEntity" resultMap="element">
+        SELECT CP_ELEM_ID CP_Element_Id,ELE_TYPE_ID Elem_Type_Id,ELEMENT_CODE Elem_Code,ELEMENT_DESC Elem_Name from Bas_CheckPoint_Element where COLLECT_ID in
+        <foreach collection="array" item="checkPointId" open="(" separator="," close=")">
+            #{checkPointId}
+        </foreach>
+        and is_deleted = 0
+    </select>
+
+    <update id="updateCheckPointElement" parameterType="CheckPointElementEntity">
+        UPDATE Bas_CheckPoint_Element
+        <set>
+            ELE_TYPE_ID = #{elemTypeId, jdbcType=VARCHAR},
+            ELEMENT_CODE = #{elemCode, jdbcType=VARCHAR},
+            ELEMENT_DESC = #{elemName, jdbcType=VARCHAR},
+            updated_by = #{updatedBy, jdbcType=VARCHAR},
+            date_updated = sysdate
+        </set>
+        where CP_ELEM_ID = #{cpElementId}
+    </update>
+
+    <insert id="insertCheckPointElementEa71" parameterType="CollectCheckPointEntity">
+        insert into Bas_CheckPoint_Element(CP_ELEM_ID,COLLECT_ID,ELE_TYPE_ID,ELEMENT_CODE,ELEMENT_DESC,is_deleted,created_by,updated_by,date_created,date_updated)
+        values(SEQ_CPELEMID.NEXTVAL,#{collectId},'ea71','ea7101','污水监测井电导率',0,#{createdBy},#{updatedBy},sysdate,sysdate)
+    </insert>
+
+    <insert id="insertCheckPointElementEa73" parameterType="CollectCheckPointEntity">
+        insert into Bas_CheckPoint_Element(CP_ELEM_ID,COLLECT_ID,ELE_TYPE_ID,ELEMENT_CODE,ELEMENT_DESC,is_deleted,created_by,updated_by,date_created,date_updated)
+        values(SEQ_CPELEMID.NEXTVAL,#{collectId},'ea73','ea7301','雨水监测井pH值',0,#{createdBy},#{updatedBy},sysdate,sysdate)
+    </insert>
+
+    <insert id="insertCheckPointElementEa74" parameterType="CollectCheckPointEntity">
+        insert into Bas_CheckPoint_Element(CP_ELEM_ID,COLLECT_ID,ELE_TYPE_ID,ELEMENT_CODE,ELEMENT_DESC,is_deleted,created_by,updated_by,date_created,date_updated)
+        values(SEQ_CPELEMID.NEXTVAL,#{collectId},'ea74','ea7401','雨水监测井电导率',0,#{createdBy},#{updatedBy},sysdate,sysdate)
+    </insert>
+
+    <insert id="insertCheckPointElementPs00" parameterType="CollectCheckPointEntity">
+        insert into Bas_CheckPoint_Element(CP_ELEM_ID,COLLECT_ID,ELE_TYPE_ID,ELEMENT_CODE,ELEMENT_DESC,is_deleted,created_by,updated_by,date_created,date_updated)
+        values(SEQ_CPELEMID.NEXTVAL,#{collectId},'ps00','ps0001','WQI',0,#{createdBy},#{updatedBy},sysdate,sysdate)
+    </insert>
+
+    <insert id="insertDevice" parameterType="OpdeviceEntity">
+        insert into opdeviceinfo
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="checkpointid != null">checkpointid,</if>
+            <if test="checkpointtype != null">checkpointtype,</if>
+            <if test="sourcename != null and sourcename !='' ">sourcename,</if>
+            <if test="sourceenvhead != null and sourceenvhead !='' ">sourceenvhead,</if>
+            <if test="sourceenvheadinfo != null and sourceenvheadinfo !=''">sourceenvheadinfo,</if>
+            <if test="opcompanyname != null and opcompanyname !='' ">opcompanyname,</if>
+            <if test="opcompanytype != null and opcompanytype !=''">opcompanytype,</if>
+            <if test="opcompanyhead != null and opcompanyhead !='' ">opcompanyhead,</if>
+            <if test="opcompanyheadinfo != null and opcompanyheadinfo !='' ">opcompanyheadinfo,</if>
+            <if test="checkpointname != null and checkpointname !='' ">checkpointname,</if>
+            <if test="oppersonname != null and oppersonname !='' ">oppersonname,</if>
+            <if test="oppersontel != null and oppersontel !='' ">oppersontel,</if>
+            <if test="opstartdate != null and opstartdate !=''">opstartdate,</if>
+            <if test="openddate != null and openddate !='' ">openddate,</if>
+            <if test="oplicensenum != null and oplicensenum !='' ">oplicensenum,</if>
+            <if test="oplicissueunit != null and oplicissueunit !='' ">oplicissueunit,</if>
+            <if test="oplicissuedate != null and oplicissuedate !=''">oplicissuedate,</if>
+            <if test="opnolicreason != null and opnolicreason !='' ">opnolicreason,</if>
+            createdby,updatedby,isdeleted,datecreated,dateupdated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="checkpointid != null ">#{checkpointid,jdbcType=INTEGER},</if>
+            <if test="checkpointtype != null ">#{checkpointtype,jdbcType=INTEGER},</if>
+            <if test="sourcename != null and sourcename !='' ">#{sourcename,jdbcType=VARCHAR},</if>
+            <if test="sourceenvhead != null and sourceenvhead !='' ">#{sourceenvhead,jdbcType=VARCHAR},</if>
+            <if test="sourceenvheadinfo != null and sourceenvheadinfo !=''">#{sourceenvheadinfo,jdbcType=VARCHAR},</if>
+            <if test="opcompanyname != null and opcompanyname !='' ">#{opcompanyname,jdbcType=VARCHAR},</if>
+            <if test="opcompanytype != null and opcompanytype !=''">#{opcompanytype,jdbcType=VARCHAR},</if>
+            <if test="opcompanyhead != null and opcompanyhead !='' ">#{opcompanyhead,jdbcType=VARCHAR},</if>
+            <if test="opcompanyheadinfo != null and opcompanyheadinfo !='' ">#{opcompanyheadinfo,jdbcType=VARCHAR},</if>
+            <if test="checkpointname != null and checkpointname !='' ">#{checkpointname,jdbcType=VARCHAR},</if>
+            <if test="oppersonname != null and oppersonname !='' ">#{oppersonname,jdbcType=VARCHAR},</if>
+            <if test="oppersontel != null and oppersontel !='' ">#{oppersontel,jdbcType=VARCHAR},</if>
+            <if test="opstartdate != null and opstartdate !=''">to_date(#{opstartdate},'yyyy-MM-dd'),</if>
+            <if test="openddate != null and openddate !='' ">to_date(#{openddate},'yyyy-MM-dd'),</if>
+            <if test="oplicensenum != null and oplicensenum !='' ">#{oplicensenum,jdbcType=VARCHAR},</if>
+            <if test="oplicissueunit != null and oplicissueunit !='' ">#{oplicissueunit,jdbcType=VARCHAR},</if>
+            <if test="oplicissuedate != null and oplicissuedate !=''">to_date(#{oplicissuedate},'yyyy-MM-dd'),</if>
+            <if test="opnolicreason != null and opnolicreason !='' ">#{opnolicreason,jdbcType=VARCHAR},</if>
+            #{createdby,jdbcType=VARCHAR},#{updatedby,jdbcType=VARCHAR} , 0,sysdate,sysdate
+        </trim>
+    </insert>
+
+</mapper>

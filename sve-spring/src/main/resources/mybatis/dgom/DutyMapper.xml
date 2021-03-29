@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.dgom.mapper.DutyMapper">
+
+    <resultMap id="outpaceTrans" type="OutpaceTransStatistic">
+        <result property="checkpointCount" column="checkpoint_count"/>
+        <result property="finishCount" column="finish_count"/>
+        <result property="finishRate" column="finish_rate"/>
+        <result property="lessthanCount" column="lessthan_count"/>
+        <result property="lostCount" column="lost_Count"/>
+        <result property="negativeCount" column="negative_count"/>
+        <result property="overCount" column="over_count"/>
+        <result property="sourceCount" column="source_count"/>
+        <result property="staticCount" column="static_count"/>
+        <result property="townName" column="town_name"/>
+        <result property="transportRate" column="transport_rate"/>
+        <result property="unhandleCount" column="unhandle_count"/>
+        <result property="zeroCount" column="zero_count"/>
+    </resultMap>
+
+    <select id="getSubStationWeeklyReport" parameterType="map" resultMap="outpaceTrans">
+        select t.zlabelname town_name, count(c.zdatasourid) source_count, nvl(sum(c.checkpointcount), 0) checkpoint_count,
+        nvl(round(sum(c.transportrate) / count(c.zdatasourid), 4), 0) transport_rate,
+        count(case when c.transportrate &lt; 0.9 then c.zdatasourid end) lessthan_count,
+        nvl(sum(c.overcount), 0) over_count,
+        nvl(sum(c.lostcount), 0) lost_count,
+        nvl(sum(c.zerocount), 0) zero_count,
+        nvl(sum(c.negativecount), 0) negative_count,
+        nvl(sum(c.staticcount), 0) static_count,
+        nvl(sum(c.unhandlecount), 0) unhandle_count,
+        nvl(sum(c.finishcount), 0) finish_count,
+        nvl(round(sum(c.finishcount) / sum(c.allcount), 4), 0) finish_rate
+        from zlabelhead t
+        left join (
+        select s.zdatasourid,s.zsuperiorid,
+        c.checkpointcount,
+        r.transportrate,a.overcount,a.lostcount,a.zerocount,a.negativecount,a.staticcount,
+        a.unhandlecount,a.finishcount,a.allcount
+        from zdatasoursetting s
+        inner join (
+        select zdatasourid, count(1) checkpointcount
+        from zcheckpointdef
+        where zisvalid = 1 and zcheckpointtype in (1,2)
+        group by zdatasourid
+        ) c on s.zdatasourid = c.zdatasourid
+        left join (
+        select zsourceid,
+        count(case when zabnortasktype = 1 then ztaskheadid end) overcount,
+        count(case when zabnortasktype = 4 then ztaskheadid end) lostcount,
+        count(case when zabnortasktype = 2 then ztaskheadid end) zerocount,
+        count(case when zabnortasktype = 5 then ztaskheadid end) negativecount,
+        count(case when zabnortasktype = 3 then ztaskheadid end) staticcount,
+        count(case when (zisreported = 0 and zisreturnnormal = 0) then ztaskheadid end) unhandlecount,
+        count(case when ztaskstatus = 5 then ztaskheadid end) finishcount,
+        count(ztaskheadid) allcount
+        from zabnortaskhead
+        where zisdeleted = 0 and trunc(zstarttime) &lt;= to_date(#{endDate}, 'yyyy-mm-dd') and zendtime >= to_date(#{startDate}, 'yyyy-mm-dd')
+        group by zsourceid
+        ) a on a.zsourceid = s.zdatasourid
+        left join (
+        select cc.zdatasourid, round(sum(cr.zactualcount) / sum(cr.zsupposedcount),4) transportrate
+        from zcompleterate cr
+        left join zcheckpointdef cc on cc.zcheckpointid = cr.zcheckpointid
+        where cc.zisvalid = 1 and cc.zcheckpointtype in (1,2) and cr.zdatadate between to_date(#{startDate}, 'yyyy-mm-dd') and to_date(#{endDate}, 'yyyy-mm-dd')
+        group by cc.zdatasourid
+        ) r on r.zdatasourid = s.zdatasourid
+        where s.zisdeleted = 0 and s.zisfactory = 1 and s.zfactorystatus in(3, 4)
+        order by s.zdatasourid
+        ) c on c.zsuperiorid = t.zlabelheadid
+        where t.zparentid = 100 and zisdeleted = 0
+        group by t.zlabelname
+    </select>
+
+    <select id="getEnterpriseWeeklyReport" parameterType="map" resultType="map">
+        select rownum rn, townName town_name, zdatasourname source_name, overcount over_count
+        from (
+        select t.zlabelname townName, s.zdatasourname,count(1) overcount
+        from zabnortaskhead ath
+        left join zdatasoursetting s on s.zdatasourid = ath.zsourceid
+        left join zlabelhead t on t.zlabelheadid = s.zsuperiorid and t.zparentid = 100
+        where ath.zstarttime &lt; to_date(#{endDate},'yyyy-mm-dd') and ath.zendtime >= to_date(#{startDate},'yyyy-mm-dd')
+        and ath.zabnortasktype = 1 and ath.zisdeleted = 0
+        group by t.zlabelname, s.zdatasourname
+        order by overcount desc
+        )
+        where rownum &lt;= 20
+    </select>
+
+    <select id="getSrcNumByType" parameterType="map" resultType="map">
+        select zabnortype,count(*) src_num from
+        (
+        select distinct cp.zdatasourid,(case
+        when tk.zelementid >= 123000 and tk.zelementid &lt; 133000 then 1
+        when tk.zelementid >= 133000 then 2
+        end) zabnortype
+        from zoverlimitdata tk
+        inner join zcheckpointdef cp on tk.zcheckpointid= cp.zcheckpointid and cp.zcheckpointtype in(1,2)
+        inner join zdatasourelement se on tk.zelementid = se.zelementid and tk.zcheckpointid = se.zcheckpointid and se.zpause = 0 and se.zisdeleted = 0
+        where tk.zdatadate >= to_date(#{startDate},'yyyy-mm-dd')
+        and tk.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+        and tk.zamount > 0
+        and mod(tk.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        and tk.zisdeleted = 0
+        ) a group by zabnortype
+    </select>
+
+    <select id="getOverNumByType" parameterType="map" resultType="map">
+        select zcheckpointtype,zabnortype,count(1) num from (select cp.zcheckpointtype,(case
+        when tk.zelementid >= 123000 and tk.zelementid &lt; 133000 then 1
+        when tk.zelementid >= 133000 then 2
+        end) zabnortype from zoverlimitdata tk
+        inner join zcheckpointdef cp on tk.zcheckpointid= cp.zcheckpointid and cp.zcheckpointtype in(1,2)
+        inner join zdatasourelement se on tk.zelementid = se.zelementid and tk.zcheckpointid = se.zcheckpointid and se.zpause = 0 and se.zisdeleted = 0
+        where tk.zdatadate >= to_date(#{startDate},'yyyy-mm-dd')
+        and tk.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+        and tk.zamount > 0
+        and mod(se.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        and tk.zisdeleted = 0) group by zcheckpointtype,zabnortype
+    </select>
+
+    <select id="getWaterHourDevNumByType" parameterType="map" resultType="map">
+        select zelementdesc,count(1) devnum from (
+            select se.zdatadevid,ed.zelementdesc from zoverlimitdata z
+            left join zdatasourelement se on z.zelementid = se.zelementid and z.zcheckpointid = se.zcheckpointid and se.zpause = 0 and se.zisdeleted = 0
+            left join zelementdef ed on mod(ed.zelementid,1000) = mod(z.zelementid,1000)
+            left join zcheckpointdef cp on cp.zcheckpointid = z.zcheckpointid
+            where z.zisdeleted = 0 and z.zelementid &lt; 133000 and cp.zcheckpointtype = 1
+            and z.zamount > 0
+            and mod(z.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+            and z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+            group by se.zdatadevid,ed.zelementdesc
+        ) group by zelementdesc
+    </select>
+
+    <select id="getGasHourDevNumByType" parameterType="map" resultType="map">
+        select count(1) devnum from(select se.zdatadevid
+        from zoverlimitdata z
+        inner join zdatasourelement se on z.zelementid = se.zelementid and z.zcheckpointid = se.zcheckpointid and se.zpause = 0 and se.zisdeleted = 0
+        left join zelementdef ed on mod(ed.zelementid,1000) = mod(z.zelementid,1000)
+        left join zcheckpointdef cp on cp.zcheckpointid = z.zcheckpointid
+        where z.zisdeleted = 0 and z.zelementid &lt; 133000 and cp.zcheckpointtype = 2
+        and z.zamount > 0
+        and mod(z.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        and z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+        group by se.zdatadevid
+        )
+    </select>
+
+    <select id="getWaterDayDevNumByType" parameterType="map" resultType="map">
+        select zelementdesc,count(1) devnum from(select se.zdatadevid,ed.zelementdesc
+        from zoverlimitdata z
+        inner join zdatasourelement se on z.zelementid = se.zelementid and z.zcheckpointid = se.zcheckpointid and se.zpause = 0 and se.zisdeleted = 0
+        left join zelementdef ed on mod(ed.zelementid,1000) = mod(z.zelementid,1000)
+        left join zcheckpointdef cp on cp.zcheckpointid = z.zcheckpointid
+        where z.zisdeleted = 0 and z.zelementid > 133000 and cp.zcheckpointtype = 1
+        and z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+        and z.zamount > 0
+        and mod(z.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        group by se.zdatadevid,ed.zelementdesc
+        ) group by zelementdesc
+    </select>
+
+    <select id="getGasDayDevNumByType" parameterType="map" resultType="map">
+        select count(1) devnum from(select se.zdatadevid
+        from zoverlimitdata z
+        inner join zdatasourelement se on z.zelementid = se.zelementid and z.zcheckpointid = se.zcheckpointid and se.zpause = 0 and se.zisdeleted = 0
+        left join zcheckpointdef cp on cp.zcheckpointid = z.zcheckpointid
+        where z.zisdeleted = 0 and z.zelementid > 133000 and cp.zcheckpointtype = 2
+        and z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+        and z.zamount > 0
+        and mod(z.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        group by se.zdatadevid
+        )
+    </select>
+
+    <select id="getSrcNumByTransRate" parameterType="map" resultType="int">
+        select count(1) from (select cp.zdatasourid,sum(z.zsupposedcount) zs,sum(z.zactualcount) za from zcompleterate z
+        left join zcheckpointdef cp on cp.zcheckpointid = z.zcheckpointid
+        where z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1
+        group by cp.zdatasourid) where za/zs &lt; 0.9
+    </select>
+
+    <select id="getWasteWaterDevNumByTransRate" parameterType="map" resultType="map">
+        select ZELEMENTDESC,count(1) num from (select ED.ZELEMENTDESC,SE.ZDATADEVID,sum(z.ZSUPPOSEDCOUNT) zs,sum(z.ZACTUALCOUNT) za from zcompleterate z
+        left join zCheckpointDef cp on CP.ZCHECKPOINTID = Z.ZCHECKPOINTID
+        inner join zDataSourElement se on SE.ZELEMENTID = Z.ZELEMENTID and SE.ZCHECKPOINTID = Z.ZCHECKPOINTID and SE.ZPAUSE = 0 and SE.ZISDELETED = 0
+        left join zElementDef ed on mod(ED.ZELEMENTID,1000) = mod(Z.ZELEMENTID,1000)
+        where z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1 and CP.ZCHECKPOINTTYPE = 1
+        group by ED.ZELEMENTDESC,SE.ZDATADEVID) where za/zs &lt; 0.9 group by ZELEMENTDESC
+    </select>
+
+    <select id="getWasteGasDevNumByTransRate" parameterType="map" resultType="int">
+        select count(1) num from (select ED.ZELEMENTDESC,SE.ZDATADEVID,sum(z.ZSUPPOSEDCOUNT) zs,sum(z.ZACTUALCOUNT) za from zcompleterate z
+        left join zCheckpointDef cp on CP.ZCHECKPOINTID = Z.ZCHECKPOINTID
+        inner join zDataSourElement se on SE.ZELEMENTID = Z.ZELEMENTID and SE.ZCHECKPOINTID = Z.ZCHECKPOINTID and SE.ZPAUSE = 0 and SE.ZISDELETED = 0
+        left join zElementDef ed on mod(ED.ZELEMENTID,1000) = mod(Z.ZELEMENTID,1000)
+        where z.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and z.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd') + 1 and CP.ZCHECKPOINTTYPE = 2
+        group by ED.ZELEMENTDESC,SE.ZDATADEVID) where za/zs &lt; 0.9
+    </select>
+
+    <select id="getZeroNumByAbnor" parameterType="map" resultType="int">
+        SELECT count(*) FROM zAbnorTaskHead where zAbnorTaskType = 2 and zIsDeleted = 0
+        and zStartTime &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and zEndTime >= to_date(#{startDate},'yyyy-mm-dd') + 1
+    </select>
+
+    <select id="getZeroWasteWaterDev" parameterType="map" resultType="map">
+        select zelementdesc,count(*) total from (select cp.ZCHECKPOINTDESC,SE.ZDATADEVID,ED.ZELEMENTDESC from zAbnorTaskHead th
+        left join zAbnorTaskElement te on te.zTaskHeadId = th.zTaskHeadId
+        left join zCheckPointDef cp on th.zCheckPointId = cp.zCheckPointId
+        inner join zDataSourElement se on se.ZDATASOURID = TH.ZSOURCEID and SE.ZCHECKPOINTID = TH.ZCHECKPOINTID and SE.ZELEMENTID = TE.ZELEMENTID and se.ZPAUSE = 0 and se.ZISDELETED = 0
+        left join zElementDef ed on mod(ED.ZELEMENTID,1000) = mod(TE.ZELEMENTID,1000)
+        where th.zStartTime &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and th.zEndTime >= to_date(#{startDate},'yyyy-mm-dd') + 1
+        and th.zAbnorTaskType = 2 and cp.zCheckPointType = 1
+        group by cp.ZCHECKPOINTDESC,SE.ZDATADEVID,ED.ZELEMENTDESC) group by zelementdesc
+    </select>
+
+    <select id="getZeroWasteGasDev" parameterType="map" resultType="int">
+        select count(1) total from (select cp.ZCHECKPOINTDESC,SE.ZDATADEVID from zAbnorTaskHead th
+        left join zAbnorTaskElement te on te.zTaskHeadId = th.zTaskHeadId
+        left join zCheckPointDef cp on th.zCheckPointId = cp.zCheckPointId
+        inner join zDataSourElement se on se.ZDATASOURID = TH.ZSOURCEID and SE.ZCHECKPOINTID = TH.ZCHECKPOINTID and SE.ZELEMENTID = TE.ZELEMENTID and se.ZPAUSE = 0 and se.ZISDELETED = 0
+        where th.zStartTime &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and th.zEndTime >= to_date(#{startDate},'yyyy-mm-dd') + 1
+        and th.zAbnorTaskType = 2 and cp.zCheckPointType = 2
+        and TH.ZISDELETED = 0
+        group by cp.ZCHECKPOINTDESC,SE.ZDATADEVID)
+    </select>
+
+    <select id="getAbnorProcessResult" parameterType="map" resultType="map">
+        select zdatasourname source_name, town_name, zabnordesc abnor_desc, to_char(startdate, 'yyyy-mm-dd') start_date, zentprocessmemo process_memo,
+               decode(zisreported, 1, '已报告', '未报告') is_reported, to_char(zdatereported, 'yyyy-mm-dd') date_reported,
+               decode(zisreturnnormal, 1, '已恢复', '未恢复') is_return_normal, to_char(zreturnnormaldate, 'yyyy-mm-dd') return_normal_date
+        from (
+                 select s.zdatasourname, l.zlabelname town_name, trunc(h.zstarttime, 'dd') startdate, h.zentprocessmemo,
+                        h.zisreported, h.zdatereported, h.zisreturnnormal, h.zreturnnormaldate, h.zabnordesc
+                 from zabnortaskhead h
+                          inner join zdatasoursetting s on s.zdatasourid = h.zsourceid and s.zisfactory = 1 and s.zisdeleted = 0
+                          left join zlabelhead l on l.zlabelheadid = s.zsuperiorid and zparentid = 100
+                          inner join (
+                     select distinct ztaskheadid,zelementid from zabnortaskelement where zisdeleted = 0
+                 ) he on he.ztaskheadid = h.ztaskheadid
+                          inner join (
+                     select o.zdatadate, c.zdatasourid, o.zelementid from zoverlimitdata o
+                                                                              inner join zcheckpointdef c on c.zcheckpointid = o.zcheckpointid and c.zisvalid = 1
+                     where o.zelementid in (133001,133027,133002,133044,133060,133058,133043,133059,133042)
+                       and o.zisdeleted = 0
+                 ) o on o.zdatadate = trunc(h.zstarttime, 'dd') and o.zdatasourid = s.zdatasourid
+                     and mod(he.zelementid, 1000) = mod(o.zelementid, 1000)
+                 where h.zabnortasktype = 1 and h.zstarttime >= to_date(#{startDate},'yyyy-mm-dd') and h.zstarttime &lt; to_date(#{endDate},'yyyy-mm-dd')
+                   and exists (select zdatasourid from zlabeldetail where zisdeleted = 0 and zlabelheadid = 5053 and zdatasourid = s.zdatasourid)
+                 group by s.zdatasourname, l.zlabelname, trunc(h.zstarttime, 'dd'), h.zentprocessmemo,
+                          h.zisreported, h.zdatereported, h.zisreturnnormal, h.zreturnnormaldate, h.zabnordesc
+                 union all
+                 select s.zdatasourname, l.zlabelname townName, trunc(h.zstarttime, 'dd') startdate, h.zentprocessmemo,
+                        h.zisreported, h.zdatereported, h.zisreturnnormal, h.zreturnnormaldate, h.zabnordesc
+                 from zabnortaskhead h
+                          inner join zdatasoursetting s on s.zdatasourid = h.zsourceid and s.zisfactory = 1 and s.zisdeleted = 0
+                          left join zlabelhead l on l.zlabelheadid = s.zsuperiorid and zparentid = 100
+                          inner join (
+                     select distinct ztaskheadid,zelementid from zabnortaskelement where zisdeleted = 0
+                 ) he on he.ztaskheadid = h.ztaskheadid
+                          inner join (
+                     select o.zdatadate, c.zdatasourid, o.zelementid from zlostdata o
+                                                                              inner join zcheckpointdef c on c.zcheckpointid = o.zcheckpointid and c.zisvalid = 1
+                     where o.zelementid in (133001,133027,133002,133044,133060,133058,133043,133059,133042)
+                       and o.zisdeleted = 0
+                 ) o on o.zdatadate = trunc(h.zstarttime, 'dd') and o.zdatasourid = s.zdatasourid
+                     and mod(he.zelementid, 1000) = mod(o.zelementid, 1000)
+                 where h.zabnortasktype = 4 and h.zstarttime >= to_date(#{startDate},'yyyy-mm-dd') and h.zstarttime &lt; to_date(#{endDate},'yyyy-mm-dd')
+                   and exists (select zdatasourid from zlabeldetail where zisdeleted = 0 and zlabelheadid = 5053 and zdatasourid = s.zdatasourid)
+                 group by s.zdatasourname, l.zlabelname, trunc(h.zstarttime, 'dd'), h.zentprocessmemo,
+                          h.zisreported, h.zdatereported, h.zisreturnnormal, h.zreturnnormaldate, h.zabnordesc
+             )
+    </select>
+
+    <select id="getAbnorSummaryBySubcategory" parameterType="map" resultType="map">
+        select c.zsubcategoryid,
+               nvl(c.day_cnt, 0) day_cnt, nvl(c.two_day_cnt, 0) two_day_cnt,
+               nvl(c.four_day_cnt, 0) four_day_cnt, nvl(r.rate_less_90, 0) rate_less_90
+        from (
+        select zsubcategoryid,count(distinct zsourceid) day_cnt,
+        count(distinct case when zabnordate0 - zabnordate1 = 1 then zsourceid end) two_day_cnt,
+        count(distinct case when zabnordate0 - zabnordate4 >= 3 then zsourceid end) four_day_cnt
+        from (
+        select s.zsubcategoryid,s.zdatasourid zsourceid,t.zdatadate zabnordate0,
+        lag(t.zdatadate,1) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate1,
+        lag(t.zdatadate,3) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate4
+        from zoverlimitdata t
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where t.zelementid > 133000 and t.zisdeleted = 0 and s.zsubcategoryid in (201, 5042)
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        and exists (
+        select zdatasourid from zlabeldetail where zlabelheadid = 5021 and zdatasourid = s.zdatasourid
+        )
+        group by s.zdatasourid, s.zsubcategoryid, t.zcheckpointid, t.zdatadate
+        order by s.zdatasourid, t.zdatadate
+        ) c
+        group by zsubcategoryid
+        ) c
+        full join (
+        select zsubcategoryid, count(distinct zdatasourid) rate_less_90
+        from (
+        select s.zdatasourid, s.zsubcategoryid from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where s.zsubcategoryid in (201, 5042)
+        and c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and exists (
+        select zdatasourid from zlabeldetail where zlabelheadid = 5021 and zdatasourid = s.zdatasourid
+        )
+        group by s.zdatasourid, s.zsubcategoryid
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+        ) r
+        group by zsubcategoryid
+        ) r on r.zsubcategoryid = c.zsubcategoryid
+    </select>
+
+    <select id="getAbnorSummaryByOther" parameterType="map" resultType="map">
+        select 'other' zsubcategoryid, sum(nvl(c.day_cnt, 0)) day_cnt, sum(c.two_day_cnt) two_day_cnt,
+               sum(c.four_day_cnt) four_day_cnt, sum(nvl(r.rate_less_90, 0))rate_less_90
+        from (
+        select zsubcategoryid,count(distinct zsourceid) day_cnt,
+        count(distinct case when zabnordate0 - zabnordate1 = 1 then zsourceid end) two_day_cnt,
+        count(distinct case when zabnordate0 - zabnordate4 >= 3 then zsourceid end) four_day_cnt
+        from (
+        select s.zsubcategoryid,s.zdatasourid zsourceid,t.zdatadate zabnordate0,
+        lag(t.zdatadate,1) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate1,
+        lag(t.zdatadate,3) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate4
+        from zoverlimitdata t
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where t.zelementid > 133000 and t.zisdeleted = 0
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        and exists (
+        select zdatasourid from zlabeldetail where zlabelheadid = 5021 and zdatasourid = s.zdatasourid
+        )
+        group by s.zdatasourid, s.zsubcategoryid, t.zcheckpointid, t.zdatadate
+        order by s.zdatasourid, t.zdatadate
+        ) c
+        group by zsubcategoryid
+        ) c
+        full join (
+        select zsubcategoryid, count(distinct zdatasourid) rate_less_90
+        from (
+        select s.zdatasourid, s.zsubcategoryid from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and exists (
+        select zdatasourid from zlabeldetail where zlabelheadid = 5021 and zdatasourid = s.zdatasourid
+        )
+        group by s.zdatasourid, s.zsubcategoryid
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+        ) r
+        group by zsubcategoryid
+        ) r on r.zsubcategoryid = c.zsubcategoryid
+    </select>
+
+    <select id="getAbnorSummaryByZhongDianOther" parameterType="map" resultType="map">
+        select 'zhongdian_other' zsubcategoryid, sum(nvl(c.day_cnt, 0)) day_cnt, sum(c.two_day_cnt) two_day_cnt,
+               sum(c.four_day_cnt) four_day_cnt, sum(nvl(r.rate_less_90, 0))rate_less_90
+        from (
+        select zsubcategoryid,count(distinct zsourceid) day_cnt,
+        count(distinct case when zabnordate0 - zabnordate1 = 1 then zsourceid end) two_day_cnt,
+        count(distinct case when zabnordate0 - zabnordate4 >= 3 then zsourceid end) four_day_cnt
+        from (
+        select s.zsubcategoryid,s.zdatasourid zsourceid,t.zdatadate zabnordate0,
+        lag(t.zdatadate,1) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate1,
+        lag(t.zdatadate,3) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate4
+        from zoverlimitdata t
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where t.zelementid > 133000 and t.zisdeleted = 0
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        and not exists (
+        select zdatasourid from zlabeldetail where zlabelheadid = 5021 and zdatasourid = s.zdatasourid
+        )
+        group by s.zdatasourid, s.zsubcategoryid, t.zcheckpointid, t.zdatadate
+        order by s.zdatasourid, t.zdatadate
+        ) c
+        group by zsubcategoryid
+        ) c
+        full join (
+        select zsubcategoryid, count(distinct zdatasourid) rate_less_90
+        from (
+        select s.zdatasourid, s.zsubcategoryid from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and not exists (
+        select zdatasourid from zlabeldetail where zlabelheadid = 5021 and zdatasourid = s.zdatasourid
+        )
+        group by s.zdatasourid, s.zsubcategoryid
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+        ) r
+        group by zsubcategoryid
+        ) r on r.zsubcategoryid = c.zsubcategoryid
+    </select>
+
+    <select id="getAbnorSummaryByTown" parameterType="map" resultType="map">
+        select nvl(c.zsuperiorid, r.zsuperiorid) zsuperiorid, l.zlabelname || '生态环境分局' town_name,
+        nvl(c.day_cnt, 0) day_cnt, nvl(c.two_day_cnt, 0) two_day_cnt,
+        nvl(c.four_day_cnt, 0) four_day_cnt, nvl(r.rate_less_90, 0) rate_less_90
+        from (
+        select zsuperiorid,count(distinct zsourceid) day_cnt,
+        count(distinct case when zabnordate0 - zabnordate1 = 1 then zsourceid end) two_day_cnt,
+        count(distinct case when zabnordate0 - zabnordate4 >= 3 then zsourceid end) four_day_cnt
+        from (
+        select s.zsuperiorid,s.zdatasourid zsourceid,t.zdatadate zabnordate0,
+        lag(t.zdatadate,1) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate1,
+        lag(t.zdatadate,3) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate4
+        from zoverlimitdata t
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus in (3)
+        where t.zelementid > 133000 and t.zisdeleted = 0
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        group by s.zdatasourid, s.zsuperiorid, t.zcheckpointid, t.zdatadate
+        order by s.zdatasourid, t.zdatadate
+        ) c
+        group by zsuperiorid
+        ) c
+        full join (
+        select zsuperiorid, count(distinct zdatasourid) rate_less_90
+        from (
+        select s.zdatasourid, s.zsuperiorid from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        group by s.zdatasourid, s.zsuperiorid
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+        ) r
+        group by zsuperiorid
+        ) r on r.zsuperiorid = c.zsuperiorid
+        left join zlabelhead l on l.zlabelheadid = nvl(c.zsuperiorid, r.zsuperiorid)
+    </select>
+
+    <select id="getAbnorSummaryAll" parameterType="map" resultType="map">
+        select '汇总' town_name,sum(nvl(c.day_cnt, 0)) day_cnt, sum(c.two_day_cnt) two_day_cnt,
+               sum(c.four_day_cnt) four_day_cnt, sum(nvl(r.rate_less_90, 0))rate_less_90
+        from (
+        select zsuperiorid,count(distinct zsourceid) day_cnt,
+        count(distinct case when zabnordate0 - zabnordate1 = 1 then zsourceid end) two_day_cnt,
+        count(distinct case when zabnordate0 - zabnordate4 >= 3 then zsourceid end) four_day_cnt
+        from (
+        select s.zsuperiorid,s.zdatasourid zsourceid,t.zdatadate zabnordate0,
+        lag(t.zdatadate,1) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate1,
+        lag(t.zdatadate,3) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate4
+        from zoverlimitdata t
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus in (3)
+        where t.zelementid > 133000 and t.zisdeleted = 0
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        group by s.zdatasourid, s.zsuperiorid, t.zcheckpointid, t.zdatadate
+        order by s.zdatasourid, t.zdatadate
+        ) c
+        group by zsuperiorid
+        ) c
+        full join (
+        select zsuperiorid, count(distinct zdatasourid) rate_less_90
+        from (
+        select s.zdatasourid, s.zsuperiorid from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        group by s.zdatasourid, s.zsuperiorid
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+        ) r
+        group by zsuperiorid
+        ) r on r.zsuperiorid = c.zsuperiorid
+    </select>
+
+    <select id="getAbnorEnterpriseSummary" parameterType="map" resultType="map">
+        select s.zdatasourname, l.zlabelname town_name, t.* from (
+        select nvl(c.zdatasourid, r.zdatasourid) zdatasourid,
+        case when c.two_day_cnt = 1 then '连续2天日均值超标' end two_day_cnt,
+        case when c.four_day_cnt = 1 then '累计4天日均值超标' end four_day_cnt,
+        case when r.zdatasourid is not null then '传输率低于90%' end rate_less_90
+        from (
+        select zdatasourid,
+        count(distinct case when zabnordate0 - zabnordate1 = 1 then 1 end) two_day_cnt,
+        count(distinct case when zabnordate0 - zabnordate4 >= 3 then 1 end) four_day_cnt
+        from (
+        select s.zdatasourid,t.zdatadate zabnordate0,
+        lag(t.zdatadate,1) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate1,
+        lag(t.zdatadate,3) over(partition by t.zcheckpointid order by t.zdatadate) zabnordate4
+        from zoverlimitdata t
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus in (3)
+        where t.zelementid > 133000 and t.zisdeleted = 0
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+        group by s.zdatasourid, t.zcheckpointid, t.zdatadate
+        order by s.zdatasourid, t.zdatadate
+        ) c
+        where zabnordate0 - zabnordate1 = 1
+        group by zdatasourid
+        ) c
+        full join (
+        select s.zdatasourid from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        where c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        group by s.zdatasourid
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+        ) r on r.zdatasourid = c.zdatasourid
+        ) t
+        inner join zdatasoursetting s on s.zdatasourid = t.zdatasourid
+        left join zlabelhead l on l.zlabelheadid = s.zsuperiorid
+    </select>
+
+    <select id="getTransRateLess90" parameterType="map" resultType="map">
+        select h.zlabelname town_name,s.zdatasourname, round(sum(c.zactualcount) / sum(c.zsupposedcount) * 100, 2) rate
+        from zcompleterate c
+        inner join zcheckpointdef cp on cp.zcheckpointid = c.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus = 3
+        left join zlabelhead h on h.zlabelheadid = s.zsuperiorid
+        where c.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and c.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        group by h.zlabelname, s.zdatasourname
+        having sum(c.zactualcount) / sum(c.zsupposedcount) &lt; 0.9
+    </select>
+
+    <resultMap id="dailyAvgStatistic" type="DailyAvgStatistic">
+        <result property="townName" column="townName"/>
+        <result property="sourceName" column="zdatasourname"/>
+        <result property="deptName" column="zdeptcode"/>
+        <result property="checkpointName" column="zcheckpointdesc"/>
+        <result property="elementName" column="zelementdesc"/>
+        <result property="dataDate" column="datadate"/>
+        <result property="standard" column="standard"/>
+        <result property="amount" column="zamount"/>
+        <result property="multiple" column="multiple"/>
+    </resultMap>
+
+    <select id="getDailyAvgStatistic" parameterType="map" resultMap="dailyAvgStatistic">
+        select h.zlabelname townName,s.zdatasourname,fd.zdeptcode, cp.zcheckpointdesc, e.zelementdesc,
+          to_char(t.zdatadate, 'yyyy-mm-dd') datadate,
+        t.zlowerlimit || '-' || t.zupperlimit standard, t.zamount, round(t.zamount / t.zupperlimit, 2) multiple
+        from zoverlimitdata t
+        inner join zdatasourelement se on se.zcheckpointid = t.zcheckpointid and se.zelementid = t.zelementid
+        and se.zpause = 0 and se.zisdeleted = 0
+        left join zelementdef e on mod(e.zelementid,1000) = mod(t.zelementid,1000)
+        inner join zcheckpointdef cp on cp.zcheckpointid = t.zcheckpointid and cp.zcheckpointtype in (1,2) and cp.zisvalid = 1
+        inner join zdatasoursetting s on cp.zdatasourid = s.zdatasourid and s.zisfactory = 1
+        and s.zisclosed = 0 and s.zfactorystatus in (3)
+        left join zfactorydept fd on fd.znewtownid = s.zsuperiorid and fd.zmonitorclass = 0
+        left join zlabelhead h on h.zlabelheadid = s.zsuperiorid
+        where t.zelementid > 133000 and t.zisdeleted = 0
+        and t.zdatadate >= to_date(#{startDate},'yyyy-mm-dd') and t.zdatadate &lt; to_date(#{endDate},'yyyy-mm-dd')
+        and t.zamount > 0 and mod(t.zelementid,1000) in (1,26,27,28,35,42,43,44,58,59,60)
+    </select>
+</mapper>

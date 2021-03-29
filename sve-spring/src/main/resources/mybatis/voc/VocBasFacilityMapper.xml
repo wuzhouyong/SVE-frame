@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.project.voc.mapper.VocBasFacilityMapper">
+
+    <resultMap type="VocBasFacility" id="VocBasFacilityResult">
+        <result property="facilityId" column="FACILITY_ID"/>
+        <result property="facilityType" column="FACILITY_TYPE"/>
+        <result property="facilityName" column="FACILITY_NAME"/>
+        <result property="memo" column="MEMO"/>
+        <result property="createdBy" column="CREATED_BY"/>
+        <result property="dateCreated" column="DATE_CREATED"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+        <result property="sourceId" column="SOURCE_ID"/>
+        <result property="isDeleted" column="IS_DELETED"/>
+        <result property="fullName" column="full_name"/>
+    </resultMap>
+
+    <resultMap type="VocBasTechnology" id="VocBasTechnologyResult">
+        <result property="techId" column="TECH_ID"/>
+        <result property="facilityId" column="FACILITY_ID"/>
+        <result property="techType" column="TECH_TYPE"/>
+        <result property="techNo" column="TECH_NO"/>
+        <result property="memo" column="MEMO"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+    </resultMap>
+
+    <sql id="selectVocBasFacilityVo">
+        select FACILITY_ID,FACILITY_TYPE,FACILITY_NAME,MEMO,SOURCE_ID from bas_facility
+    </sql>
+
+    <!--查询生产设施管理-->
+    <select id="selectProductionList" parameterType="VocBasFacility" resultMap="VocBasFacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,s.SOURCE_ID,s.full_name from bas_facility w
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        where w.is_deleted=0 and w.facility_type='voc_scss'
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        <if test="facilityName != null and facilityName != ''">and w.FACILITY_NAME like '%'||#{facilityName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="memo != null  and memo != ''">and w.MEMO = #{memo}</if>
+        <if test="createdBy != null  and createdBy != ''">and w.CREATED_BY = #{createdBy}</if>
+        <if test="dateCreated != null ">and w.DATE_CREATED = #{dateCreated}</if>
+        <if test="updatedBy != null  and updatedBy != ''">and w.UPDATED_BY = #{updatedBy}</if>
+        <if test="dateUpdated != null ">and w.DATE_UPDATED = #{dateUpdated}</if>
+        order by s.full_name,w.FACILITY_NAME
+    </select>
+
+    <!--查询处理设施-->
+    <select id="selectHandleList" parameterType="VocBasFacility" resultMap="VocBasFacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,s.SOURCE_ID,s.full_name from bas_facility w
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        where w.is_deleted=0 and w.facility_type='voc_clss'
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        <if test="facilityName != null and facilityName != ''">and w.FACILITY_NAME like '%'||#{facilityName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="memo != null  and memo != ''">and w.MEMO = #{memo}</if>
+        <if test="createdBy != null  and createdBy != ''">and w.CREATED_BY = #{createdBy}</if>
+        <if test="dateCreated != null ">and w.DATE_CREATED = #{dateCreated}</if>
+        <if test="updatedBy != null  and updatedBy != ''">and w.UPDATED_BY = #{updatedBy}</if>
+        <if test="dateUpdated != null ">and w.DATE_UPDATED = #{dateUpdated}</if>
+        order by s.full_name,w.FACILITY_NAME
+    </select>
+
+    <!--获取工艺列表-->
+    <select id="selectVocBasTechnologyById" resultMap="VocBasTechnologyResult">
+        select TECH_ID, FACILITY_ID, TECH_TYPE, TECH_NO, MEMO, UPDATED_BY, DATE_UPDATED from bas_settletechnology
+        where is_deleted=0 and FACILITY_ID = #{facilityId}
+    </select>
+
+    <!--查询收集风机管理-->
+    <select id="selectCollectList" parameterType="VocBasFacility" resultMap="VocBasFacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,s.SOURCE_ID,s.full_name from bas_facility w
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        where w.is_deleted=0 and w.facility_type='voc_sjfj'
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        <if test="facilityName != null and facilityName != ''">and w.FACILITY_NAME like '%'||#{facilityName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="memo != null  and memo != ''">and w.MEMO = #{memo}</if>
+        <if test="createdBy != null  and createdBy != ''">and w.CREATED_BY = #{createdBy}</if>
+        <if test="dateCreated != null ">and w.DATE_CREATED = #{dateCreated}</if>
+        <if test="updatedBy != null  and updatedBy != ''">and w.UPDATED_BY = #{updatedBy}</if>
+        <if test="dateUpdated != null ">and w.DATE_UPDATED = #{dateUpdated}</if>
+        order by s.full_name,w.FACILITY_NAME
+    </select>
+
+    <!--查询排放口管理-->
+    <select id="selectEmissionPointList" parameterType="VocBasFacility" resultMap="VocBasFacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,s.SOURCE_ID,s.full_name from bas_facility w
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        where w.is_deleted=0 and w.facility_type='voc_pfk'
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        <if test="facilityName != null and facilityName != ''">and w.FACILITY_NAME like '%'||#{facilityName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="memo != null  and memo != ''">and w.MEMO = #{memo}</if>
+        <if test="createdBy != null  and createdBy != ''">and w.CREATED_BY = #{createdBy}</if>
+        <if test="dateCreated != null ">and w.DATE_CREATED = #{dateCreated}</if>
+        <if test="updatedBy != null  and updatedBy != ''">and w.UPDATED_BY = #{updatedBy}</if>
+        <if test="dateUpdated != null ">and w.DATE_UPDATED = #{dateUpdated}</if>
+        order by s.full_name,w.FACILITY_NAME
+    </select>
+
+    <!--查询排放风机管理-->
+    <select id="selectBlowerList" parameterType="VocBasFacility" resultMap="VocBasFacilityResult">
+        select w.FACILITY_ID,w.FACILITY_TYPE,w.FACILITY_NAME,w.MEMO,s.SOURCE_ID,s.full_name from bas_facility w
+        inner join basecenter.pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        where w.is_deleted=0 and w.facility_type='voc_pffj'
+        <if test="sourceId != null and sourceId != ''">and s.source_id = #{sourceId}</if>
+        <if test="facilityName != null and facilityName != ''">and w.FACILITY_NAME like '%'||#{facilityName}||'%'</if>
+        <if test="fullName != null and fullName != ''">and s.full_name like '%'||#{fullName}||'%'</if>
+        <if test="memo != null  and memo != ''">and w.MEMO = #{memo}</if>
+        <if test="createdBy != null  and createdBy != ''">and w.CREATED_BY = #{createdBy}</if>
+        <if test="dateCreated != null ">and w.DATE_CREATED = #{dateCreated}</if>
+        <if test="updatedBy != null  and updatedBy != ''">and w.UPDATED_BY = #{updatedBy}</if>
+        <if test="dateUpdated != null ">and w.DATE_UPDATED = #{dateUpdated}</if>
+        order by s.full_name,w.FACILITY_NAME
+    </select>
+
+    <!--新增处理设施-->
+    <insert id="insertBasFacility" parameterType="VocBasFacility" useGeneratedKeys="true" keyProperty="facilityId">
+        <selectKey keyProperty="facilityId" order="BEFORE" resultType="int">
+            select seq_facilityid.nextval as facilityId from DUAL
+        </selectKey>
+        insert into bas_facility
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">FACILITY_ID,</if>
+            <if test="facilityType != null  and facilityType != ''">FACILITY_TYPE,</if>
+            <if test="facilityName != null  and facilityName != ''">FACILITY_NAME,</if>
+            <if test="sourceId != null  and sourceId != ''">SOURCE_ID,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            <if test="createdBy != null  and createdBy != ''">CREATED_BY,</if>
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">#{facilityId},</if>
+            <if test="facilityType != null  and facilityType != ''">#{facilityType},</if>
+            <if test="facilityName != null  and facilityName != ''">#{facilityName},</if>
+            <if test="sourceId != null  and sourceId != ''">#{sourceId},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+        </trim>
+    </insert>
+
+    <!--获取关联pid-->
+    <select id="selectFacilityPidById" resultType="int">
+        select facility_pid facilityPid from bas_facilityrelation f
+        inner JOIN BAS_FACILITY b on f.facility_pid=b.FACILITY_ID and b.IS_DELETED=0
+        where f.IS_DELETED=0 and f.FACILITY_ID = #{facilityId}
+    </select>
+
+    <!--关联pid对应的名字-->
+    <select id="selectFacilityPidNameById" resultType="string">
+        select facility_name pidName from bas_facility where is_deleted=0 and FACILITY_ID in
+        <if test="array !=null and array.length !=0">
+            <foreach collection="array" item="facilityId" open="(" separator="," close=")" index="index">
+                #{facilityId}
+            </foreach>
+        </if>
+        <if test="array == null or array.length ==0">
+            null
+        </if>
+    </select>
+
+    <!--新增关联-->
+    <insert id="insertBasFacilityrelation" parameterType="VocBasFacilityrelation">
+        insert into bas_facilityrelation
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">FACILITY_ID,</if>
+            <if test="facilityPid != null ">FACILITY_PID,</if>
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY,</if>
+            is_deleted,date_updated
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="facilityId != null ">#{facilityId},</if>
+            <if test="facilityPid != null ">#{facilityPid},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            0,SYSDATE
+        </trim>
+    </insert>
+
+    <!--更新关联表-->
+    <update id="updateBasFacilityRelation" parameterType="VocBasFacilityrelation">
+       update bas_facilityrelation SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE,is_deleted=#{isDeleted,jdbcType=BIGINT}
+        where facility_pid=#{facilityPid} and FACILITY_ID = #{facilityId}
+    </update>
+
+    <!--删除关联关系-->
+    <update id="deleteBasFacilityRelation">
+        update bas_facilityrelation SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE,is_deleted=1 where FACILITY_ID in
+        <foreach collection="facilityIds" item="facilityId" open="(" separator="," close=")" index="index">
+            #{facilityId}
+        </foreach>
+    </update>
+
+    <!--查询被删除的关联关系-->
+    <select id="selectBasFacilityRelation" parameterType="SysRoleTag" resultType="int">
+        select count(1) from bas_facilityrelation
+        where facility_pid=#{facilityPid,jdbcType=BIGINT} and FACILITY_ID = #{facilityId,jdbcType=BIGINT} and is_deleted=1
+    </select>
+
+    <!--新增工艺-->
+    <insert id="insertTechnology" parameterType="VocBasTechnology">
+        insert into bas_settletechnology
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="techId != null  and techId != ''">TECH_ID,</if>
+            <if test="facilityId != null ">FACILITY_ID,</if>
+            <if test="techType != null  and techType != ''">TECH_TYPE,</if>
+            <if test="techNo != null ">TECH_NO,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="techId != null  and techId != ''">#{techId},</if>
+            <if test="facilityId != null ">#{facilityId},</if>
+            <if test="techType != null  and techType != ''">#{techType},</if>
+            <if test="techNo != null ">#{techNo},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+        </trim>
+    </insert>
+
+    <!--修改设施管理-->
+    <update id="updateBasFacility" parameterType="VocBasFacility">
+        update bas_facility SET FACILITY_NAME = #{facilityName,jdbcType=VARCHAR},
+        MEMO = #{memo,jdbcType=VARCHAR},UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE
+        where is_deleted=0 and FACILITY_ID = #{facilityId}
+        <if test="sourceId != null and sourceId != ''">and source_id = #{sourceId}</if>
+    </update>
+
+    <!--删除设施管理-->
+    <update id="deleteBasFacilityByIds" parameterType="VocBasFacility">
+        update bas_facility SET UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},
+        DATE_UPDATED=SYSDATE,is_deleted=1 where FACILITY_ID in
+        <foreach collection="facilityPid" item="facilityId" open="(" separator="," close=")" index="index">
+            #{facilityId}
+        </foreach>
+        <if test="sourceId != null and sourceId != ''">and source_id = #{sourceId}</if>
+    </update>
+
+    <!--修改处理工艺-->
+    <update id="updateTechnology" parameterType="VocBasTechnology">
+        update bas_settletechnology set TECH_TYPE = #{techType,jdbcType=VARCHAR},TECH_NO = #{techNo,jdbcType=BIGINT},
+        UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},memo = #{memo,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE
+        where TECH_ID = #{techId}
+    </update>
+
+    <!--删除工艺-->
+    <update id="deleteTechnologyByFacilityIds">
+        update bas_settletechnology set UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE,is_deleted=1
+        where FACILITY_ID in
+        <foreach collection="facilityIds" item="facilityId" open="(" separator="," close=")" index="index">
+            #{facilityId}
+        </foreach>
+    </update>
+
+    <!--删除工艺-->
+    <update id="deleteTechnologyById" parameterType="VocBasTechnology">
+        update bas_settletechnology set UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE,is_deleted=1
+        where tech_id=#{techId}
+    </update>
+
+    <!--查询治理设施工况详情列表-->
+    <select id="selectFacilityBySourceId" parameterType="string" resultMap="VocBasFacilityResult">
+        select facility_id,facility_name from bas_facility
+        where facility_type='voc_clss' and source_id = #{sourceId} and is_deleted = 0
+    </select>
+
+    <!--查询治理设施工艺类型-->
+    <select id="selectBasTechnologyByFacilityId" parameterType="int" resultType="Technology">
+      select t.tech_id facilityId,d.dict_label facilityName,l.amount,case when l.amount > ce.judgementval then 'true' else 'false' end status
+      from bas_settletechnology t
+      inner join basecenter.sys_dict_data d on d.dict_value = t.tech_type
+      inner join bas_checkpoint_element ce on ce.facility_id = t.facility_id and ce.tech_id = t.tech_id and ce.is_deleted = 0
+      left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+      where t.facility_id = #{facilityId} and ce.ele_type_id in('e702', 'g184', 'g187') and t.is_deleted = 0
+      order by t.tech_no
+    </select>
+
+    <!--查询治理设施生产线-->
+    <select id="selectLineMeterByFacilityId" parameterType="int" resultType="Technology">
+    select f.facility_id facilityId, f.facility_name facilityName,ce.ele_type_id elementCode,ce.element_desc elementDesc,l.amount,
+    case when l.amount > ce.judgementval then 'true' else 'false' end status
+    from bas_facility f
+    inner join bas_facilityrelation fr on fr.facility_pid = f.facility_id and fr.is_deleted = 0
+    inner join bas_checkpoint_element ce on ce.facility_id = f.facility_id and ce.is_deleted = 0
+    left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+    where f.facility_type='voc_scss' and fr.facility_id = #{facilityId} and ce.is_deleted = 0
+    </select>
+
+    <!--查询治理设施收集风机-->
+    <select id="selectGatherFanByFacilityId" parameterType="int" resultType="Technology">
+    select f.facility_id facilityId,f.facility_name facilityName,ce.ele_type_id elementCode,ce.element_desc element_desc,l.amount,
+    case when l.amount > ce.judgementval then 'true' else 'false' end status
+    from bas_facility f
+    inner join bas_facilityrelation fr on fr.facility_id = f.facility_id and fr.is_deleted = 0
+    inner join bas_checkpoint_element ce on ce.facility_id = f.facility_id and ce.is_deleted = 0
+    left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+    where f.facility_type='voc_sjfj' and fr.facility_pid = #{facilityId} and ce.is_deleted = 0
+    </select>
+
+    <!--查询治理设施排放口-->
+    <select id="selectDischargeByFacilityId" parameterType="int" resultType="Technology">
+    select f.facility_id facilityId,f.facility_name facilityName,ce.ele_type_id elementCode,ce.element_desc element_desc,l.amount,
+    case when l.amount > ce.judgementval then 'true' else 'false' end status
+    from bas_facility f
+    inner join bas_facilityrelation fr on fr.facility_id = f.facility_id and fr.is_deleted = 0
+    inner join bas_checkpoint_element ce on ce.facility_id = f.facility_id and ce.is_deleted = 0
+    left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+    where f.facility_type='voc_pfk' and fr.facility_pid = #{facilityId} and ce.is_deleted = 0
+    </select>
+
+    <!--查询治理设施排放风机-->
+    <select id="selectDischargeFanByFacilityId" parameterType="int" resultType="Technology">
+    select f.facility_id facilityId,f.facility_name facilityName,ce.ele_type_id elementCode,ce.element_desc element_desc,l.amount,
+    case when l.amount > ce.judgementval then 'true' else'false' end status
+    from bas_facility f
+    inner join bas_facilityrelation fr on fr.facility_id = f.facility_id and fr.is_deleted = 0
+    inner join bas_checkpoint_element ce on ce.facility_id = f.facility_id and ce.is_deleted = 0
+    left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+    where f.facility_type='voc_pffj' and fr.facility_pid = #{facilityId} and ce.is_deleted = 0
+    </select>
+
+    <!--生产线电表24小时均值-->
+    <select id="selectLineMeterByCondition" parameterType="string" resultType="map">
+        select to_char(t.datadate,'hh24') datadate, t.facility_id,t.facility_name,ce.element_code,ce.element_desc,
+        d.avg_amt from (
+        select * from (
+        select trunc(to_date(#{time},'yyyy-MM-dd'),'hh') + (rownum - 1) / 24 datadate from dual
+        connect by rownum &lt;= 24 )
+        cross join (
+        select facility_id, facility_name
+        from bas_facility
+        where facility_type='voc_scss' and source_id = #{sourceId} and is_deleted = 0
+        )   ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.facility_id and ce.ele_type_id = 'e301' and ce.is_deleted = 0
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.facility_id, ce.element_code, t.datadate
+    </select>
+
+    <!--收集/排放风机开关状态-->
+    <select id="selectGatherFanByCondition" parameterType="string" resultType="map">
+        select to_char(t.datadate, 'hh24') datadate,t.facility_id,t.facility_name,ce.element_code,ce.element_desc,
+        nvl(case when d.avg_amt > ce.judgementval then 1 else 0 end, 0) switch from (
+        select * from (
+        select trunc(to_date(#{time},'yyyy-MM-dd'),'hh') + (rownum - 1) / 24 datadate from dual
+        connect by rownum &lt;= 24  	)
+        cross join (
+        select facility_id, facility_name
+        from bas_facility
+        where facility_type in('voc_sjfj', 'voc_pffj') and source_id = #{sourceId} and is_deleted = 0
+        )  ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.facility_id and ce.is_deleted = 0
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.facility_id, ce.element_code, t.datadate
+    </select>
+
+    <!--排放口-->
+    <select id="selectDischargeByCondition" parameterType="string" resultType="map">
+        select to_char(t.datadate, 'hh24') datadate,t.facility_id,t.facility_name,ce.element_code,ce.element_desc,d.avg_amt from (
+        select * from (
+        select trunc(to_date(#{time},'yyyy-MM-dd'),'hh') + (rownum - 1) / 24 datadate from dual
+        connect by rownum &lt;= 24        )
+        cross join (
+        select facility_id, facility_name
+        from bas_facility
+        where facility_type='voc_pfk' and source_id = #{sourceId} and is_deleted = 0
+        )        ) t
+        inner join bas_checkpoint_element ce on ce.facility_id = t.facility_id and ce.is_deleted = 0
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.facility_id, ce.element_code, t.datadate
+    </select>
+
+    <!--治理设施工况 UV光解+喷淋-->
+    <select id="selectFacilityByCondition" parameterType="string" resultType="map">
+        select to_char(t.datadate, 'hh24') datadate, t.facility_id, t.facility_name, t.tech_id, t.tech_type, ce.element_code, ce.element_desc,
+        nvl(case when d.avg_amt > ce.judgementval then 1 else 0 end, 0) switch from (
+        select * from (
+        select trunc(to_date(#{time},'yyyy-MM-dd'), 'hh') + (rownum - 1) / 24 datadate from dual
+        connect by rownum &lt;= 24 	)
+        cross join (
+        select f.facility_id, f.facility_name, t.tech_id, t.tech_type
+        from bas_facility f
+        inner join bas_settletechnology t on t.facility_id = f.facility_id and t.tech_type in ('voc_uvgj','voc_pl') and t.is_deleted = 0
+        where f.facility_type='voc_clss' and f.source_id = #{sourceId} and f.is_deleted = 0
+        )  ) t
+        left join bas_checkpoint_element ce on ce.facility_id = t.facility_id and ce.tech_id = t.tech_id and ce.ele_type_id = 'e702' and ce.is_deleted = 0
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.facility_id, t.tech_id, ce.element_code, t.datadate
+
+    </select>
+
+    <!--治理设施工况 活性炭+催化燃烧-->
+    <select id="selectTechnoByCondition" parameterType="string" resultType="map">
+        select to_char(t.datadate, 'hh24') datadate,t.facility_id,t.facility_name,t.tech_id,t.tech_type,ce.element_code,ce.element_desc,d.avg_amt
+        from (
+        select * from (
+        select trunc(to_date(#{time},'yyyy-MM-dd'), 'hh') + (rownum - 1) / 24 datadate from dual
+        connect by rownum &lt;= 24 	)
+        cross join (
+        select f.facility_id, f.facility_name, t.tech_id, t.tech_type
+        from bas_facility f
+        inner join bas_settletechnology t on t.facility_id = f.facility_id and t.tech_type in ('voc_hxt','voc_chrs') and t.is_deleted = 0
+        where f.facility_type='voc_clss' and f.source_id = #{sourceId} and f.is_deleted = 0
+        )  ) t
+        left join bas_checkpoint_element ce on ce.facility_id = t.facility_id and ce.tech_id = t.tech_id and ce.is_deleted = 0
+        left join dat_hour d on d.cp_elem_id = ce.cp_elem_id and d.datadate = t.datadate
+        order by t.facility_id, t.tech_id, ce.element_code, t.datadate
+    </select>
+
+    <resultMap type="VocBasFacilityElecmeter" id="FacilityElecmeterResult">
+        <result property="elecmeterId" column="elecmeter_id"/>
+        <result property="facilityId" column="FACILITY_ID"/>
+        <result property="elecmeterName" column="elecmeter_name"/>
+        <result property="memo" column="MEMO"/>
+        <result property="isDeleted" column="is_deleted"/>
+        <result property="updatedBy" column="UPDATED_BY"/>
+        <result property="dateUpdated" column="DATE_UPDATED"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="dateCreated" column="date_created"/>
+    </resultMap>
+
+    <!--新增电表-->
+    <insert id="insertFacilityElecmeter" parameterType="VocBasFacilityElecmeter">
+        insert into bas_facility_elecmeter
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="elecmeterId != null  and elecmeterId != ''">elecmeter_id,</if>
+            <if test="facilityId != null ">FACILITY_ID,</if>
+            <if test="elecmeterName != null  and elecmeterName != ''">elecmeter_name,</if>
+            <if test="memo != null  and memo != ''">MEMO,</if>
+            <if test="updatedBy != null  and updatedBy != ''">UPDATED_BY,</if>
+            <if test="createdBy != null  and createdBy != ''">created_by,</if>
+            is_deleted,DATE_UPDATED,date_created
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="elecmeterId != null  and elecmeterId != ''">#{elecmeterId},</if>
+            <if test="facilityId != null ">#{facilityId},</if>
+            <if test="elecmeterName != null  and elecmeterName != ''">#{elecmeterName},</if>
+            <if test="memo != null  and memo != ''">#{memo},</if>
+            <if test="updatedBy != null  and updatedBy != ''">#{updatedBy},</if>
+            <if test="createdBy != null  and createdBy != ''">#{createdBy},</if>
+            0,SYSDATE,SYSDATE
+        </trim>
+    </insert>
+
+    <!--查询电表-->
+    <select id="selectFacilityElecmeterById" resultMap="FacilityElecmeterResult">
+        select elecmeter_id,FACILITY_ID,elecmeter_name,MEMO,UPDATED_BY,created_by,DATE_UPDATED,date_created from bas_facility_elecmeter
+        where is_deleted=0 and FACILITY_ID = #{facilityId}
+    </select>
+
+    <!--删除电表-->
+    <update id="deleteFacilityElecmeterByIds">
+        update bas_facility_elecmeter set UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE,is_deleted=1
+        where FACILITY_ID in
+        <foreach collection="facilityIds" item="facilityId" open="(" separator="," close=")" index="index">
+            #{facilityId}
+        </foreach>
+    </update>
+
+    <!--删除工艺-->
+    <update id="deleteFacilityElecmeterById" parameterType="VocBasFacilityElecmeter">
+        update bas_facility_elecmeter set UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE,is_deleted=1
+        where elecmeter_id=#{elecmeterId}
+    </update>
+
+    <!--修改处理工艺-->
+    <update id="updateFacilityElecmeter" parameterType="VocBasFacilityElecmeter">
+        update bas_facility_elecmeter set elecmeter_name = #{elecmeterName,jdbcType=VARCHAR},
+        UPDATED_BY = #{updatedBy,jdbcType=VARCHAR},memo = #{memo,jdbcType=VARCHAR},DATE_UPDATED=SYSDATE
+        where elecmeter_id=#{elecmeterId}
+    </update>
+
+
+    <!--企业查询设施列表-->
+    <select id="selectAllFacilityBySourceId" parameterType="string" resultMap="VocBasFacilityResult">
+        select * from bas_facility
+        where facility_type='voc_clss' and source_id = #{sourceId} and is_deleted = 0
+    </select>
+
+    <!--    查询设施关取的车间-->
+    <select id="selectWorkshopByFacilityId" resultMap="VocBasFacilityResult">
+        select f.* from bas_facility f
+        inner join bas_facilityrelation fr on fr.facility_pid = f.facility_id and fr.is_deleted = 0
+        where f.facility_type='voc_scss' and fr.facility_id =  #{facilityId} and f.IS_DELETED = 0
+    </select>
+
+    <!--    根据设施查找车间风机-->
+    <select id="selectWorkFanByFacilityId" resultType="map">
+        select f.*,fr.FACILITY_PID from bas_facility f
+        inner join bas_facilityrelation fr on fr.facility_id = f.facility_id and fr.IS_DELETED =0
+        where f.facility_type='voc_sjfj' and f.IS_DELETED = 0
+        and fr.FACILITY_PID in (
+                select f.FACILITY_ID from bas_facility f
+                inner join bas_facilityrelation fr on fr.facility_pid = f.facility_id and fr.is_deleted = 0
+                where f.facility_type='voc_scss' and fr.facility_id = #{facilityId}  and f.IS_DELETED = 0
+        )
+    </select>
+
+    <!--    根据治理设施获取相关工艺-->
+    <select id="selectTechnologyByFacilityId" resultType="map">
+        select TECH_ID,TECH_TYPE,dict_label TECH_NAME From bas_settletechnology t
+        left join basecenter.sys_dict_data d on d.dict_value = t.tech_type
+        where  facility_id =  #{facilityId}  order by TECH_NO
+     </select>
+
+    <!--    根据治理设施查找排放口与排放风机
+    因数据太烂改多重嵌套查询
+
+    select  f.*,ref.FACILITY_PID from (
+              select rs.*
+              From bas_facilityrelation r
+                       right join bas_facilityrelation rs on r.FACILITY_ID = rs.FACILITY_PID
+              where r.FACILITY_PID = #{facilityId}
+                and r.IS_DELETED = 0
+              union
+              select *
+              From BAS_FACILITYRELATION
+              where FACILITY_PID = #{facilityId}
+                and IS_DELETED = 0
+          ) ref
+    left join BAS_FACILITY f on f.FACILITY_ID = ref.FACILITY_ID and f.IS_DELETED = 0
+    where f.FACILITY_ID is not null
+    -->
+    <select id="selctOutAndFanByFacilityId" resultType="map">
+        select f.FACILITY_ID,f.FACILITY_TYPE,FACILITY_NAME,to_char(rf.FACILITY_PID) FACILITY_PID
+        from BAS_FACILITY f
+        left join BAS_FACILITYRELATION rf on rf.FACILITY_ID = f.FACILITY_ID
+        where f.IS_DELETED = 0 and rf.FACILITY_PID = #{facilityId}
+        union
+        select f.FACILITY_ID,f.FACILITY_TYPE,FACILITY_NAME,
+        listagg (rf.FACILITY_PID,',') WITHIN GROUP (ORDER BY rf.FACILITY_PID) FACILITY_PID
+        From BAS_FACILITY f
+        left join BAS_FACILITYRELATION rf on rf.FACILITY_ID = f.FACILITY_ID
+        where f.IS_DELETED = 0 and rf.FACILITY_PID in
+        (
+            select f.FACILITY_ID from BAS_FACILITY f
+            left join BAS_FACILITYRELATION rf on rf.FACILITY_ID = f.FACILITY_ID
+            where f.IS_DELETED = 0 and rf.FACILITY_PID = #{facilityId}
+        ) group by f.FACILITY_ID,f.FACILITY_TYPE,FACILITY_NAME
+     </select>
+
+    <!--    因数据结构太乱，查询所企业所有的标检值-->
+    <select id="selectVocElemntTagVal" resultType="map">
+        select ce.CP_ELEM_ID id, ce.element_desc name,l.amount val,f.FACILITY_ID pid,el.UNIT,el.ELE_TYPE_ID,ce.TECH_ID
+        From bas_checkpoint_element ce
+        left join bas_facility f on f.FACILITY_ID = ce.FACILITY_ID
+        left join BAS_ELEMENT el on el.ELE_TYPE_ID = ce.ELE_TYPE_ID
+        left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+        where f.SOURCE_ID = (select SOURCE_ID from BAS_FACILITY where FACILITY_ID = #{facilityId}) and ce.IS_DELETED = 0
+        and ce.ELE_TYPE_ID is not null order by TECH_ID desc
+    </select>
+
+    <select id="getSFanRunStatus" resultType="map">
+        select f.FACILITY_ID id,case when l.amount > ce.judgementval then 1 else 0 end run
+        from bas_facility f
+        inner join bas_facilityrelation fr on fr.facility_id = f.facility_id and fr.IS_DELETED =0
+        inner join bas_checkpoint_element ce on ce.facility_id = f.facility_id and ce.is_deleted = 0
+        left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 *60)
+        where f.facility_type='voc_sjfj' and f.IS_DELETED = 0
+        and fr.FACILITY_PID in (
+                select f.FACILITY_ID from bas_facility f
+                inner join bas_facilityrelation fr on fr.facility_pid = f.facility_id and fr.is_deleted = 0
+                where f.facility_type='voc_scss' and fr.facility_id =  #{facilityId}  and f.IS_DELETED = 0
+        ) and ce.ele_type_id in('e602')
+    </select>
+
+    <select id="getOutFanStatus" resultType="map">
+        select f.FACILITY_ID id,case when l.amount > ce.judgementval then 1 else 0 end run
+        From (
+                 select distinct f.FACILITY_ID
+                 from BAS_FACILITY f
+                          left join BAS_FACILITYRELATION rf on rf.FACILITY_ID = f.FACILITY_ID
+                 where f.IS_DELETED = 0
+                   and rf.FACILITY_PID = #{facilityId}
+                 union
+                 select distinct f.FACILITY_ID
+                 From BAS_FACILITY f
+                          left join BAS_FACILITYRELATION rf on rf.FACILITY_ID = f.FACILITY_ID
+                 where f.IS_DELETED = 0
+                   and rf.FACILITY_PID in
+                       (
+                           select f.FACILITY_ID
+                           from BAS_FACILITY f
+                                    left join BAS_FACILITYRELATION rf on rf.FACILITY_ID = f.FACILITY_ID
+                           where f.IS_DELETED = 0
+                             and rf.FACILITY_PID = #{facilityId}
+                       )
+             ) f
+        left join bas_checkpoint_element ce on ce.facility_id = f.facility_id and ce.is_deleted = 0
+        left join dat_latest l on l.cp_elem_id = ce.cp_elem_id and l.datatype = 0 and l.datadate > sysdate - 30 / (24 * 60)
+        where ELE_TYPE_ID in ('e802', 'g201')
+    </select>
+</mapper>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.enterprise.mapper.DashboardMapper">
+    <resultMap id="sourceSearchResult" type="SourceSearchResult">
+        <result property="sourceId" column="source_id" />
+        <result property="sourceName" column="source_name" />
+        <result property="townName" column="town_name" />
+        <result property="emissionPermitCode" column="emission_permit_code" />
+        <result property="socialCreditCode" column="social_credit_code" />
+        <result property="envContactName" column="env_contact_name" />
+        <result property="envContactPhone" column="env_contact_phone" />
+        <result property="industryName" column="industry_name" />
+        <result property="sourceStatusName" column="source_status_name" />
+        <result property="address" column="address" />
+        <result property="longitude" column="longitude" />
+        <result property="latitude" column="latitude" />
+        <result property="warnLevel" column="warn_level" />
+    </resultMap>
+    <select id="getSourceList" resultMap="sourceSearchResult">
+        select s.source_id, s.full_name source_name, s.town_name,
+        s.emission_permit_code, s.social_credit_code, s.env_contact_name, s.env_contact_phone,
+        s.industry_name, dd.dict_label source_status_name, s.address,
+        s.longitude, s.latitude, w.warn_level
+        from pf_bas_source s
+        inner join (
+            select c.pf_source_id, nvl(min(w.warn_level), 0) warn_level from pf_bas_constructioninfo c
+            inner join pf_bas_tag_detail td on td.pf_source_id = c.pf_source_id and td.is_deleted = 0
+            inner join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted = 0
+            left join dat_warnstat w on w.tag_head_id = c.tag_head_id and w.source_id = c.pf_source_id and w.proc_state = 0
+            where c.is_deleted = 0 and th.is_active = 1
+            <if test="warnLevel != null">
+                and w.warn_level = #{warnLevel}
+            </if>
+            <if test="statuses != null and statuses.length > 0">
+                and c.construction_status in
+                <foreach collection="statuses" item="status" open="(" separator="," close=")">
+                    #{status}
+                </foreach>
+            </if>
+            <if test="tagHeadIds != null and tagHeadIds.length > 0">
+                and td.tag_head_id in
+                <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                    #{tagHeadId}
+                </foreach>
+            </if>
+            group by c.pf_source_id
+        ) w on w.pf_source_id = s.source_id
+        left join sys_dict_data dd on dd.dict_type = 'source_status' and dd.dict_value = s.source_status
+        where s.is_deleted = 0
+        <if test="sourceName != null">
+            and s.full_name like '%' || #{sourceName} || '%'
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        ${dataScope}
+        order by s.full_name
+    </select>
+
+    <select id="getSourceStatistics" resultType="java.util.Map">
+        select dd.dict_label name, count(distinct s.source_id) total
+        from pf_bas_source s
+        inner join pf_bas_tag_detail td on td.pf_source_id = s.source_id and td.is_deleted = 0
+        inner join pf_bas_tag_head th on th.tag_head_id = td.tag_head_id and th.is_deleted = 0
+        left join sys_dict_data dd on dd.dict_type = 'source_status' and dd.dict_value = s.source_status
+        where s.is_deleted = 0 and th.is_active = 1
+        <if test="tagHeadIds != null and tagHeadIds.length > 0">
+            and td.tag_head_id in
+            <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                #{tagHeadId}
+            </foreach>
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        ${dataScope}
+        group by s.source_status, dd.dict_label
+        order by s.source_status
+    </select>
+
+    <select id="getWarnStatistics" resultType="java.util.Map">
+        select w.warn_level, w.warn_desc name, sum(warn_cnt) total
+        from dat_warnstat w
+        inner join pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        where w.proc_state = 0
+        <if test="tagHeadIds != null and tagHeadIds.length > 0">
+            and w.tag_head_id in
+            <foreach collection="tagHeadIds" item="tagHeadId" open="(" separator="," close=")">
+                #{tagHeadId}
+            </foreach>
+        </if>
+        <if test="townCode != null">
+            and s.town_code = #{townCode}
+        </if>
+        <if test="startDate != null">
+            and w.warn_date >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            and w.warn_date &lt; #{endDate} + 1
+        </if>
+        ${dataScope}
+        group by w.warn_level, w.warn_desc
+        order by w.warn_level, sum(warn_cnt)
+    </select>
+</mapper>

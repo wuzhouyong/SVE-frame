@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ruoyi.project.enterprise.mapper.WorkStatusMapper">
+    <resultMap id="workStatusResult" type="WorkStatusResult">
+        <result column="work_id" property="workId"/>
+        <result column="tag_head_id" property="tagHeadId"/>
+        <result column="tag_head_name" property="tagHeadName"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_name" property="sourceName"/>
+        <result column="town_name" property="townName"/>
+        <result column="collect_id" property="collectId"/>
+        <result column="collect_name" property="collectName"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="explain" property="explain"/>
+        <result column="audit_status" property="auditStatus"/>
+        <result column="audit_by" property="auditBy"/>
+        <result column="audit_desc" property="auditDesc"/>
+        <result column="audit_time" property="auditTime"/>
+    </resultMap>
+
+    <select id="getWorkStatusList" parameterType="WorkStatusParam" resultMap="workStatusResult">
+        select w.work_id, w.tag_head_id, th.tag_head_name, w.source_id, s.full_name source_name, s.town_name, w.collect_id, w.collect_name,
+               w.work_status, w.start_time, w.end_time, w.explain, w.audit_status, w.audit_by, w.audit_desc, w.audit_time
+        from pf_bas_work_status w
+                 inner join pf_bas_tag_head th on th.tag_head_id = w.tag_head_id and th.is_deleted = 0
+                 inner join pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 00
+        <where>
+            <if test="tagHeadId != null">and w.tag_head_id = #{tagHeadId}</if>
+            <if test="sourceId != null">and w.source_id = #{sourceId}</if>
+            <if test="sourceName != null">and s.full_name like '%' || #{sourceName} || '%'</if>
+            <if test="workStatus != null">and work_status = #{workStatus}</if>
+            <if test="auditStatus != null">and audit_status = #{auditStatus}</if>
+            <if test="startTime != null and endTime != null">
+                and start_time &lt;= #{startTime}
+                and end_time >= #{endTime}
+            </if>
+            and w.is_deleted = 0 ${dataScope}
+        </where>
+        order by w.date_updated desc
+    </select>
+
+    <resultMap id="workStatusDateResult" type="WorkStatusDateResult">
+        <result column="work_status" property="workStatus"/>
+        <result column="work_status_name" property="workStatusName"/>
+        <result column="datadate" property="dataDate"/>
+    </resultMap>
+
+    <select id="getWorkStatusDate" parameterType="WorkStatusDateParam" resultMap="workStatusDateResult">
+        select * from (
+            select work_status, start_time + (level - 1) / 24 datadate
+            from (
+                select start_time, w.work_status, d.dict_label work_status_name, ceil(to_number(end_time - start_time) * 24 + 1) hours
+                from pf_bas_work_status w
+                inner join sys_dict_data d on d.dict_value = to_char(w.work_status) and d.dict_type = 'work_status'
+                where audit_status = 3 and tag_head_id = #{tagHeadId} and source_id = #{sourceId}
+                order by start_time
+            )
+            connect by level &lt;= hours
+            and start_time = prior start_time
+            and prior dbms_random.value > 0
+        )
+        where datadate between #{startTime} and #{endTime}
+    </select>
+
+    <resultMap id="workStatus" type="WorkStatusEntity">
+        <result column="work_id" property="workId"/>
+        <result column="tag_head_id" property="tagHeadId"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="collect_id" property="collectId"/>
+        <result column="collect_name" property="collectName"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="explain" property="explain"/>
+        <result column="audit_status" property="auditStatus"/>
+        <result column="audit_by" property="auditBy"/>
+        <result column="audit_desc" property="auditDesc"/>
+        <result column="audit_time" property="auditTime"/>
+    </resultMap>
+
+    <select id="getModelById" parameterType="int" resultMap="workStatus">
+        select * from pf_bas_work_status where work_id = #{workId} and is_deleted = 0
+    </select>
+
+    <select id="getWorkStatusInTime" parameterType="WorkStatusEntity" resultMap="workStatus">
+        select * from pf_bas_work_status
+        where audit_status = 1
+        and source_id = #{sourceId} and tag_head_id = #{tagHeadId}
+        and start_time &lt;= #{endTime} and end_time >= #{startTime}
+        <if test="workId != 0">
+            and work_id != #{workId}
+        </if>
+        and is_deleted = 0
+    </select>
+
+    <insert id="addWorkStatus" parameterType="WorkStatusEntity">
+        <selectKey keyProperty="workId" order="BEFORE" resultType="int">
+            select seq_bas_work_status.nextval from dual
+        </selectKey>
+        insert into pf_bas_work_status (work_id, tag_head_id, source_id, collect_id, collect_name, work_status, start_time, end_time, explain, audit_status, created_by, updated_by)
+        values (#{workId}, #{tagHeadId}, #{sourceId}, #{collectId,jdbcType=VARCHAR}, #{collectName,jdbcType=VARCHAR}, #{workStatus}, #{startTime}, #{endTime}, #{explain}, #{auditStatus}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="updateWorkStatus" parameterType="WorkStatusEntity">
+        update pf_bas_work_status
+        <trim prefix="set"  suffixOverrides=",">
+            <if test="auditStatus != null">audit_status = #{auditStatus},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="explain != null and explain!= ''">explain = #{explain},</if>
+            updated_by = #{updatedBy}, date_updated = sysdate,
+        </trim>
+        where work_id = #{workId}
+    </update>
+
+    <update id="auditWorkStatus" parameterType="WorkStatusEntity">
+        update pf_bas_work_status set audit_status = #{auditStatus}, audit_by = #{auditBy}, audit_desc = #{auditDesc}, audit_time = sysdate where work_id = #{workId}
+    </update>
+
+    <update id="removeWorkStatus" parameterType="string">
+        update pf_bas_work_status set is_deleted = 1, updated_by = #{updatedBy}, date_updated = sysdate where work_id = #{workId}
+    </update>
+
+    <resultMap id="workStatusChange" type="WorkStatusChangeResult">
+        <result column="change_id" property="changeId"/>
+        <result column="work_id" property="workId"/>
+        <result column="tag_head_id" property="tagHeadId"/>
+        <result column="tag_head_name" property="tagHeadName"/>
+        <result column="source_id" property="sourceId"/>
+        <result column="source_name" property="sourceName"/>
+        <result column="collect_id" property="collectId"/>
+        <result column="collect_name" property="collectName"/>
+        <result column="work_status" property="workStatus"/>
+        <result column="old_start_time" property="oldStartTime"/>
+        <result column="old_end_time" property="oldEndTime"/>
+        <result column="old_explain" property="oldExplain"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="explain" property="explain"/>
+        <result column="audit_status" property="auditStatus"/>
+        <result column="audit_by" property="auditBy"/>
+        <result column="audit_desc" property="auditDesc"/>
+        <result column="audit_time" property="auditTime"/>
+    </resultMap>
+
+    <select id="getChangeTimeList" parameterType="WorkStatusParam" resultMap="workStatusChange">
+        select c.change_id, w.work_id, w.tag_head_id, th.tag_head_name, w.source_id, s.full_name source_name,w.collect_id, w.collect_name,
+               w.work_status, w.start_time old_start_time, w.end_time old_end_time, w.explain old_explain,
+        c.start_time, c.end_time, c.explain, c.audit_status, c.audit_by, c.audit_desc, c.audit_time
+        from pf_bas_work_status_change c
+        inner join pf_bas_work_status w on w.work_id = c.work_id and w.is_deleted = 0
+        inner join pf_bas_tag_head th on th.tag_head_id = w.tag_head_id and th.is_deleted = 0
+        inner join pf_bas_source s on s.source_id = w.source_id and s.is_deleted = 0
+        <where>
+            <if test="workId != null">and c.work_id = #{workId}</if>
+            <if test="tagHeadId != null">and w.tag_head_id = #{tagHeadId}</if>
+            <if test="sourceId != null">and w.source_id = #{sourceId}</if>
+            <if test="sourceName != null">and s.full_name like '%' || #{sourceName} || '%'</if>
+            <if test="workStatus != null">and w.work_status = #{workStatus}</if>
+            <if test="auditStatus != null">and c.audit_status = #{auditStatus}</if>
+            <if test="startTime != null and endTime != null">
+                and c.start_time &lt;= #{startTime}
+                and c.end_time >= #{endTime}
+            </if>
+            and c.is_deleted = 0
+        </where>
+        order by c.date_updated desc
+    </select>
+
+    <insert id="applyChangeTime" parameterType="WorkStatusChangeEntity">
+        <selectKey keyProperty="changeId" order="BEFORE" resultType="int">
+            select seq_bas_work_status_change.nextval from dual
+        </selectKey>
+        insert into pf_bas_work_status_change (change_id, work_id, start_time, end_time, explain, audit_status, created_by, updated_by)
+        values (#{changeId}, #{workId}, #{startTime}, #{endTime}, #{explain}, #{auditStatus}, #{createdBy}, #{updatedBy})
+    </insert>
+
+    <update id="auditChangeTime" parameterType="WorkStatusChangeEntity">
+        update pf_bas_work_status_change set audit_status = #{auditStatus}, audit_by = #{auditBy}, audit_desc = #{auditDesc}, audit_time = sysdate where change_id = #{changeId}
+    </update>
+
+    <update id="syncChangeToMaster" parameterType="int">
+        merge into pf_bas_work_status w
+            using (select work_id, start_time, end_time, explain from pf_bas_work_status_change where change_id = #{changeId}) c
+            on (c.work_id = w.work_id)
+            when matched then
+                update set w.start_time = c.start_time, w.end_time = c.end_time, w.explain = c.explain
+    </update>
+</mapper>
