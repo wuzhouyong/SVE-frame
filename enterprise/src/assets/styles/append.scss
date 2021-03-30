@@ -1,0 +1,209 @@
+// $mini-font-size: 12px;
+// $mini-height: 28px;
+// //附加样式
+// body {
+//   .app-wrapper {
+//     .sidebar-container {
+
+//       .el-submenu {
+//         .nest-menu {
+//           .el-menu-item {
+//             font-size: 13px !important;
+//             line-height: 38px;
+//             height: 38px;
+//             padding-left: 30px !important;
+//           }
+
+//           .el-submenu {
+//             .el-submenu__title {
+//               padding-left: 20px !important;
+//             }
+//           }
+//         }
+//       }
+
+//     }
+
+//     .main-container {
+//       .navbar {
+//         height: 36px;
+
+//         div {
+//           line-height: 36px;
+//         }
+
+//         .avatar-container {
+//           margin-right: 10px !important;
+
+//           .avatar-wrapper {
+//             .user-avatar {
+//               height: 26px !important;
+//               width: 26px !important;
+//             }
+
+//             .el-icon-caret-bottom {
+//               display: none;
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
+
+// //for mini
+// .app-container {
+//   .el-form-item--mini {
+//     margin-bottom: 10px !important;
+
+//     label {
+//       font-size: $mini-font-size;
+//     }
+
+//     input {
+//       font-size: $mini-font-size;
+//       height: $mini-height !important;
+//       line-height: $mini-height !important;
+//     }
+
+//     input:not(.el-range-input) {
+
+//     }
+
+//     .el-date-editor {
+//       height: $mini-height !important;
+
+//       input {
+//         height: 26px !important;
+//       }
+//     }
+//   }
+//   .el-table--mini{
+//     .el-table__body-wrapper {
+//       table {
+//         td {
+//           padding: 2px 0;
+//         }
+//       }
+//     }
+//   }
+// }
+
+// .el-button--mini {
+//   padding: 5px 10px;
+// }
+
+$mini-font-size: 12px;
+$mini-height: 28px;
+//附加样式
+body {
+  .el-menu--vertical {
+    .el-menu-item {
+      height: 40px;
+      line-height: 40px;
+    }
+  }
+  .app-wrapper {
+    .sidebar-container {
+      .el-menu-item {
+        height: 40px;
+        line-height: 40px;
+      }
+      .el-submenu {
+        .el-submenu__title {
+          height: 40px;
+          line-height: 40px;
+          font-size: 13px;
+        }
+        .nest-menu {
+          .el-menu-item {
+            font-size: 13px !important;
+            line-height: 40px;
+            height: 40px;
+            padding-left: 30px !important;
+          }
+
+          .el-submenu {
+            .el-submenu__title {
+              height: 40px;
+              line-height: 40px;
+              font-size: 13px;
+              padding-left: 30px !important;
+            }
+            .el-menu {
+              .el-menu-item {
+                padding-left: 45px !important;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .main-container {
+      .navbar {
+        height: 36px;
+
+        div {
+          line-height: 36px;
+        }
+
+        .avatar-container {
+          margin-right: 10px !important;
+
+          .avatar-wrapper {
+            .user-avatar {
+              height: 26px !important;
+              width: 26px !important;
+            }
+
+            .el-icon-caret-bottom {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+//for mini
+.app-container {
+  .el-form-item--mini {
+    margin-bottom: 10px !important;
+
+    label {
+      font-size: $mini-font-size;
+    }
+
+    input {
+      font-size: $mini-font-size;
+      height: $mini-height !important;
+      line-height: $mini-height !important;
+    }
+
+    input:not(.el-range-input) {
+    }
+
+    .el-date-editor {
+      height: $mini-height !important;
+
+      input {
+        height: 26px !important;
+      }
+    }
+  }
+  .el-table--mini {
+    .el-table__body-wrapper {
+      table {
+        td {
+          padding: 2px 0;
+        }
+      }
+    }
+  }
+}
+
+.el-button--mini {
+  padding: 5px 10px;
+}
