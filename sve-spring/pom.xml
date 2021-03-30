@@ -35,7 +35,7 @@
         <poi.version>3.17</poi.version>
         <oshi.version>3.9.1</oshi.version>
         <velocity.version>1.7</velocity.version>
-        <dom4j.version>2.0.0</dom4j.version>
+        <dom4j.version>2.0.3</dom4j.version>
     </properties>
 
     <dependencies>
